@@ -1,0 +1,68 @@
+CHORGRAM
+
+A tool chain for
+
+- converting communicating finite state machines (CFSMs) to global graphs (GGs)
+- projecting GGs on CFSMs
+- check multiparty compatibility
+
+Chorgram is written in haskell and uses hkc and petrify as auxiliary
+tools. The integration between chorgram and hkc and petrify is is
+attained with some python scripts. Chorgram uses dot to display CFSMs,
+transition systems, global graphs, and semantics
+
+
+
+CONTENT 
+
+aux: a directory with configuration files; it is advisable to put in
+     aux the directories of hkc and petrify
+
+BCGBridge.hs: from our notation to BCG. This is very much work in progress to
+              rely on BCG in order to minimise CFSMs
+
+BranchingProperty.hs: checks the branching property
+
+BuildGlobal.hs: from petri nets in GGs
+
+CFSM.hs: data and functions on CFSMs
+
+cfsm2gg.py: checks gmc of system of CFSMs and builds its GG
+
+Dependency.hs
+
+DotStuff.hs: configuration for dot
+
+GGGrammar.y: lex/yacc parser generator for the syntax of GGs
+
+GlobalGraph.hs: data and functions on GGs
+
+gmc.hs: generalised multiparty compatibility checker
+
+HKCBridge.hs: transforms CFSMs in the hkc format
+
+Makefile: a makefile
+
+Misc.hs: should I say more?
+
+PartialOrderReduction.hs: compacts p.o.
+
+PetrifyBridge.hs: transforms files to the format of petrify
+
+PetriNet.hs: utils on Petri nets
+
+Representability.hs: representability checker
+
+SemanticGlobalGraphs.hs: computes the semantics of GGs
+
+sgg.hs: extracts the semantics of a GGs and its (non minimised) projections
+
+sgg.py: python script for post-processing of the output of sgg.hs
+
+SyntacticGlobalGraphs.hs: an editor for GGs
+
+sysparser.hs: parses the process algebraic presentation of systems CFSMs (.sys format)
+
+SystemGrammar.y: lex/yacc parser generator for the process algebraic presentation of systems CFSMs
+
+TS.hs: data structures and functions for manipulating transition systems of CFSMs
