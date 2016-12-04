@@ -123,6 +123,9 @@ ggfmt = "ggfmt"
 ggsizenode :: String
 ggsizenode = "ggsizenode"
 
+ggarr :: String
+ggarr = "ggarr"
+
 hecol :: String
 hecol = "hecol"
 

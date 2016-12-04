@@ -12,6 +12,7 @@ import Data.List as L
 import Data.Map.Strict as M
 import Misc
 import PetriNet
+import Data.String.Utils as SU
 
 data Vertex = ParGate (Set Vertex) (Set Vertex)
             | OrGate (Set Vertex) (Set Vertex)
@@ -236,7 +237,7 @@ ranksToVertices  inmap = helper (M.assocs inmap) M.empty
 
              
 printVertexLabel :: Vertex -> String
-printVertexLabel (VT t) = "label=\""++(printTransition t)++"\""
+printVertexLabel (VT t) = "label=\""++(SU.replace "->" " &rarr; " (printTransition t))++"\""
 -- printVertexLabel _ = ""
 printVertexLabel (VP p) = "label=\""++(printPlace p)++"\""
 printVertexLabel f@(VF (PT(_,_))) = "label=\""++(printVertexId f)++"\""
