@@ -72,6 +72,9 @@ ptpsep = "ptpsep"
 confsep :: String
 confsep = "confsep"
 
+tslab :: String
+tslab = "tslab"
+
 deadlockcol1 :: String
 deadlockcol1 = "deadlockcol1"
 

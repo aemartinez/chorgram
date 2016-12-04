@@ -297,7 +297,11 @@ nodelabel n sep = rmChar '\"' (helper n)
 --   POST: a string format of the event
 eventLabel :: Int -> KEvent -> Map String String -> String
 eventLabel k (q, q', s, r, d, msg) flines
-    | k < 1     =     rmChar '\"' $ "(" ++ (show q) ++ "," ++ (show q') ++ "," ++ s ++ flines!ggarr ++ r ++ ":" ++ (show msg) ++ ")"
+    | k < 1     =
+      let interaction = s ++ flines!ggarr ++ r ++ ":" ++ (show msg) in rmChar '\"' $ 
+          case flines!tslab of
+            "simple" -> interaction
+            _        -> "(" ++ (show q) ++ "," ++ (show q') ++ "," ++ interaction ++ ")"
     | otherwise = rmChar '\"' $ s ++ (flines!ptpsep) ++ r ++ (showDir d flines) ++ (show msg)
 
 -- showQueue qs
