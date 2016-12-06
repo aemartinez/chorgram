@@ -27,71 +27,89 @@ parser = argparse.ArgumentParser(description="chorgram: From communicating machi
 parser.add_argument("-v", "--verbose",
                     dest = "debug",
                     action = "store_true",
-                    help = "Run in verbose mode")
+                    help = "Run in verbose mode"
+)
 parser.add_argument("-df",
                     dest = "df",
                     default = "svg",
-                    help = "Output format from dot files (svg, png, pdf, etc.) {default = svg}")
+                    help = "Output format from dot files (svg, png, pdf, etc.) {default = svg}"
+)
 parser.add_argument("--dot",
                     dest = "dot",
                     action = "append",
                     type=str,
-                    help = "Options for dot starting without '-' (e.g., --dot Nnodesep=.5)")
+                    help = "Options for dot starting without '-' (e.g., --dot Nnodesep=.5)"
+)
 parser.add_argument("-l",
                     dest = "leg",
                     action = "store_true",
-                    help = "Suppress legend from dot files")
+                    help = "Suppress legend from dot files"
+)
 parser.add_argument("-dw",
                     dest = "dw",
                     default = "0",
-                    help = "Set fixedsize of dot nodes to the given value {default = 0}")
+                    help = "Set fixedsize of dot nodes to the given value {default = 0}"
+)
 parser.add_argument("-ts",
                     dest = "ts",
                     action = "store_true",
-                    help = "Just computes the CFSMs and the transition system(s)")
+                    help = "Just computes the CFSMs and the transition system(s)"
+)
 parser.add_argument("-tp",
                     dest = "tp",
                     default = "- - - -",
-                    help = "Pattern for colouring transitions; the syntax is \"s r d msg\" where s and r are the indexes of sender and receiver, d is the action, and msg is the message {default = \"- - - -\"}")
+                    help = "Pattern for colouring transitions; the syntax is \"s r d msg\" where s and r are the indexes of sender and receiver, d is the action, and msg is the message {default = \"- - - -\"}"
+)
 parser.add_argument("-cp",
                     dest = "cp",
                     default = "",
-                    help = "Pattern for colouring configurations; the syntax is a string with blank-separated local state ids or '*' (as many as the number of machines) and then some blank separated string of the forom \"s r\" where s and r are the indexes of sender and receiver {default = \"\"}")
+                    help = "Pattern for colouring configurations; the syntax is a string with blank-separated local state ids or '*' (as many as the number of machines) and then some blank separated string of the forom \"s r\" where s and r are the indexes of sender and receiver {default = \"\"}"
+)
 parser.add_argument("-p", "--path",
                     dest = "path",
                     default = "",
-                    help = "Colours paths from the initial node to the ones matching the configuration pattern PATH {default: \"\"}")
+                    help = "Colours paths from the initial node to the ones matching the configuration pattern PATH {default: \"\"}"
+)
 parser.add_argument("-b", "--bounded",
                     dest = "bound",
                     type = int,
                     default = 0,
-                    help = "Set the bound to BOUND; if BOUND < 1, the synchronous TS is computed {default: 0}")
+                    help = "Set the bound to BOUND; if BOUND < 1, the synchronous TS is computed {default: 0}"
+)
 parser.add_argument("-nc", "--noclean",
                     dest = "nc",
                     action = "store_false",
-                    help = "Do not remove auxiliary files")
+                    help = "Do not remove auxiliary files"
+)
 parser.add_argument("-pn",
                     dest = "pn",
-                    help = "Specify the path to petrify  {default: " + PETRY + "}")
+                    help = "Specify the path to petrify  {default: " + PETRY + "}"
+)
 parser.add_argument("-hkc",
                     dest = "hkc",
-                    help = "Specify the path to hkc   {default: " + HKC + "}")
+                    help = "Specify the path to hkc   {default: " + HKC + "}"
+)
 parser.add_argument("-gmc",
                     dest = "gmc",
-                    help = "Specify the path to gmc   {default: " + GMC + "}")
+                    help = "Specify the path to gmc   {default: " + GMC + "}"
+)
 parser.add_argument("-gg",
                     dest = "gg",
-                    help = "Specify the path to BuildGlobal   {default: " + BG + "}")
+                    help = "Specify the path to BuildGlobal   {default: " + BG + "}"
+)
 parser.add_argument("-dir",
                     dest = "dir",
                     default = "experiments/results",
-                    help = "Specify the directory for the output files   {default: outputs}")
+                    help = "Specify the directory for the output files   {default: outputs}"
+)
 parser.add_argument("-m",
                     dest = "mul",
                     type = int, default = 0,
-                    help = "Specify the multiplicity factor [DEPRECATED]")
+                    help = "Specify the multiplicity factor [DEPRECATED]"
+)
 parser.add_argument("filename",
-                    help = "Specify the path to file containing the CFSMs")
+                    help = "Specify the path to file containing the CFSMs"
+)
 args = parser.parse_args()
 
 
@@ -110,7 +128,7 @@ except OSError:
         pass
     else:
         raise
-basename = dir + bname # os.path.basename(args.filename)
+basename = dir + bname      # os.path.basename(args.filename)
 
 factor = str(args.mul)
 
@@ -137,7 +155,7 @@ debugMsg("\n   Executing with...\n\tgmc\t\t" + GMC +
          "\n\tmultiplicity\t" + factor +
          "\n\tdir\t\t" + args.dir +
          "\n\tCFSMs\t\t" + args.filename + "\n"
-         )
+)
 
 date = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 starttime = time.time()
@@ -151,7 +169,8 @@ callgmc = ([GMC,
             "-b", str(args.bound)] +
            (["-l"] if args.leg else []) +
            (["-ts"] if args.ts else []) +
-           [args.filename])
+           [args.filename]
+)
 
 debugMsg("Execution Started on " + date, True)
 debugMsg(string.join(callgmc))
@@ -168,7 +187,8 @@ if machine_number < 2:
 
 if args.ts:
     sys.exit()
-else: debugMsg("Checking projections...")
+else:
+    debugMsg("Checking projections...")
 
 tmpbool = True
 
@@ -183,19 +203,19 @@ for i in range(machine_number):
                                 "-equiv",
                                 basename + MACH + str(i),
                                 basename + PROJ + str(i)],
-                               stdout=subprocess.PIPE)
+                                stdout=subprocess.PIPE
+        )
     except: debugMsg("Language equivalence check failed. Something wrong with " + HKC)
     stop = time.time()
     hkctime = hkctime + stop - start
-    for line in cmd.stdout:
-        spa = line.split('<<<')
-        if len(spa) > 1:
-            spb = spa[1].split('>>>')
-            tmpbool = tmpbool and (spb[0].strip() == "true")
-            debugMsg("Is machine " + str(i) + " representable? "+ spb[0].strip(),True)
+    for line in cmd.stdout: spa = line    # read the last line produced by hkc
+    spa = line.split(': ')                # after ': ' on the last line of its output hkc returns the boolean
+    hkc_boolean_position = 1              # position of the boolean returned by hkc after the split
+    res = spa[hkc_boolean_position].split(',')[0]
+    tmpbool = tmpbool and (res == "true")
+    debugMsg("Is machine " + str(i) + " representable? "+ res, True)
 
-
-debugMsg("Language-equivalence (Representability part (i))? " + str(tmpbool),True)
+debugMsg("Language-equivalence (Representability part (i))? " + str(tmpbool), True)
 
 
 ######################################## PETRIFY ###############################################
@@ -206,7 +226,8 @@ try:
     subprocess.check_call([PETRY,
                            "-dead","-ip",
                            "-efc", basename + "_toPetrify",
-                           "-o" , dir + TEMP])
+                           "-o" , dir + TEMP]
+    )
 except: debugMsg("Petrification failed. Something wrong with " + PETRY)
 stop = time.time()
 petritime = stop - start
@@ -236,8 +257,8 @@ debugMsg("All done.\n\tTotal execution time: " +  str(endtime - starttime) +
          "\n\t\tHKC minimisation:\t\t" + str(hkctime) +
          "\n\t\tPetrify:\t\t\t" + str(petritime) +
          "\n\t\tGlobal graph generation:\t" + str(endtime - ggstarttime),
-         True)
-
+         True
+)
 
 ########################################## DOT #################################################
 debugMsg("Transforming dot files in " + args.df + " format", True)
@@ -248,9 +269,11 @@ for x in ["machines", "ts0"] + (["ts" + str(args.bound)] if args.bound > 0 else 
 if debug:
     subprocess.check_call(dot + [basename + PNET + FINP + ".dot", "-o", basename + FINP + "." + args.df])
     subprocess.check_call(dot + [basename + PNET + PGLO + ".dot", "-o", basename + PGLO + "." + args.df],
-                          stderr=subprocess.PIPE)
+                          stderr=subprocess.PIPE
+    )
 subprocess.check_call(dot + ["-Gsplines=ortho", basename + PNET + GLOB + ".dot", "-o", basename + GLOB + "." + args.df],
-                      stderr=subprocess.PIPE)
+                      stderr=subprocess.PIPE
+)
 
 ###################################### CLEANING UP #############################################
 
@@ -258,11 +281,10 @@ if args.nc and not debug:
     to_be_deleted = [
         f for sub in (glob.glob("./" + basename + x + "*")
                       for x in [PROJ,MACH,PNET,"_toPetrify", FINP, "_preglobal*"]
-                      )
+        )
         for f in sub
         ] + [dir + ".machines", dir + TEMP]
     debugMsg("Deleting auxiliary files")
     for fl in to_be_deleted:
         debugMsg("\tDeleting " + fl)
         os.remove(fl)
-
