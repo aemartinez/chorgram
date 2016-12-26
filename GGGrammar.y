@@ -47,6 +47,7 @@ import CFSM
 %token
   str	        { TokenStr $$ }
   '§'	        { TokenEmp    }
+  '='	     	{ TokenEqu    }
   '->'	     	{ TokenArr    }
   '=>'	        { TokenMAr    }
   '|'	        { TokenPar    }
@@ -60,12 +61,23 @@ import CFSM
   ','	        { TokenCom    }
   '['	        { TokenCtb    }
   ']'	        { TokenCte    }
+  '\n'	        { TokenNln    }
 
 %right '|'
 %right '+'
 %right ';'
 
 %%
+
+Gdec : D                        { [$1] }
+     | D '\n' Gdec              { ($1 : $3) }
+  
+D : G                           { (self, $1) }
+  | str '=' G                   { if isPtp $1
+                                  then ($1,$3)
+                                  else myErr ("Bad name " ++ $1)
+                                }
+
 
 G : '§'				{ myErr "§ not permitted" } -- it used to be (Emps, S.empty) when designers where allowed to use §; 
   | str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
@@ -105,6 +117,9 @@ ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name 
 
 
 {
+self :: String
+self = "__self__"
+
 data Token =
   TokenStr String
   | TokenPtps [Ptp]
@@ -133,8 +148,9 @@ lexer s = case s of
     '[':r     -> lexer $ tail (L.dropWhile (\c->c/=']') r)
     '.':'.':r -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
     ' '  :r   -> lexer r
-    '\n' :r   -> lexer r
     '\t' :r   -> lexer r
+    '\n' :r   -> TokenNln : (lexer $ tail r)
+    '=':r     -> TokenEqu : (lexer $ tail r)
     '-':'>':r -> TokenArr : (lexer $ tail r)
     '=':'>':r -> TokenMAr : (lexer $ tail r)
     '§':r     -> TokenEmp : lexer r
