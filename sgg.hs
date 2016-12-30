@@ -22,8 +22,11 @@ main = do putStrLn $ msgFormat SGG "start"
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
-              let (ggname, (gg, names, _) ) =
-                    head $ (gggrammar . lexer) ggtxt
+              let decs = (gggrammar . lexer) ggtxt
+              let names = S.unions (L.map (\(_,(_,n,_)) -> n) decs)
+              let (ggname, (gg, _, _) ) =
+                    head decs
+              let env = M.fromList (L.map (\(x,(y,_,_)) -> (x, y)) decs)
               let ptps =
                     list2map $ S.toList names
               writeToFile (dir ++ "in_sgg_parsed.txt") (show gg) >>= (\_ -> putStrLn $ "\t"++dir++"in.sgg: is the initial gg")
@@ -31,15 +34,15 @@ main = do putStrLn $ msgFormat SGG "start"
 --                    normGG gg
 --              let fact =
 --                    factorise $ norm
-              let fact =
-                    factorise $ normGG gg --norm
+              -- let fact =
+              --       factorise $ normGG gg --norm
               let sgg2file s s' =
-                    writeToFile (dir ++ s) (gg2dot gg (baseName ++ s') (flines!ggsizenode))
+                    writeToFile (dir ++ s) (gg2dot env gg (baseName ++ s') (flines!ggsizenode))
               sgg2file "graph_sgg.dot" ""    >>= \_ -> putStrLn $ "\t" ++ dir ++ "graph_sgg.dot: is the input gg"
-              sgg2file "norm_sgg.dot" "norm" >>= \_ -> putStrLn $ "\t" ++ dir ++ "norm_sgg.dot:  is the normalised initial gg"
-              sgg2file "fact_sgg.dot" "fact" >>= \_ -> putStrLn $ "\t" ++ dir ++ "fact_sgg.dot:  is the factorised initial gg"
+--              sgg2file "norm_sgg.dot" "norm" >>= \_ -> putStrLn $ "\t" ++ dir ++ "norm_sgg.dot:  is the normalised initial gg"
+--              sgg2file "fact_sgg.dot" "fact" >>= \_ -> putStrLn $ "\t" ++ dir ++ "fact_sgg.dot:  is the factorised initial gg"
               let ( _, hg ) =
-                    sem (-1) fact ptps
+                    sem env (-1) gg ptps
               writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines) >>=
                 \_ -> putStrLn $ "\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg"
               let path i ext =
@@ -60,5 +63,5 @@ main = do putStrLn $ msgFormat SGG "start"
                              (\_ -> writeToFile (path i ".dot") (dottifyCfsm cfsm (ptps!i) (legend cfsm i) flines) ) >>=
                              (\_ -> writeToFile (path i ".aut") (cfsm2bcg cfsm flines) ) >>=
                              (\_ -> output ls)
-                       where cfsm = fst $ proj gg (ptps!i) "q0" "qe" 0
+                       where cfsm = fst $ proj env gg (ptps!i) "q0" "qe" 0
               output $ range (S.size names)

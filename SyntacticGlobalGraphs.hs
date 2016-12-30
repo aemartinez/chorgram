@@ -30,25 +30,27 @@ type Endpoint = String
 
 -- Syntactic global graphs can be normalised by flattening nested | and +
 -- the name normGG is misleading. TODO: change normGG to preNormGG or flattenGG 
-normGG :: GG -> GG
-normGG gg = case gg of
-             Emp       -> Emp -- note that this case should never happen for parsed graphs
-             Act _ _   -> gg
-             Par ggs   -> Par $ L.sort (normPar ggs)
-             Bra ggs   -> let nb = normBra $ S.toList ggs in
-                           (if (S.size nb==1) then (head $ S.toList nb) else (Bra nb))
-             Seq ggs   -> Seq (L.map normGG ggs)
-             Rep gg' p -> Rep (normGG gg') p
-  where normPar gs = case gs of
-                      []   -> []
-                      g:l' -> case normGG g of
-                               Par ggs' -> normPar (ggs' ++ l')
-                               _        -> [normGG g] ++ (normPar l')
-        normBra gs = case gs of
-                      []   -> S.empty
-                      g:l' -> case (normGG g) of
-                               Bra ggs' -> normBra ((S.toList ggs') ++ l')
-                               _        -> S.union (S.singleton $ normGG g) (normBra l')
+-- normGG :: (Map String GG) -> GG -> GG
+-- normGG env gg =
+--   case gg of
+--     Emp       -> Emp -- note that this case should never happen for parsed graphs
+--     Act _ _   -> gg
+--     Par ggs   -> Par $ L.sort (normPar ggs)
+--     Bra ggs   -> let nb = normBra $ S.toList ggs in
+--       (if (S.size nb==1) then (head $ S.toList nb) else (Bra nb))
+--     Seq ggs   -> Seq (L.map normGG env ggs)
+--     Rep gg' p -> Rep (normGG env gg') p
+--     Inv gname -> normGG env (env!gname)
+--   where normPar gs = case gs of
+--                       []   -> []
+--                       g:l' -> case normGG g of
+--                                Par ggs' -> normPar (ggs' ++ l')
+--                                _        -> [normGG g] ++ (normPar l')
+--         normBra gs = case gs of
+--                       []   -> S.empty
+--                       g:l' -> case (normGG g) of
+--                                Bra ggs' -> normBra ((S.toList ggs') ++ l')
+--                                _        -> S.union (S.singleton $ normGG g) (normBra l')
 
 -- start g g' checks if g is a prefix of g'
 startGG :: GG -> GG -> Bool
@@ -64,31 +66,32 @@ startGG g g' = g == g' || case g' of
 -- PRE: gg in normal form
 -- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
 --
-factorise :: GG -> GG
-factorise gg = case gg of
-                Emp         -> Emp
-                Act (_,_) _ -> gg
-                Par ggs     -> Par (L.map factorise ggs)
-                Bra ggs     -> if S.null ggs
-                               then Emp
-                               else let prefix     = prefOf (S.elemAt 0 ggs)
-                                        part       = S.partition (startGG prefix) ggs
-                                        prefOf gg' = case gg' of
-                                                      Seq ggs' -> if L.null ggs' then error $ show (S.elemAt 0 ggs) else head ggs'
-                                                      _        -> gg'
-                                        ggSet      = fst part
-                                    in normGG (Bra (S.union (fact prefix ggSet) (rest $ snd part)))
-                                       where fact prefix ggSet = if S.size ggSet == 1
-                                                                 then ggSet
-                                                                 else S.singleton (Seq [prefix, factorise (Bra (S.map suffOf ggSet))])
-                                             suffOf gg'        = case gg' of
-                                                                  Seq ggs' -> if L.length ggs' == 1 then Emp else Seq (tail ggs')
-                                                                  _        -> Emp
-                                             rest ggSet'       = if S.size ggSet' == 1
-                                                                 then ggSet'
-                                                                 else S.singleton $ factorise (Bra ggSet')
-                Seq ggs     -> Seq (L.map factorise ggs)
-                Rep gg' p   -> Rep (factorise gg') p
+-- factorise :: (Map String GG) -> GG -> GG
+-- factorise env gg =
+--   case gg of
+--                 Emp         -> Emp
+--                 Act (_,_) _ -> gg
+--                 Par ggs     -> Par (L.map factorise ggs)
+--                 Bra ggs     -> if S.null ggs
+--                                then Emp
+--                                else let prefix     = prefOf (S.elemAt 0 ggs)
+--                                         part       = S.partition (startGG prefix) ggs
+--                                         prefOf gg' = case gg' of
+--                                                       Seq ggs' -> if L.null ggs' then error $ show (S.elemAt 0 ggs) else head ggs'
+--                                                       _        -> gg'
+--                                         ggSet      = fst part
+--                                     in normGG env (Bra (S.union (fact prefix ggSet) (rest $ snd part)))
+--                                        where fact prefix ggSet = if S.size ggSet == 1
+--                                                                  then ggSet
+--                                                                  else S.singleton (Seq [prefix, factorise (Bra (S.map suffOf ggSet))])
+--                                              suffOf gg'        = case gg' of
+--                                                                   Seq ggs' -> if L.length ggs' == 1 then Emp else Seq (tail ggs')
+--                                                                   _        -> Emp
+--                                              rest ggSet'       = if S.size ggSet' == 1
+--                                                                  then ggSet'
+--                                                                  else S.singleton $ factorise (Bra ggSet')
+--                 Seq ggs     -> Seq (L.map factorise ggs)
+--                 Rep gg' p   -> Rep (factorise gg') p
 
 --
 -- PRE: the input ggs are factorised
@@ -157,8 +160,8 @@ ggptp ptps g = case g of
 -- n is a counter for fresh state generation
 -- q0 and qe correspond to the entry and exit state, respectively
 --
-proj :: GG -> Ptp -> State -> State -> Int -> (CFSM, State)
-proj gg p q0 qe n =
+proj :: (Map String GG) -> GG -> Ptp -> State -> State -> Int -> (CFSM, State)
+proj env gg p q0 qe n =
   let suf = show n
       tau = (Tau, (p,p), "")
       dm  = ( (S.fromList [q0,qe], q0, S.singleton tau, tautrx q0 qe) , qe )
@@ -177,7 +180,7 @@ proj gg p q0 qe n =
                       , qe )
         where m   = replaceState qe' qe (cfsmProd $ L.map fst mps)
               qe' = L.foldr stateProd "" (L.map snd mps)
-              mps = L.map (\g -> proj g p q0 qe n) ggs
+              mps = L.map (\g -> proj env g p q0 qe n) ggs
       Bra ggs     -> ( replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs) , qe )
         where (states, acts, trxs) = L.foldl
                                        (\(x,y,z) m -> ( S.union x (statesOf m) ,
@@ -187,13 +190,13 @@ proj gg p q0 qe n =
                                        (S.singleton qe, S.singleton tau, S.empty)
                                        ms
               ggs'                 = L.zip (S.toList ggs) [1..S.size ggs]
-              mps                  = L.map (\(g,i) -> proj g p (q0 ++ (show i)) qe n) ggs'
+              mps                  = L.map (\(g,i) -> proj env g p (q0 ++ (show i)) qe n) ggs'
               (ms, _)              = (L.map fst mps, L.map snd mps)
       Seq ggs     -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
         where ( _ ,  qe' , states , acts , trxs ) =
                 L.foldl
                   (\( i , qi , x , y , z ) g ->
-                    let ( m , qf' ) = proj g p qi (qe ++ (show i)) n in
+                    let ( m , qf' ) = proj env g p qi (qe ++ (show i)) n in
                      ( i+1 ,
                        qf' ,
                        S.union x (statesOf m) ,
@@ -205,19 +208,19 @@ proj gg p q0 qe n =
               chain                    = [q0] ++ [q0 ++ "_" ++ (show i) | i <- [1 .. (length ggs)-1]] ++ [qe]
               aux z gs                 = case gs of
                                           [] -> []
-                                          g:gs' -> (fst $ proj g p (head z) (head (tail z)) n) : (aux (tail z) gs')
+                                          g:gs' -> (fst $ proj env g p (head z) (head (tail z)) n) : (aux (tail z) gs')
       Rep g p'    -> if (S.member p repptps) then ( ggrep , qe' ) else dm
         where repptps        = ggptp S.empty g
               ggrep          = ( S.unions [statesOf body, statesOf loop, statesOf exit] ,
                                  initialOf body ,
                                  S.unions [actionsOf body, actionsOf loop, actionsOf exit] ,
                                  S.unions [transitionsOf body, transitionsOf loop, transitionsOf exit] )
-              ( body , q )   = proj g p q0 (qe ++ suf) (n+2)
-              ( loop' , ql ) = proj (helper (lpref ++ suf)) p q (q0 ++ suf) (n + 2)
+              ( body , q )   = proj env g p q0 (qe ++ suf) (n+2)
+              ( loop' , ql ) = proj env (helper (lpref ++ suf)) p q (q0 ++ suf) (n + 2)
               loop           = replaceState ql q0 loop'
-              ( exit , qe' ) = proj (helper (epref ++ suf)) p q qe (n + 2)
+              ( exit , qe' ) = proj env (helper (epref ++ suf)) p q qe (n + 2)
               helper s       = Par (L.map (\p'' -> Act (p',p'') s) (S.toList $ S.delete p' repptps))
-
+      Inv gname -> proj env (env!gname) p q0 qe n
 --
 -- PRE:  actions are well formed (wffActions) ^ q0 /= qe ^ ps are all the participants of gg
 -- POST: the system corresponding to GG wrt ps
@@ -238,8 +241,8 @@ type PD = ([(Int,String)],[(Int,Int)])
 -- gg2dot gg name transforms a GG in dot format
 -- TODO: improve on fresh node generation
 --
-gg2dot :: GG -> String -> String -> String
-gg2dot gg name nodeSize =
+gg2dot :: (Map String GG) -> GG -> String -> String -> String
+gg2dot env gg name nodeSize =
   let myshow n          = (if n < 0 then "_" else "") ++ (show $ abs n)
       header            = "digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n"
       maxIdx vs         = aux vs 0
@@ -269,6 +272,7 @@ gg2dot gg name nodeSize =
                                                                           idx         = 1 + maxIdx vs_
                                Rep gg' _ -> ((init vs) ++ vs' ++ [sink], (attach i (-i)) ++ ((-i,i):as'))
                                    where (vs', as') = helper [(i,mergeV),(-i,branchV)] [(i,-i)] gg'
+                               Inv gname -> helper vs as (env!gname)
         where rename excluded offset pds       = case pds of
                                                    (vs1,as1):pds' -> ([(newNode excluded v offset,l) | (v,l) <- vs1],
                                                                       [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as1]) :

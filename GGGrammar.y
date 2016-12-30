@@ -163,10 +163,10 @@ lexer s = case s of
     ' ' :r    -> lexer r
     '\t':r    -> lexer r
     '\n':r    -> lexer r
-    '&' :r    -> TokenNwd : (lexer $ tail r)
-    '=' :r    -> TokenEqu : (lexer $ tail r)
-    '-':'>':r -> TokenArr : (lexer $ tail r)
-    '=':'>':r -> TokenMAr : (lexer $ tail r)
+    '&' :r    -> TokenNwd : (lexer r)
+    '=' :r    -> TokenEqu : (lexer r)
+    '-':'>':r -> TokenArr : (lexer r)
+    '=':'>':r -> TokenMAr : (lexer r)
     '§':r     -> TokenEmp : lexer r
     '|':r     -> TokenPar : lexer r
     '+':r     -> TokenBra : lexer r
@@ -227,9 +227,9 @@ checkCircularDeps ds = let env = M.fromList ds in
     True  -> ds
     False -> if noloops
              then ds
-             else myErr("Sets of recursive definitions not allowed")
+             else myErr("Sets of recursive definitions not permitted:\t" ++ (show checklist))
       where gnames = M.keys env
-            noloops = L.foldr (&&) True (L.map snd checklist)
+            noloops = not(L.foldr (||) False (L.map snd checklist))
             calltc g = let ginv = gginv (env!g) in (if S.null ginv then ginv else S.union ginv (S.unions (L.map calltc (S.toList ginv))))
             checklist = L.map (\x -> (x, S.member x (calltc x))) gnames
             

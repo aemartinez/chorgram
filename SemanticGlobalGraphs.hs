@@ -142,12 +142,13 @@ unionsHG [] = Just emptyHG
 unionsHG (hg:hgs) = if (isJust hg) && (isJust hg') then unionHG hg hg' else Nothing
   where hg' = unionsHG hgs
 
-semList :: Mu -> [GG] -> P -> (Mu,[Maybe HG])
-semList mu ggs ptps = case ggs of
+semList :: (Map String GG) -> Mu -> [GG] -> P -> (Mu,[Maybe HG])
+semList env mu ggs ptps =
+  case ggs of
                        []        -> (mu,[])
                        (gg:ggs') -> (mu'', ([Just hg'] ++ rest))
-                           where ( mu', hg' )   = sem mu gg ptps
-                                 ( mu'', rest ) = semList mu' ggs' ptps
+                           where ( mu', hg' )   = sem env mu gg ptps
+                                 ( mu'', rest ) = semList env mu' ggs' ptps
 
 --
 -- The semantic function [[_]] of ICE16; it is assumed that some
@@ -156,9 +157,9 @@ semList mu ggs ptps = case ggs of
 -- The labels of the evens corresponds to those used in proj (again
 -- this is the case for iteration)
 --
-sem :: Mu -> GG -> P -> (Mu, HG)
-sem mu gg ptps =
-  case factorise $ normGG gg of
+sem :: (Map String GG) -> Mu -> GG -> P -> (Mu, HG)
+sem env mu gg ptps =
+  case gg of
    Emp         -> ( mu, emptyHG )
    Act (s,r) m -> ( i, ( rel, S.singleton e, S.singleton e', rel, rel ) )
        where i   = 1 + mu
@@ -166,10 +167,10 @@ sem mu gg ptps =
              e'  = ( i, Just ( Receive, ( s, r ), m ) )
              rel = S.singleton ( S.singleton e, S.singleton e' )
    Par ggs     -> if isJust hgu then (mu', fromJust hgu) else error (msgFormat SGG "Something wrong in a fork: " ++ (show (Par ggs)))
-     where ( mu', l ) = semList mu ggs ptps
+     where ( mu', l ) = semList env mu ggs ptps
            hgu        = unionsHG l
    Bra ggs     -> (i, fromJust hg')
-     where ( mu', l )  = semList mu (S.toList ggs) ptps
+     where ( mu', l )  = semList env mu (S.toList ggs) ptps
            i           = 1 + mu'
            hgu         = unionsHG l
            hg'         = if (wb ggs && isJust hgu)
@@ -181,14 +182,14 @@ sem mu gg ptps =
            helper x    = if isJust x then let x' = fromJust x in [(e, minOf x')] ++ [(maxOf x', e')] else error (msgFormat SGG "ERROR ...")
    Seq ggs     -> case ggs of
                    []            -> ( mu, emptyHG )
-                   [g']          -> sem mu g' ptps
+                   [g']          -> sem env mu g' ptps
                    gg':gg'':ggs' -> if (ws pg pg') then hgs else error (msgFormat SGG "Violation of well-sequencedness: " ++ show (Seq ggs))
                      where hgs           = (mu'', (seqHG pg pg'))
-                           ( mu', pg )   = sem mu gg' ptps
-                           ( mu'', pg' ) = sem mu' (Seq (gg'':ggs')) ptps
+                           ( mu', pg )   = sem env mu gg' ptps
+                           ( mu'', pg' ) = sem env mu' (Seq (gg'':ggs')) ptps
    Rep gg' p -> ( mu', hgr )
      where ps                = ggptp S.empty gg'
-           ( mu', hgb )     = if S.member p ps then sem mu gg' ptps else error (msgFormat SGG "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
+           ( mu', hgb )     = if S.member p ps then sem env mu gg' ptps else error (msgFormat SGG "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
            ( i, suf )       = ( 1+mu' , show i )
            ( eL, eE )       = (S.singleton (i, Just ( LoopSnd , ( p , p ) , lpref ++ suf )), S.singleton ((-i), Just ( LoopRcv , ( p , p ) , epref ++ suf )))
            rel              = S.fromList ([( S.singleton e , eE ) | e <- S.toList $ maxOf $ hgb] ++
@@ -196,6 +197,7 @@ sem mu gg ptps =
                                           [( eE , eL )]
                                          )
            hgr              = (S.union rel (relOf hgb), eL, eE, (fstOf hgb), (lstOf hgb))
+   Inv gname -> sem env mu (env!gname) ptps
 
 -- DOT format
 
