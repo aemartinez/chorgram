@@ -23,6 +23,7 @@ data GG = Emp
         | Bra (Set GG)
         | Seq [GG]
         | Rep GG Ptp
+        | Inv String
         deriving (Eq, Ord, Show)
 
 type Endpoint = String

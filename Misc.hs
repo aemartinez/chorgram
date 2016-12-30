@@ -50,7 +50,7 @@ range i
 -- machine (non-terminal Ptp) or of system.
 isAlpha :: Char -> Bool
 isAlpha c = c € ([x | x <- ['0'.. 'z'] ++ ['/', '$', '#', '&', '~', '\"'],
-		      not (x € ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '*', '!', '?', '-', '%', '§'])
+                      not (x € ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '*', '!', '?', '-', '%', '§'])
                  ])
 
 -- Names of participants have to begin with a letter

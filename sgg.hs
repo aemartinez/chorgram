@@ -22,8 +22,8 @@ main = do putStrLn $ msgFormat SGG "start"
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
-              let ( gg, names ) =
-                    (gggrammar . lexer) ggtxt
+              let (ggname, (gg, names, _) ) =
+                    head $ (gggrammar . lexer) ggtxt
               let ptps =
                     list2map $ S.toList names
               writeToFile (dir ++ "in_sgg_parsed.txt") (show gg) >>= (\_ -> putStrLn $ "\t"++dir++"in.sgg: is the initial gg")
