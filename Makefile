@@ -36,6 +36,11 @@ clean:
 parser:
 	happy -a -i  GGGrammar.y -o GGparser.hs && $(ccmd) GGparser.hs
 	happy -a -i  SystemGrammar.y -o SystemParser.hs && $(ccmd) SystemParser.hs
+	$(ccmd) BuildGlobal.hs &&\
+	$(ccmd) GGparser.hs &&\
+	$(ccmd) SystemParser.hs &&\
+	$(ccmd) sgg.hs &&\
+	$(ccmd) sysparser.hs
 
 config:
 	@echo "hkc\t"$(hkcpath) > /tmp/$(cfgfile)

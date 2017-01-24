@@ -94,65 +94,18 @@ startGG g g' = g == g' || case g' of
 --                 Rep gg' p   -> Rep (factorise gg') p
 
 --
--- PRE: the input ggs are factorised
--- POST: returns True iff th list is well-branched
---        
-wb :: Set GG -> Bool
-wb ggs =
-  let ps             = S.toList $ ggptp S.empty (Bra ggs)
-      disjoint (x, y)= S.null $ S.intersection x y
-      same (x, y)    = x == y
-      firstActs p gg = case sevAt p gg of
-                        Emp               -> (S.empty, S.empty)
-                        act@(Act (s,_) _) -> if s == p
-                                             then (S.singleton act, S.empty)
-                                             else (S.empty, S.singleton act)
-                        Par ggs''         -> L.foldr aux (S.empty, S.empty) ggs''
-                            where aux gg_ (fA,fP) = let (fA',fP') = firstActs p gg_ in
-                                                    (S.union fA fA', S.union fP fP')
-                        Bra ggs''         -> S.foldr aux (S.empty, S.empty) ggs''
-                            where aux = \gg_ (fA,fP) -> let (fA',fP') = firstActs p gg_ in
-                                                        ((S.union fA fA'), (S.union fP fP'))
-                        Seq ggs''         -> case ggs'' of
-                                              []    -> (S.empty, S.empty)
-                                              gg':_ -> if res == (S.empty, S.empty)
-                                                       then firstActs p (Seq (tail ggs''))
-                                                       else res
-                                                           where res = firstActs p gg'
-                        Rep gg' _        -> firstActs p gg'
-      matrix         = M.fromList [(p, L.map (firstActs p) (S.toList ggs)) | p <- ps ]
-      check prop f p = L.all (\pairs -> prop (f pairs)) (matrix!p)
-      active         = S.fromList ([ p | p <- ps, check (\x -> not (S.null x)) fst p ])
-      passive        = S.fromList ([ p | p <- ps, check (\x -> not (S.null x)) snd p ])
-      getpairs l res = case l of
-                        []   -> res
-                        e:l' -> getpairs l' (res ++ [(e,e') | e' <- l'])
-  in S.null ggs || (
-                    L.all (\p -> check (\x -> S.null x) fst p || check (\x -> not (S.null x)) fst p) ps &&
-                    L.all (\p -> check (\x -> S.null x) snd p || check (\x -> not (S.null x)) snd p) ps &&
-                    (S.size active == 1) && (disjoint (active, passive)) &&
-                    L.all disjoint (getpairs (L.map fst (matrix!(S.elemAt 0 active))) []) &&
-                    L.all (\p -> L.all disjoint (getpairs (L.map snd (matrix!p)) [])) (S.toList passive)
-                   )
-
-sevAt :: Ptp -> GG -> GG
-sevAt p gg = case gg of
-               Emp               -> Emp
-               act@(Act (s,r) _) -> if (s==p || r==p) then act else Emp
-               Par ggs           -> Par (L.map (sevAt p) ggs)
-               Bra ggs           -> Bra (S.map (sevAt p) ggs)
-               Seq ggs           -> Seq (L.map (sevAt p) ggs)
-               Rep gg' p'        -> Rep (sevAt p gg') p'
                       
 -- ggptp computes the set of participants of a global graph
-ggptp :: Set Ptp -> GG -> Set Ptp
-ggptp ptps g = case g of
-                Emp         -> ptps
-                Act (s,r) _ -> S.union ptps (S.fromList [s,r])
-                Par gs      -> S.union ptps (S.unions $ L.map (ggptp S.empty) gs)
-                Bra gs      -> S.union ptps (S.unions $ S.toList (S.map (ggptp S.empty) gs))
-                Seq gs      -> S.union ptps (S.unions (L.map (ggptp S.empty) gs))
-                Rep g' p    -> S.union ptps (ggptp (S.singleton p) g')
+ggptp :: (Map String GG) -> Set Ptp -> GG -> Set Ptp
+ggptp env ptps g =
+  case g of
+    Emp         -> ptps
+    Act (s,r) _ -> S.union ptps (S.fromList [s,r])
+    Par gs      -> S.union ptps (S.unions $ L.map (ggptp env S.empty) gs)
+    Bra gs      -> S.union ptps (S.unions $ S.toList (S.map (ggptp env S.empty) gs))
+    Seq gs      -> S.union ptps (S.unions (L.map (ggptp env S.empty) gs))
+    Rep g' p    -> S.union ptps (ggptp env (S.singleton p) g')
+    Inv gname   -> ggptp env ptps (env!gname)
 
 --
 -- PRE:  actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
@@ -162,10 +115,10 @@ ggptp ptps g = case g of
 --
 proj :: (Map String GG) -> GG -> Ptp -> State -> State -> Int -> (CFSM, State)
 proj env gg p q0 qe n =
-  let suf = show n
-      tau = (Tau, (p,p), "")
-      dm  = ( (S.fromList [q0,qe], q0, S.singleton tau, tautrx q0 qe) , qe )
-      tautrx q1 q2 = if q1==q2 then S.empty else S.singleton (q1, tau, q2)
+  let suf    = show n
+      tauact = (Tau, (p,p), "")
+      dm     = ( (S.fromList [q0,qe], q0, S.singleton tauact, tautrx q0 qe) , qe )
+      tautrx = \q1 -> \q2 -> if q1==q2 then S.empty else S.singleton (q1, tauact, q2)
   in case gg of
       Emp         -> dm
       Act (s,r) m -> if (p/=s && p/=r)
@@ -174,7 +127,7 @@ proj env gg p q0 qe n =
         where c = if (p == s) then (Send,(p,r),m) else (Receive,(s,p),m)
       Par ggs     -> ( replaceState (initialOf m) q0 ( S.union (S.singleton qe) (statesOf m ) ,
                                                        initialOf m ,
-                                                       S.union (actionsOf m) (S.singleton tau) ,
+                                                       S.union (actionsOf m) (S.singleton tauact) ,
                                                        (transitionsOf m)
                                                      )
                       , qe )
@@ -187,7 +140,7 @@ proj env gg p q0 qe n =
                                                         S.union y (actionsOf m) ,
                                                         S.union z (transitionsOf m) )
                                        )
-                                       (S.singleton qe, S.singleton tau, S.empty)
+                                       (S.singleton qe, S.singleton tauact, S.empty)
                                        ms
               ggs'                 = L.zip (S.toList ggs) [1..S.size ggs]
               mps                  = L.map (\(g,i) -> proj env g p (q0 ++ (show i)) qe n) ggs'
@@ -205,12 +158,8 @@ proj env gg p q0 qe n =
                   )
                   ( 0 , q0 , S.empty , S.empty , S.empty )
                   ggs
-              chain                    = [q0] ++ [q0 ++ "_" ++ (show i) | i <- [1 .. (length ggs)-1]] ++ [qe]
-              aux z gs                 = case gs of
-                                          [] -> []
-                                          g:gs' -> (fst $ proj env g p (head z) (head (tail z)) n) : (aux (tail z) gs')
       Rep g p'    -> if (S.member p repptps) then ( ggrep , qe' ) else dm
-        where repptps        = ggptp S.empty g
+        where repptps        = ggptp env S.empty g
               ggrep          = ( S.unions [statesOf body, statesOf loop, statesOf exit] ,
                                  initialOf body ,
                                  S.unions [actionsOf body, actionsOf loop, actionsOf exit] ,
@@ -255,7 +204,7 @@ gg2dot env gg name nodeSize =
                               notgate         = \v -> v/=i && v/=(-i)
                           in case gg_ of
                                Emp      -> (vs,as)
-                               Act _ _  -> ((init vs) ++ [( i , labelOf gg_ )] ++ [sink], attach i i)
+                               Act _ _  -> ((init vs) ++ [( i , labelOf env gg_ )] ++ [sink], attach i i)
                                Par ggs  -> ((init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
                                    where (vs', as') = unionsPD forkV joinV notgate i (rename (\v -> not (notgate v)) i graphs)
                                          graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) ggs)
@@ -287,15 +236,17 @@ gg2dot env gg name nodeSize =
       (vertexes, edges) = helper [(0,sourceV),(-1,sinkV)] [(0,-1)] gg
   in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
 
-labelOf :: GG -> String
-labelOf gg = case gg of
-              Emp         -> sourceV
-              Act (s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]"
-              Par _       -> forkV
-              Bra _       -> branchV
-              Seq _       -> ""
-              Rep _ _     -> ""
-
+labelOf :: (Map String GG) -> GG -> String
+labelOf env gg =
+  case gg of
+    Emp         -> sourceV
+    Act (s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]"
+    Par _       -> forkV
+    Bra _       -> branchV
+    Seq _       -> ""
+    Rep _ _     -> ""
+    Inv gname   -> labelOf env (env!gname)
+    
 -- catPD (vs,as) (vs',as') appends (vs', as') attaching its
 -- source to the nodes of (vs,as) entering the sink of (vs,as)
 --

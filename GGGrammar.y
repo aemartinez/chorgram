@@ -54,12 +54,12 @@ import CFSM
   '=>'	        { TokenMAr    }
   '|'	        { TokenPar    }
   '+'	        { TokenBra    }
-  '*'	        { TokenSta    }
   ';'	        { TokenSeq    }
+  '*'	        { TokenSta    }
   '@'   	{ TokenUnt    }
   ':'	        { TokenSec    }
-  '('	        { TokenBro    }
-  ')'	        { TokenBrc    }
+  '{'	        { TokenBro    }
+  '}'	        { TokenBrc    }
   ','	        { TokenCom    }
   '['	        { TokenCtb    }
   ']'	        { TokenCte    }
@@ -112,7 +112,7 @@ G : '§'				{ myErr "§ not permitted" } -- it used to be (Emps, S.empty) when d
                                     (False, _)    -> myErr ("Bad name " ++ $4)
                                     (True, False) -> myErr ("Participant " ++ $4 ++ " is not in the loop")
                                 }
-  | '(' G ')'			{ ( $2 ) }
+  | '{' G '}'			{ ( $2 ) }
   | str                         { case isPtp $1 of
                                     True  -> ((Inv $1), S.empty, S.singleton $1)
                                     False -> myErr ("Bad name: " ++ $1  ++ " is not a valid participant's name")
@@ -175,8 +175,8 @@ lexer s = case s of
     ':':r     -> TokenSec : lexer r
     ';':r     -> TokenSeq : lexer r
     ',':r     -> TokenCom : lexer r
-    '(':r     -> TokenBro : lexer r
-    ')':r     -> TokenBrc : lexer r
+    '{':r     -> TokenBro : lexer r
+    '}':r     -> TokenBrc : lexer r
     _         -> TokenStr (fst s') : (lexer $ snd s')
         where s' = span isAlpha s
     
