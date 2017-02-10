@@ -66,6 +66,7 @@ main =  do -- putStrLn "±±±±±±±±±±±±±±±±±±±±±±±±±±±±
                      case ext of
                       ".fsa" -> parseFSA (Prelude.map (\x -> words x) (lines cfsmFile))
                       ".sys" -> parseSYS cfsmFile
+                      ".cms" -> parseSYS cfsmFile
                       ""     -> parseFSA (Prelude.map (\x -> words x) (lines cfsmFile))
                       _      -> error ("unknown extension " ++ ext)
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (L.map snd (M.assocs $ snd system)))
