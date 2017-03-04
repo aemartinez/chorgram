@@ -40,7 +40,7 @@ type CFSM    = Agraph State Action
 -- cfsms!!i
 --
 type System  = ( [CFSM] , P )
-type Diamond   = Set ( ( State, Action ), ( State, Action ) )
+type Diamond = Set ( ( State, Action ), ( State, Action ) )
 
 --- type ECFSM     = (CFSM, Map LTrans Cond) -- TODO: remove
 --- type ESystem   = ([ECFSM] , [String]) -- TODO: remove
