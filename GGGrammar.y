@@ -78,7 +78,7 @@ import CFSM
 %%
 
 Gdec : G                        { [(self, $1)] }
-     | D                        { checkCircularDeps $1 } -- there must be no circular dependencies; just macro expansion
+     | D                        { checkCircularDeps $1 }  -- there must be no circular dependencies; just macro expansion
 
 D : NamedChor                   { [$1] }
   | NamedChor '&' D             { case (fst $1) € (L.map fst $3) of
