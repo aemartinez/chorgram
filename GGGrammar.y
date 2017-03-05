@@ -66,9 +66,14 @@ import CFSM
 --  '\n'	        { TokenNln    }
 
 %right '&'
+%nonassoc '='
+%nonassoc '*' '@'
 %right '|'
 %right '+'
 %right ';'
+%right ','
+%nonassoc '->' '=>'
+%nonassoc ':'
 
 %%
 
@@ -164,9 +169,9 @@ lexer s = case s of
     '\t':r    -> lexer r
     '\n':r    -> lexer r
     '&' :r    -> TokenNwd : (lexer r)
-    '=' :r    -> TokenEqu : (lexer r)
     '-':'>':r -> TokenArr : (lexer r)
     '=':'>':r -> TokenMAr : (lexer r)
+    '=' :r    -> TokenEqu : (lexer r)
     '§':r     -> TokenEmp : lexer r
     '|':r     -> TokenPar : lexer r
     '+':r     -> TokenBra : lexer r
