@@ -2,6 +2,10 @@
 -- Authors: Emilio Tuosto <emilio@le.ac.uk>
 --
 -- Stuff about FSA
+--
+-- TODO: take silent transitions into account!!!
+--
+
 
 module FSA where
 
