@@ -42,6 +42,13 @@ range i
   | i <= 0    = [i+1 .. 0]
   | otherwise = [0 .. i-1]
 
+flatten :: [[a]] -> [a]
+-- nomen omen
+flatten ls =
+  case ls of
+    []    -> []
+    l:lls -> [e | e <-l] ++ (flatten lls)
+
 -- For parsing: strings are made of the following characters
 --
 --   0123456789<=>ABCDEFGHIJKLMNOPQRSTUVWXYZ\\^_`abcdefghijklmnopqrstuvwxyz/$#&~()\"
@@ -50,7 +57,7 @@ range i
 -- machine (non-terminal Ptp) or of system.
 isAlpha :: Char -> Bool
 isAlpha c = c € ([x | x <- ['0'.. 'z'] ++ ['/', '$', '#', '&', '~', '\"'],
-		      not (x € ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '*', '!', '?', '-', '%', '§'])
+                  not (x € ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '*', '!', '?', '-', '%', '§'])
                  ])
 
 -- Names of participants have to begin with a letter
@@ -233,6 +240,30 @@ getFlags cmd args = case cmd of
 -- Some utilities on graphs
 --
 
+
+--  PRE:
+--  POST: returns the closure of vertexes reachable from v with transitions that satisfy the predicate lpred on labels
+pClosure :: Ord vertex => Agraph vertex label -> (label -> Bool) -> vertex -> Set vertex
+pClosure g lpred v =
+  let ptrans = S.filter (\(_,l,_) -> (lpred l)) (gtrans g)
+      aux res wl ml =
+        case wl of
+          []     -> S.insert v res
+          v':wl' -> if v' € ml
+                    then aux res wl' ml
+                    else aux res' wl'' (v':ml)
+            where newvs = S.foldl S.union S.empty (S.map (\(q,_,q') -> if q == v' then (S.singleton q') else S.empty) ptrans)
+                  res'  = S.union res newvs
+                  wl''  = wl' ++ S.toList newvs
+  in aux S.empty [v] []
+
+
+--  PRE:
+--  POST: returns the set of vertexes of g reachable from a given vertex
+reachableVertexes :: Ord vertex => Agraph vertex label -> vertex -> Set vertex
+reachableVertexes g = pClosure g (\_ -> True)
+
+
 -- Projections of Agraph and Atrans components
 
 gnodes :: Agraph vertex label -> Set vertex
@@ -260,8 +291,8 @@ isTerminal ::  Eq vertex => vertex -> Agraph vertex label -> Bool
 isTerminal q (_,_,_,trxs) =
   let l = S.toList trxs in q € [q_ | (_,_,q_) <- l, L.all (\(q',_,_) -> q' /= q) l]
 
--- gstep gr v
---  PRE:  
+-- goutgoing gr v
+--  PRE:  v is a vertex of gr
 --  POST: returns the outgoing edges of v in gr
 goutgoing :: Eq vertex => Agraph vertex label -> vertex -> Set (Atrans vertex label)
 goutgoing (_, _, _,trans) v = S.filter (\t -> v == (gsource t)) trans
