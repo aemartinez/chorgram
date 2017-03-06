@@ -15,7 +15,7 @@ type Message             = String
 type Atrans vertex label = (vertex, label, vertex)
 type Agraph vertex label = (Set vertex, vertex, Set label, Set(Atrans vertex label))
 
-data Command = GMC | GG | SGG | SYS
+data Command = GMC | GG | SGG | SYS | MIN
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
 
 -- Some useful functions
@@ -182,6 +182,7 @@ usage cmd = "Usage: " ++ msg
                GG  -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG -> "sgg [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SYS -> "systemparser [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               MIN -> "minimise [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
 
 msgFormat :: Command -> String -> String
 msgFormat cmd msg =
@@ -190,6 +191,7 @@ msgFormat cmd msg =
         GG  -> "gg:\t"
         SGG -> "sgg:\t"
         SYS -> "systemparser:\t"
+        MIN -> "minimise:\t"
   in pre ++ msg
 
 
@@ -200,6 +202,7 @@ defaultFlags cmd = case cmd of
                      GG  -> M.fromList [("-d",dirpath), ("-v","")]
                      SGG -> M.fromList [("-d",dirpath)]
                      SYS -> M.fromList [("-d",dirpath)]
+                     MIN -> M.fromList [("-d",dirpath)]
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args = case cmd of
@@ -232,6 +235,10 @@ getFlags cmd args = case cmd of
                               "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
                               _         -> error $ usage(SGG)
                       SYS -> case args of
+                              []        -> defaultFlags(cmd)
+                              "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+                              _         -> error $ usage(cmd)
+                      MIN -> case args of
                               []        -> defaultFlags(cmd)
                               "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
                               _         -> error $ usage(cmd)
