@@ -29,7 +29,7 @@ eqClassOf state classes =
     qs:classes' -> if (S.member state qs) then qs else (eqClassOf state classes')
 
 flatSet :: Set State -> State
-flatSet states = S.foldr ( \q q' -> (q ++ "~" ++ q') ) "" states 
+flatSet states = S.foldr ( \q q' -> (q ++ "__" ++ q') ) "" states 
 
 flat :: Agraph (Set State) Action -> CFSM
 flat (states, q0, labels, trxs) = (S.map flatSet states, flatSet q0, labels, S.map (\(q,l,q') -> (flatSet q, l, flatSet q')) trxs)
