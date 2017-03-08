@@ -45,6 +45,10 @@ type Diamond = Set ( ( State, Action ), ( State, Action ) )
 --- type ECFSM     = (CFSM, Map LTrans Cond) -- TODO: remove
 --- type ESystem   = ([ECFSM] , [String]) -- TODO: remove
 
+isTau :: Action -> Bool
+isTau (d, _, _) = (d == Tau)
+
+
 emptyCFSM :: CFSM
 emptyCFSM = ( S.empty, "", S.empty, S.empty )
 
@@ -328,8 +332,8 @@ replaceStateSep s sep = case s of
 prefStates :: String -> CFSM -> CFSM
 prefStates pref ( states, q0, acts, trxs ) =
   ( states', pref ++ q0, acts, trxs')
-  where	states' = S.map (\q -> pref ++ q) states
-  	trxs'   = S.map (\( q,act,q') -> ( pref ++ q, act, pref ++ q' )) trxs
+  where states' = S.map (\q -> pref ++ q) states
+        trxs'   = S.map (\( q,act,q') -> ( pref ++ q, act, pref ++ q' )) trxs
 
 -- for the moment printMessage is the identity; to be changed when messages evolve
 printMessage :: Message -> String

@@ -15,7 +15,7 @@ type Message             = String
 type Atrans vertex label = (vertex, label, vertex)
 type Agraph vertex label = (Set vertex, vertex, Set label, Set(Atrans vertex label))
 
-data Command = GMC | GG | SGG | SYS
+data Command = GMC | GG | SGG | SYS | MIN
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
 
 -- Some useful functions
@@ -42,6 +42,13 @@ range i
   | i <= 0    = [i+1 .. 0]
   | otherwise = [0 .. i-1]
 
+flatten :: [[a]] -> [a]
+-- nomen omen
+flatten ls =
+  case ls of
+    []    -> []
+    l:lls -> [e | e <-l] ++ (flatten lls)
+
 -- For parsing: strings are made of the following characters
 --
 --   0123456789<=>ABCDEFGHIJKLMNOPQRSTUVWXYZ\\^_`abcdefghijklmnopqrstuvwxyz/$#&~()\"
@@ -50,7 +57,7 @@ range i
 -- machine (non-terminal Ptp) or of system.
 isAlpha :: Char -> Bool
 isAlpha c = c € ([x | x <- ['0'.. 'z'] ++ ['/', '$', '#', '&', '~', '\"'],
-		      not (x € ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '*', '!', '?', '-', '%', '§'])
+                  not (x € ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '*', '!', '?', '-', '%', '§'])
                  ])
 
 -- Names of participants have to begin with a letter
@@ -175,6 +182,7 @@ usage cmd = "Usage: " ++ msg
                GG  -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG -> "sgg [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SYS -> "systemparser [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               MIN -> "minimise [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
 
 msgFormat :: Command -> String -> String
 msgFormat cmd msg =
@@ -183,6 +191,7 @@ msgFormat cmd msg =
         GG  -> "gg:\t"
         SGG -> "sgg:\t"
         SYS -> "systemparser:\t"
+        MIN -> "minimise:\t"
   in pre ++ msg
 
 
@@ -193,6 +202,7 @@ defaultFlags cmd = case cmd of
                      GG  -> M.fromList [("-d",dirpath), ("-v","")]
                      SGG -> M.fromList [("-d",dirpath)]
                      SYS -> M.fromList [("-d",dirpath)]
+                     MIN -> M.fromList [("-d",dirpath)]
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args = case cmd of
@@ -228,10 +238,38 @@ getFlags cmd args = case cmd of
                               []        -> defaultFlags(cmd)
                               "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
                               _         -> error $ usage(cmd)
+                      MIN -> case args of
+                              []        -> defaultFlags(cmd)
+                              "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+                              _         -> error $ usage(cmd)
 
 --
 -- Some utilities on graphs
 --
+
+
+--  PRE:
+--  POST: returns the closure of vertexes reachable from v with transitions that satisfy the predicate lpred on labels
+pClosure :: Ord vertex => Agraph vertex label -> (label -> Bool) -> vertex -> Set vertex
+pClosure g lpred v =
+  let ptrans = S.filter (\(_,l,_) -> (lpred l)) (gtrans g)
+      aux res wl ml =
+        case wl of
+          []     -> S.insert v res
+          v':wl' -> if v' € ml
+                    then aux res wl' ml
+                    else aux res' wl'' (v':ml)
+            where newvs = S.foldl S.union S.empty (S.map (\(q,_,q') -> if q == v' then (S.singleton q') else S.empty) ptrans)
+                  res'  = S.union res newvs
+                  wl''  = wl' ++ S.toList newvs
+  in aux S.empty [v] []
+
+
+--  PRE:
+--  POST: returns the set of vertexes of g reachable from a given vertex
+reachableVertexes :: Ord vertex => Agraph vertex label -> vertex -> Set vertex
+reachableVertexes g = pClosure g (\_ -> True)
+
 
 -- Projections of Agraph and Atrans components
 
@@ -260,8 +298,8 @@ isTerminal ::  Eq vertex => vertex -> Agraph vertex label -> Bool
 isTerminal q (_,_,_,trxs) =
   let l = S.toList trxs in q € [q_ | (_,_,q_) <- l, L.all (\(q',_,_) -> q' /= q) l]
 
--- gstep gr v
---  PRE:  
+-- goutgoing gr v
+--  PRE:  v is a vertex of gr
 --  POST: returns the outgoing edges of v in gr
 goutgoing :: Eq vertex => Agraph vertex label -> vertex -> Set (Atrans vertex label)
 goutgoing (_, _, _,trans) v = S.filter (\t -> v == (gsource t)) trans
