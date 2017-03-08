@@ -28,7 +28,6 @@ eqClassOf state classes =
     []          -> S.empty
     qs:classes' -> if (S.member state qs) then qs else (eqClassOf state classes')
 
-
 flatSet :: Set State -> State
 flatSet states = S.foldr ( \q q' -> (q ++ "~" ++ q') ) "" states 
 
