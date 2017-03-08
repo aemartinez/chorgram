@@ -36,7 +36,7 @@ flat (states, q0, labels, trxs) = (S.map flatSet states, flatSet q0, labels, S.m
 
 -- PRE: gr represents a finite automaton
 -- POST: minimise gr is the minimal automaton 
-minimise :: CFSM -> CFSM  -- NOTE: this is almost a CFSM! 
+minimise :: CFSM -> CFSM
 -- Variant of the partition refinement algorithm were all states are final
 minimise m =
   if (S.size vs <= 1)

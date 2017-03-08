@@ -21,6 +21,7 @@ import PetrifyBridge
 import Control.Concurrent
 import Control.Monad
 import System.Environment
+import FSA
 
 projectionThread :: FilePath -> System -> TSb -> MVar Bool -> IO ()
 projectionThread filename system ts var = do
@@ -50,8 +51,7 @@ parseSYS :: String -> System
 parseSYS txt = (sysgrammar . lexer) txt
 
 main :: IO ()
-main =  do -- putStrLn "±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±± gmc ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±"
-           progargs <- getArgs
+main =  do progargs <- getArgs
            if L.null progargs
              then error $ usage(GMC)
              else do
@@ -62,13 +62,14 @@ main =  do -- putStrLn "±±±±±±±±±±±±±±±±±±±±±±±±±±±±
                cfsmFile <- readFile sourcefile
                let ( dir, destfile, basename, ext ) =
                      setFileNames sourcefile flags
-               let system =
+               let (sys , ptps) =
                      case ext of
                       ".fsa" -> parseFSA (Prelude.map (\x -> words x) (lines cfsmFile))
                       ".sys" -> parseSYS cfsmFile
                       ".cms" -> parseSYS cfsmFile
                       ""     -> parseFSA (Prelude.map (\x -> words x) (lines cfsmFile))
                       _      -> error ("unknown extension " ++ ext)
+               let system = (L.map FSA.minimise sys , ptps)
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (L.map snd (M.assocs $ snd system)))
                let bufferSize =
                      read (flags ! "-b") :: Int
