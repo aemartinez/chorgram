@@ -28,15 +28,20 @@ eqClassOf state classes =
     []          -> S.empty
     qs:classes' -> if (S.member state qs) then qs else (eqClassOf state classes')
 
+flatSet :: Set State -> State
+flatSet states = S.foldr ( \q q' -> (q ++ "__" ++ q') ) "" states 
+
+flat :: Agraph (Set State) Action -> CFSM
+flat (states, q0, labels, trxs) = (S.map flatSet states, flatSet q0, labels, S.map (\(q,l,q') -> (flatSet q, l, flatSet q')) trxs)
+
 -- PRE: gr represents a finite automaton
--- POST: minimise gr is the minimal automaton
-minimise :: CFSM -> Agraph (Set State) Action
--- Variant of the partition refinement algorithm were all states are
--- final. NOTE: the codomain of minimise is *almost* a CFSM!
+-- POST: minimise gr is the minimal automaton 
+minimise :: CFSM -> CFSM
+-- Variant of the partition refinement algorithm were all states are final
 minimise m =
   if (S.size vs <= 1)
-  then (S.map S.singleton vs, S.singleton v, acts, S.map (\(q,l,q') -> (S.singleton q, l, S.singleton q')) trxs)
-  else (S.fromList states, q0, acts, trs')
+  then m
+  else flat (S.fromList states, q0, acts, trs')
   where m'@(vs,v,acts, trxs) = pTransitionsRemoval m isTau
         -- initially all states are equivalent
         states = getPartitions [vs]
