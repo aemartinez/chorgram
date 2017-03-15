@@ -15,10 +15,10 @@ import Data.List as L
 
 pTransitionsRemoval :: CFSM -> (Action -> Bool) -> CFSM
 pTransitionsRemoval m@(states, q0, acts, trxs) lpred = (states, q0, acts, trxs')
-  where trxs' = S.difference (L.foldl S.union otrxs (L.map inherit pairs)) (S.filter (\(_,l,_) -> isTau l) trxs)
-        otrxs = S.filter (\(_,l,_) -> not(lpred l)) trxs
-        pairs = [ (q,q') | q <- S.toList states, q' <- S.toList states, not(q==q'), S.member q' (pClosure m isTau q)]
-        inherit (q1,q2) = S.map (\(_,l,q') -> (q1,l,q')) (S.intersection otrxs (goutgoing m q2))
+  where trxs'   = S.difference (L.foldl S.union otrxs (L.map inherit pairs)) (S.filter (\(_,l,_) -> isTau l) trxs)
+        otrxs   = S.filter (\(_,l,_) -> not(lpred l)) trxs
+        pairs   = [ (q,q') | q <- S.toList states, q' <- S.toList states, not(q==q'), S.member q' (pClosure m isTau q)]
+        inherit = \(q1,q2) -> S.map (\(_,l,q') -> (q1,l,q')) (S.intersection otrxs (goutgoing m q2))
   
 
 eqClassOf :: (Ord a) => a -> [Set a] -> Set a
@@ -43,8 +43,10 @@ minimise m =
   then m
   else flat (S.fromList states, q0, acts, trs')
   where m'@(vs,v,acts, trxs) = pTransitionsRemoval m isTau
-        states = getPartitions [vs]  -- initially all states are equivalent
-        q0 = eqClassOf v states   -- the initial state is the class containing the initial state of g
+        -- initially all states are equivalent
+        states = getPartitions [vs]
+        -- the initial state is the class containing the initial state of g
+        q0 = eqClassOf v states
         trs' = S.map (\(q,l,q') -> ((eqClassOf q states), l, (eqClassOf q' states)) ) trxs
         getPartitions currentStates =
           let addState state classes =
@@ -62,4 +64,3 @@ minimise m =
           in if currentStates == nextStates
              then currentStates
              else getPartitions nextStates
-               
