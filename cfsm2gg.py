@@ -1,10 +1,11 @@
+#!/usr/bin/python
+
 # Authors: Julien Lange <j.lange@ic.ac.uk> and
 #          Emilio Tuosto <emilio@le.ac.uk>
 #
 # This python script combines the parts of the tool
 
 
-#!/usr/bin/python
 import sys
 import subprocess
 import os
