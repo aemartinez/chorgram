@@ -32,14 +32,12 @@ representabilityThread :: System -> TSb -> MVar [Cause State KEvent] -> IO ()
 representabilityThread system ts var = do
       let repbra = (repBranching system ts)
       putMVar var repbra
-      putStrLn $ msgFormat GMC "Branching representability:\t" ++ (show repbra)
       
 -- branchingPropertyThread ::  System -> TS -> MVar Bool -> IO ()
 branchingPropertyThread ::  System -> TSb -> MVar [Cause Configuration KEvent] -> IO ()
 branchingPropertyThread system ts var = do
       let braprop = checkBranchingProperty system ts
       putMVar var braprop
-      putStrLn $ msgFormat GMC "Branching Property (part (ii)):\t" ++ (rmChar '\"' $ show braprop)
       
 printingThread :: System -> TSb -> FilePath -> Map String String -> MVar Bool -> IO ()
 printingThread system ts filename flines var = do
@@ -69,16 +67,16 @@ main =  do progargs <- getArgs
                       ".cms" -> parseSYS cfsmFile
                       ""     -> parseFSA (Prelude.map (\x -> words x) (lines cfsmFile))
                       _      -> error ("unknown extension " ++ ext)
-               let system = (L.map FSA.minimise sys , ptps)
+               let system = (if ("-pr" € (M.keys flags)) then (L.map FSA.minimise sys) else sys , ptps)
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (L.map snd (M.assocs $ snd system)))
                let bufferSize =
                      read (flags ! "-b") :: Int
                let ( ts0, tsb ) =
                      ( buildTSb 0 system, if bufferSize > 0 then buildTSb bufferSize system else ts0 )
-               putStrLn $ msgFormat GMC ("Parsing CFSMs file..." ++ sourcefile)
-               putStrLn $ msgFormat GMC ("dir " ++ (show $ dir))
-               putStrLn $ msgFormat GMC "Synchronous TS:\t(nodes " ++ (show $ (S.size $ gnodes ts0)) ++ ", transitions " ++ (show $ (S.size $ gtrans ts0)) ++ ")"
-               when (bufferSize > 0) $ putStrLn $ msgFormat GMC (flags ! "-b") ++ "-bounded TS:\t(nodes " ++ (show $ (S.size $ gnodes tsb)) ++ ", transitions " ++ (show $ (S.size $ gtrans tsb)) ++")"
+               myPrint flags GMC ("Parsing CFSMs file..." ++ sourcefile)
+               myPrint flags GMC ("dir " ++ (show $ dir))
+               myPrint flags GMC ("Synchronous TS:\t(nodes " ++ (show $ (S.size $ gnodes ts0)) ++ ", transitions " ++ (show $ (S.size $ gtrans ts0)) ++ ")")
+               when (bufferSize > 0) $ myPrint flags GMC ((flags ! "-b") ++ "-bounded TS:\t(nodes " ++ (show $ (S.size $ gnodes tsb)) ++ ", transitions " ++ (show $ (S.size $ gtrans tsb)) ++")")
                if flags!"-ts" == "ts"
                  then do
                     ts2file destfile sourcefile 0 system ts0 flags [] []
@@ -95,13 +93,15 @@ main =  do progargs <- getArgs
                     branchingPropertyThread system ts0 braprop
                     v1 <- takeMVar repbra
                     v2 <- takeMVar braprop
+                    myPrint flags GMC ("Branching representability:\t" ++ (show v1))
+                    myPrint flags GMC ("Branching Property (part (ii)):\t" ++ (rmChar '\"' $ show v2))
                     _  <- takeMVar proj
                     _  <- takeMVar prnt
                     -- TODO: colour bad states
                     ts2file destfile sourcefile 0 system ts0 flags v2 v1
                     ts2file destfile sourcefile (read (flags ! "-b") :: Int) system tsb flags v2 v1
-                    when (isEmpty ts0) $ putStrLn $ msgFormat GMC "(!)  Warning: the TS appears to be empty, synthesis will fail    (!)"
-                    when (not(noSelfLoop ts0)) $ putStrLn $ msgFormat GMC "(!)  Warning: the TS contains a self-loop, synthesis might fail  (!)"
+                    when (isEmpty ts0) $ myPrint flags GMC "(!)  Warning: the TS appears to be empty, synthesis will fail    (!)"
+                    when (not(noSelfLoop ts0)) $ myPrint flags GMC "(!)  Warning: the TS contains a self-loop, synthesis might fail  (!)"
 --
                     -- let output l =
                     --       let fname i = (mkFileName (ptps!i) dir "cfsm" ".aut") in

@@ -29,6 +29,11 @@ parser.add_argument("-v", "--verbose",
                     action = "store_true",
                     help = "Run in verbose mode"
 )
+parser.add_argument("-shh",
+                    dest = "shh",
+                    action = "store_true",
+                    help = "Switches off verbose mode"
+)
 parser.add_argument("-df",
                     dest = "df",
                     default = "svg",
@@ -107,6 +112,11 @@ parser.add_argument("-m",
                     type = int, default = 0,
                     help = "Specify the multiplicity factor [DEPRECATED]"
 )
+parser.add_argument("--minimise",
+                    dest = "pr",
+                    action = "store_true",
+                    help = "Forces the application of partition refinement to machines"
+)
 parser.add_argument("filename",
                     help = "Specify the path to file containing the CFSMs"
 )
@@ -166,9 +176,11 @@ callgmc = ([GMC,
             "-m", str(args.mul),
             "-tp", args.tp,
             "-cp", args.cp,
-            "-b", str(args.bound)] +
+            "-b", str(args.bound),
+            "-v", "" if args.shh else "v"] +
            (["-l"] if args.leg else []) +
            (["-ts"] if args.ts else []) +
+           (["--minimise"] if args.pr else []) +
            [args.filename]
 )
 
@@ -249,7 +261,7 @@ try:
             for l in lines: fout.write(l)
         debugMsg("Generating Global Graph...")
         ggstarttime = time.time()
-        subprocess.check_call([BG, "-d" , dir, basename + PNET])
+        subprocess.check_call([BG, "-d" , dir, "-v", "" if args.shh else "v", basename + PNET])
         endtime = time.time()
 except: debugMsg("Something wrong with the generation of global graph...")
 debugMsg("All done.\n\tTotal execution time: " +  str(endtime - starttime) +

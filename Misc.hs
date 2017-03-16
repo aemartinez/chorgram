@@ -195,53 +195,55 @@ msgFormat cmd msg =
   in pre ++ msg
 
 
+myPrint :: Map String String -> Command -> String -> IO ()
+myPrint flags cmd msg = if (flags!"-v" == "v") then putStrLn $ msgFormat cmd msg else return ()
+
 -- The default argument of each command
 defaultFlags :: Command -> Map String String
 defaultFlags cmd = case cmd of
                      GMC -> M.fromList [("-d",dirpath), ("-v",""), ("-m","0"), ("-ts",""), ("-b","0"), ("-cp", ""), ("-tp", "- - - -"), ("-p", "")]
                      GG  -> M.fromList [("-d",dirpath), ("-v","")]
-                     SGG -> M.fromList [("-d",dirpath)]
-                     SYS -> M.fromList [("-d",dirpath)]
-                     MIN -> M.fromList [("-d",dirpath)]
+                     SGG -> M.fromList [("-d",dirpath), ("-v","")]
+                     SYS -> M.fromList [("-d",dirpath), ("-v","")]
+                     MIN -> M.fromList [("-d",dirpath), ("-v","")]
 
 getFlags :: Command -> [String] -> Map String String
-getFlags cmd args = case cmd of
-                      GMC -> case args of
-                              []                -> defaultFlags(cmd)
-                              "-v":xs           -> M.insert "-v" "v"   (getFlags cmd xs)
-                              "-l":xs           -> M.insert "-l" "no"  (getFlags cmd xs)
-                              "-ts":xs          -> M.insert "-ts" "ts" (getFlags cmd xs)
-                              "-b":y:xs         -> M.insert "-b"  y    (getFlags cmd xs)
-                              "-m":y:xs         -> M.insert "-m"  y    (getFlags cmd xs)
-                              "--muliply":y:xs  -> M.insert "-m"  y    (getFlags cmd xs)
-                              "-d":y:xs         -> M.insert "-d"  y    (getFlags cmd xs)
-                              "--dir":y:xs      -> M.insert "-d"  y    (getFlags cmd xs)
-                              "--fontsize":y:xs -> M.insert "-fs" y    (getFlags cmd xs)
-                              "-cp":y:xs        -> M.insert "-cp" y    (getFlags cmd xs)
-                              "-tp":y:xs        -> M.insert "-tp" y    (getFlags cmd xs)
-                              "-p":y:xs         -> M.insert "-p"  y    (getFlags cmd xs)
-                              _                 -> error $ usage(cmd)
-                      GG  ->  case args of
-                                []     -> defaultFlags(cmd)
-                                [x]    -> case x of
-                                           "-v"  -> M.insert "-v" "v" (defaultFlags(cmd))
-                                           _     -> error $ usage(cmd)
-                                x:y:xs -> case x of
-                                           "-d" -> M.insert "-d"  y (getFlags cmd xs)
-                                           "-v" -> M.insert "-v" "v" (getFlags cmd (y:xs))
-                                           _    -> error $ usage(cmd)
-                      SGG -> case args of
-                              []        -> defaultFlags(cmd)
-                              "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
-                              _         -> error $ usage(SGG)
-                      SYS -> case args of
-                              []        -> defaultFlags(cmd)
-                              "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
-                              _         -> error $ usage(cmd)
-                      MIN -> case args of
-                              []        -> defaultFlags(cmd)
-                              "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
-                              _         -> error $ usage(cmd)
+getFlags cmd args =
+  case cmd of
+    GMC -> case args of
+      []                -> defaultFlags(cmd)
+      "-l":xs           -> M.insert "-l" "no"   (getFlags cmd xs)
+      "-ts":xs          -> M.insert "-ts" "ts"  (getFlags cmd xs)
+      "--minimise":xs   -> M.insert "-pr" "yes" (getFlags cmd xs)
+      "-b":y:xs         -> M.insert "-b"  y     (getFlags cmd xs)
+      "-m":y:xs         -> M.insert "-m"  y     (getFlags cmd xs)
+      "--muliply":y:xs  -> M.insert "-m"  y     (getFlags cmd xs)
+      "-d":y:xs         -> M.insert "-d"  y     (getFlags cmd xs)
+      "--dir":y:xs      -> M.insert "-d"  y     (getFlags cmd xs)
+      "--fontsize":y:xs -> M.insert "-fs" y     (getFlags cmd xs)
+      "-cp":y:xs        -> M.insert "-cp" y     (getFlags cmd xs)
+      "-tp":y:xs        -> M.insert "-tp" y     (getFlags cmd xs)
+      "-p":y:xs         -> M.insert "-p"  y     (getFlags cmd xs)
+      "-v":y:xs         -> M.insert "-v"  y     (getFlags cmd xs)
+      _                 -> error $ usage(cmd)
+    GG  ->  case args of
+      []     -> defaultFlags(cmd)
+      x:y:xs -> case x of
+        "-d" -> M.insert "-d" y (getFlags cmd xs)
+        "-v" -> M.insert "-v" y (getFlags cmd xs)
+        _    -> error $ usage(cmd)
+    SGG -> case args of
+      []        -> defaultFlags(cmd)
+      "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+      _         -> error $ usage(SGG)
+    SYS -> case args of
+      []        -> defaultFlags(cmd)
+      "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+      _         -> error $ usage(cmd)
+    MIN -> case args of
+      []        -> defaultFlags(cmd)
+      "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+      _         -> error $ usage(cmd)
 
 --
 -- Some utilities on graphs
