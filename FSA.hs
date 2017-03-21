@@ -7,11 +7,11 @@
 
 module FSA where
 
-import SystemParser
 import Misc
 import CFSM
 import Data.Set as S
 import Data.List as L
+import Data.Map.Strict as M
 
 pTransitionsRemoval :: CFSM -> (Action -> Bool) -> CFSM
 -- removes the transitions whose action satisfies the predicate
@@ -40,34 +40,35 @@ flat (states, q0, labels, trxs) = (S.map flatSet states, flatSet q0, labels, S.m
 -- POST: return the minimal machine equivalent to the input machine
 determinise :: CFSM -> CFSM
 -- the subset construction on CFSMs
-determinise m = flat (S.fromList states, q0_, acts, trs')
+determinise m = flat (states, q0_, acts, trxs)
   where
+    m'@(_,q0,acts, _) = pTransitionsRemoval m isTau
     q0_ = S.singleton q0
-    m'@(vs,q0,acts, trxs) = pTransitionsRemoval m isTau
+    (states,trxs) = aux (S.singleton q0_) S.empty (S.singleton q0_, S.empty)
 --     aux (S.singleton q0_) (S.singleton q0_, q0_, acts, S.emtpy)
     aux todo done current =
       if S.null todo
       then current
       else let s = S.elemAt 0 todo
            in if S.member s done
-              then aux (S.delete s todo) done (states, transitions)
-              else let done'    = S.insert s done
+              then aux (S.delete s todo) done current
+              else let done' = S.insert s done
                        actMap qqs amap =
                          if S.null qqs
                          then amap
                          else
                            let q = S.elemAt 0 qqs
+                               dq = goutgoing m' q
                                mapIns (_,act,q') = if M.member act amap
-                                                   then M.insert act (S.insert q' amap!q)
-                                                   else M.insert act (S.singleton q')
-                               amap' = S.map mapIns (goutgoing m q)
-                           in actMap (S.delete q qqs) amap'
-                       rset = actMap s M.empty
-                       todo' = S.map (\qq -> S.insert qq todo) M.values rset
-                       
-                                            
-                       
-                      in aux (S.delete (S.elemAt 0 todo) todo') done' current'
+                                                   then M.insert act (S.insert q' (amap!act)) amap
+                                                   else M.insert act (S.singleton q') amap
+                               amap' = S.map mapIns dq
+                           in actMap (S.delete q qqs) (M.unions (S.toList amap'))
+                       rset  = actMap s M.empty
+                       strxs = S.map (\(act, _) -> (s, act, rset!act)) (S.foldr S.union S.empty (S.map (\q -> (succs m' q)) s))
+                       (newqs , newtrxs) = (S.fromList $ M.elems rset, strxs)
+                       todo' = S.union todo newqs
+                   in aux (S.delete (S.elemAt 0 todo) todo') done' (S.union newqs (fst current), S.union newtrxs (snd current))
 
         
 -- PRE: the input has to be a deterministic machine
@@ -78,7 +79,7 @@ minimise m =
   if (S.size vs <= 1)
   then m
   else flat (S.fromList states, q0, acts, trs')
-  where m'@(vs,q0',acts, trxs) = pTransitionsRemoval m isTau
+  where m'@(vs,q0',acts, trxs) = determinise m
         -- initially all states are equivalent
         states = getPartitions [vs]
         -- the initial state is the class containing the initial state of g

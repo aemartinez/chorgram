@@ -1,3 +1,13 @@
+--
+-- Authors: Julien Lange <j.lange@ic.ac.uk> and
+--          Emilio Tuosto <emilio@le.ac.uk>
+--
+-- This module handles Representability checks for part (ii) and projects files
+-- to be checked with HKC, for part (i).
+--
+--
+--
+
 module Representability where
 
 import Misc
@@ -11,11 +21,7 @@ import Data.Foldable as F
 import Control.Concurrent
 import Control.Exception
 import DotStuff
-
---
--- This module handles Representability checks for part (ii) and projects files
--- to be checked with HKC, for part (i).
---
+import FSA
 
 --
 -- Language equivalence between machine and projected TS
@@ -29,7 +35,7 @@ repLanguageConcurrent file (sys,ptps) ts =
         helper (x:xs) i v1 v2 = do
           flines <- getDotConf
           let p = ptps!i
-          let projected = projectTS ts p
+          let projected = minimise $ projectTS ts p
           writeToFile (file ++ "_projection_" ++ (show i) ++ ".dot") (
             "digraph CFSM_proj_" ++ p ++ "{\n graph [color=white ratio=compress margin=0];\n" ++
             (printCfsm projected p flines) ++
