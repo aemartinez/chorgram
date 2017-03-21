@@ -113,10 +113,10 @@ parser.add_argument("-m",
                     type = int, default = 0,
                     help = "Specify the multiplicity factor [DEPRECATED]"
 )
-parser.add_argument("--minimise",
-                    dest = "pr",
-                    action = "store_true",
-                    help = "Forces the application of partition refinement to machines"
+parser.add_argument("-D",
+                    dest = "D",
+                    default = "no",
+                    help = "Applies determinisation, minimisation or nothing to machines"
 )
 parser.add_argument("filename",
                     help = "Specify the path to file containing the CFSMs"
@@ -178,10 +178,10 @@ callgmc = ([GMC,
             "-tp", args.tp,
             "-cp", args.cp,
             "-b", str(args.bound),
+            "-D", str(args.D),
             "-v", "" if args.shh else "v"] +
            (["-l"] if args.leg else []) +
            (["-ts"] if args.ts else []) +
-           (["--minimise"] if args.pr else []) +
            [args.filename]
 )
 

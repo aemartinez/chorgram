@@ -101,31 +101,3 @@ minimise m =
           in if currentStates == nextStates
              then currentStates
              else getPartitions nextStates
-
--- -- minimisation testing
--- main :: IO ()
--- main =  do progargs <- getArgs
---            let sourcefile = last progargs
---            cfsmFile <- readFile sourcefile
---            let m = parseFSA cfsmFile
---            let m'@(vs,q0',acts, trxs) = pTransitionsRemoval m isTau
---            let states = getPartitions [vs]
---            let q0 = eqClassOf q0' states
---            let trs' = S.map (\(q,l,q') -> ((eqClassOf q states), l, (eqClassOf q' states)) ) trxs
---            let getPartitions currentStates = do
---                  let addState state classes =
---                        case classes of
---                          []          -> [S.singleton state]
---                          qs:classes' -> if (equiv (S.elemAt 0 qs) state)
---                                         then (S.insert state qs):classes'
---                                         else qs:(addState state classes')
---                  let equiv q q' = (transFrom q) == (transFrom q')
---                  let transFrom = \q -> S.map (\(_,l,t) -> (l,(eqClassOf t currentStates))) (goutgoing m' q)
---                  let refineStep qs = if (S.size qs <= 1)
---                                      then [qs]
---                                      else addState (S.elemAt 0 qs) (refineStep (S.delete (S.elemAt 0 qs) qs))
---                  let nextStates = flatten (L.map refineStep currentStates)
---                  if currentStates == nextStates
---                    then do putStrLn currentStates
---                    else do putStrLn currentStates
---                            getPartitions nextStates

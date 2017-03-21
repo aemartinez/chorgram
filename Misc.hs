@@ -178,7 +178,7 @@ writeToFile file content = writeFile file content
 usage :: Command -> String
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
-               GMC  -> "gmc [-b | --bound number] [-m | --multiplicity number] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] [-l] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n"
+               GMC  -> "gmc [-b | --bound number] [-m | --multiplicity number] [--minimise] [--determinise] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] [-l] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n"
                GG   -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG  -> "sgg [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SYS  -> "systemparser [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
@@ -203,7 +203,16 @@ myPrint flags cmd msg = if (flags!"-v" == "v") then putStrLn $ msgFormat cmd msg
 -- The default argument of each command
 defaultFlags :: Command -> Map String String
 defaultFlags cmd = case cmd of
-                     GMC  -> M.fromList [("-d",dirpath), ("-v",""), ("-m","0"), ("-ts",""), ("-b","0"), ("-cp", ""), ("-tp", "- - - -"), ("-p", "")]
+                     GMC  -> M.fromList [("-d",dirpath),
+                                         ("-v",""),
+                                         ("-m","0"),   -- multiplicity **deprecated**
+                                         ("-ts",""),
+                                         ("-b","0"),
+                                         ("-cp", ""),
+                                         ("-tp", "- - - -"),
+                                         ("-p", ""),
+                                         ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
+                                        ]
                      GG   -> M.fromList [("-d",dirpath), ("-v","")]
                      SGG  -> M.fromList [("-d",dirpath), ("-v","")]
                      SYS  -> M.fromList [("-d",dirpath), ("-v","")]
@@ -214,21 +223,21 @@ getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
   case cmd of
     GMC -> case args of
-      []                -> defaultFlags(cmd)
-      "-l":xs           -> M.insert "-l" "no"   (getFlags cmd xs)
-      "-ts":xs          -> M.insert "-ts" "ts"  (getFlags cmd xs)
-      "--minimise":xs   -> M.insert "-pr" "yes" (getFlags cmd xs)
-      "-b":y:xs         -> M.insert "-b"  y     (getFlags cmd xs)
-      "-m":y:xs         -> M.insert "-m"  y     (getFlags cmd xs)
-      "--muliply":y:xs  -> M.insert "-m"  y     (getFlags cmd xs)
-      "-d":y:xs         -> M.insert "-d"  y     (getFlags cmd xs)
-      "--dir":y:xs      -> M.insert "-d"  y     (getFlags cmd xs)
-      "--fontsize":y:xs -> M.insert "-fs" y     (getFlags cmd xs)
-      "-cp":y:xs        -> M.insert "-cp" y     (getFlags cmd xs)
-      "-tp":y:xs        -> M.insert "-tp" y     (getFlags cmd xs)
-      "-p":y:xs         -> M.insert "-p"  y     (getFlags cmd xs)
-      "-v":y:xs         -> M.insert "-v"  y     (getFlags cmd xs)
-      _                 -> error $ usage(cmd)
+      []                 -> defaultFlags(cmd)
+      "-l":xs            -> M.insert "-l" "no"  (getFlags cmd xs)
+      "-ts":xs           -> M.insert "-ts" "ts" (getFlags cmd xs)
+      "-D":y:xs          -> M.insert "-D"  y    (getFlags cmd xs)
+      "-b":y:xs          -> M.insert "-b"  y    (getFlags cmd xs)
+      "-m":y:xs          -> M.insert "-m"  y    (getFlags cmd xs)
+      "--muliply":y:xs   -> M.insert "-m"  y    (getFlags cmd xs)
+      "-d":y:xs          -> M.insert "-d"  y    (getFlags cmd xs)
+      "--dir":y:xs       -> M.insert "-d"  y    (getFlags cmd xs)
+      "--fontsize":y:xs  -> M.insert "-fs" y    (getFlags cmd xs)
+      "-cp":y:xs         -> M.insert "-cp" y    (getFlags cmd xs)
+      "-tp":y:xs         -> M.insert "-tp" y    (getFlags cmd xs)
+      "-p":y:xs          -> M.insert "-p"  y    (getFlags cmd xs)
+      "-v":y:xs          -> M.insert "-v"  y    (getFlags cmd xs)
+      _                  -> error $ usage(cmd)
     GG  ->  case args of
       []     -> defaultFlags(cmd)
       x:y:xs -> case x of

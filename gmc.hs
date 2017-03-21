@@ -67,7 +67,13 @@ main =  do progargs <- getArgs
                       ".cms" -> parseSYS cfsmFile
                       ""     -> parseFSA (Prelude.map (\x -> words x) (lines cfsmFile))
                       _      -> error ("unknown extension " ++ ext)
-               let system = (if ("-pr" € (M.keys flags)) then (L.map FSA.minimise sys) else sys , ptps)
+               let sys' = case (flags!"-D") of
+                            "min" -> L.map FSA.minimise sys
+                            "det" -> L.map FSA.determinise sys
+                            "no"  -> sys
+                            _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
+               putStrLn "@@@@@@@@@@@@@@"
+               let system = (sys',ptps)
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (L.map snd (M.assocs $ snd system)))
                let bufferSize =
                      read (flags ! "-b") :: Int
