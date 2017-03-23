@@ -123,7 +123,6 @@ parser.add_argument("filename",
 )
 args = parser.parse_args()
 
-
 debug = True if args.debug else False
 if args.hkc: HKC   = args.hkc
 if args.pn:  PETRY = args.pn
@@ -168,8 +167,10 @@ debugMsg("\n   Executing with...\n\tgmc\t\t" + GMC +
          "\n\tCFSMs\t\t" + args.filename + "\n"
 )
 
+loginfo = [date, basename, args.filename]
 date = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 starttime = time.time()
+debugMsg("Execution Started on " + date, True)
 
 callgmc = ([GMC,
             "-d", args.dir,
@@ -185,12 +186,13 @@ callgmc = ([GMC,
            [args.filename]
 )
 
-loginfo = [date, basename, args.filename]
-
-debugMsg("Execution Started on " + date, True)
 debugMsg(string.join(callgmc))
 gmctime = time.time()
-subprocess.check_call(callgmc)
+try:
+    subprocess.check_call(callgmc)
+except:
+    debugMsg(GMC + " failed")
+    loginfo = loginfo + ["gmc err"]
 
 with open(dir + '.machines') as f:
     machines = (f.readline()).split()
@@ -206,7 +208,6 @@ else:
     debugMsg("Checking projections...")
 
 tmpbool = True
-
 hkctime = 0
 
 for i in range(machine_number):
@@ -272,7 +273,9 @@ try:
         endtime = time.time()
 except:
     debugMsg("Something wrong with the generation of global graph...")
-    loginfo = loginfo ++ [BG ++ " err"]
+    loginfo = loginfo + [BG + " err"]
+    ggstarttime = time.time()
+    endtime = time.time()
 debugMsg("All done.\n\tTotal execution time: " +  str(endtime - starttime) +
          "\n\t\tGMC check:\t\t\t" + str( gmctime - starttime) +
          "\n\t\tHKC minimisation:\t\t" + str(hkctime) +
@@ -280,6 +283,13 @@ debugMsg("All done.\n\tTotal execution time: " +  str(endtime - starttime) +
          "\n\t\tGlobal graph generation:\t" + str(endtime - ggstarttime),
          True
 )
+
+
+################################## LOGGING EXPERIMENTS #########################################
+logfilename = "experiments/experiments.idx"
+logfile = open(logfilename, "a+")
+logfile.write('\t'.join(loginfo))
+
 
 ########################################## DOT #################################################
 debugMsg("Transforming dot files in " + args.df + " format", True)
@@ -296,11 +306,6 @@ subprocess.check_call(dot + ["-Gsplines=ortho", basename + PNET + GLOB + ".dot",
                       stderr=subprocess.PIPE
 )
 
-################################## LOGGING EXPERIMENTS #########################################
-logfilename = "experiments/experiments.txt"
-logfile = open(logfilename, "a+")
-logfile.write('\t'.join(loginfo))
-
 
 ###################################### CLEANING UP #############################################
 
@@ -314,4 +319,6 @@ if args.nc and not debug:
     debugMsg("Deleting auxiliary files")
     for fl in to_be_deleted:
         debugMsg("\tDeleting " + fl)
-        os.remove(fl)
+        try:
+            os.remove(fl)
+        except: debugMsg("Expected file " + fl + " missing")
