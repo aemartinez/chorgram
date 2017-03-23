@@ -9,7 +9,7 @@
 import sys
 import subprocess
 import os
-import os.path
+import os
 import string
 import time
 import glob
@@ -185,6 +185,8 @@ callgmc = ([GMC,
            [args.filename]
 )
 
+loginfo = [date, basename, args.filename]
+
 debugMsg("Execution Started on " + date, True)
 debugMsg(string.join(callgmc))
 gmctime = time.time()
@@ -218,7 +220,9 @@ for i in range(machine_number):
                                 basename + PROJ + str(i)],
                                 stdout=subprocess.PIPE
         )
-    except: debugMsg("Language equivalence check failed. Something wrong with " + HKC)
+    except:
+        debugMsg("Language equivalence check failed. Something wrong with " + HKC)
+        loginfo = loginfo + ["hkc err"]
     stop = time.time()
     hkctime = hkctime + stop - start
     for line in cmd.stdout: spa = line    # read the last line produced by hkc
@@ -241,7 +245,9 @@ try:
                            "-efc", basename + "_toPetrify",
                            "-o" , dir + TEMP]
     )
-except: debugMsg("Petrification failed. Something wrong with " + PETRY)
+except:
+    debugMsg("Petrification failed. Something wrong with " + PETRY)
+    loginfo = loginfo + ["petrify err"]
 stop = time.time()
 petritime = stop - start
 st_arrow, st_comma, st_colon,st_del = "AAA", "CCC", "COCO", "delPTP"
@@ -264,7 +270,9 @@ try:
         ggstarttime = time.time()
         subprocess.check_call([BG, "-d" , dir, "-v", "" if args.shh else "v", basename + PNET])
         endtime = time.time()
-except: debugMsg("Something wrong with the generation of global graph...")
+except:
+    debugMsg("Something wrong with the generation of global graph...")
+    loginfo = loginfo ++ [BG ++ " err"]
 debugMsg("All done.\n\tTotal execution time: " +  str(endtime - starttime) +
          "\n\t\tGMC check:\t\t\t" + str( gmctime - starttime) +
          "\n\t\tHKC minimisation:\t\t" + str(hkctime) +
@@ -287,6 +295,12 @@ if debug:
 subprocess.check_call(dot + ["-Gsplines=ortho", basename + PNET + GLOB + ".dot", "-o", basename + GLOB + "." + args.df],
                       stderr=subprocess.PIPE
 )
+
+################################## LOGGING EXPERIMENTS #########################################
+logfilename = "experiments/experiments.txt"
+logfile = open(logfilename, "a+")
+logfile.write('\t'.join(loginfo))
+
 
 ###################################### CLEANING UP #############################################
 

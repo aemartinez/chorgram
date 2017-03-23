@@ -43,6 +43,7 @@ config:
 	@echo "gmc\t./gmc" >> /tmp/$(cfgfile)
 	@echo "bg\t./BuildGlobal" >> /tmp/$(cfgfile)
 	@mv /tmp/$(cfgfile) $(cfgfile)
+	@touch "experiments/experiments.idx"
 	$(info >>> config file for the python script created.)
 
 hp:
