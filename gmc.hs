@@ -72,7 +72,6 @@ main =  do progargs <- getArgs
                             "det" -> L.map FSA.determinise sys
                             "no"  -> sys
                             _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
-               putStrLn "@@@@@@@@@@@@@@"
                let system = (sys',ptps)
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (L.map snd (M.assocs $ snd system)))
                let bufferSize =

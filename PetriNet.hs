@@ -13,7 +13,6 @@ import Data.List as L
 import Data.Map.Strict as M
 import Misc
 import Data.String.Utils as SU
--- import Data.List.Utils as SU
 
 data Place = P String
            deriving (Ord, Eq, Show)
@@ -195,7 +194,7 @@ parseFlow transs srcnode xs = S.fromList (L.map (\x -> consFlow srcnode x) xs)
 -- Printing Functions
 --          
 printPlace :: Place -> String
-printPlace (P s) = "P"++s
+printPlace (P s) = "P" ++ s
 
 printTransition :: Transition -> String
 printTransition t =  case labelTrans t of
@@ -203,8 +202,8 @@ printTransition t =  case labelTrans t of
   Nothing -> "s"
 
 printTransitionId :: Transition -> String
-printTransitionId (T t) = "T"++((SU.replace "/" "") . (SU.replace ":" "") . (SU.replace "->" "") .(SU.replace "," "")) t
-printTransitionId (Silent t) = "T"++t
+printTransitionId (T t) = "T" ++ ((SU.replace "/" "") . (SU.replace ":" "") . (SU.replace "->" "") . (SU.replace "," "")) t
+printTransitionId (Silent t) = "T" ++ t
 
 labelTrans :: Transition -> Maybe String
 labelTrans (T t) = 

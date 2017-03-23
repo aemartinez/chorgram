@@ -2,7 +2,7 @@
 -- Authors: Julien Lange <j.lange@ic.ac.uk> and
 --          Emilio Tuosto <emilio@le.ac.uk>
 --
--- This module contains function to the choreography
+-- This module contains function for global graphs
 --
 
 module GlobalGraph where
@@ -235,9 +235,14 @@ ranksToVertices  inmap = helper (M.assocs inmap) M.empty
         helper [] outmap = outmap
         
 
-             
+prettyTransition :: Transition -> String
+prettyTransition t = aux detokenifyTable (printTransition t)
+  where aux l s = case l of
+          []       -> SU.replace "->" " &rarr; " s
+          (x,y):ls ->  SU.replace x y  (aux ls s)
+
 printVertexLabel :: Vertex -> String
-printVertexLabel (VT t) = "label=\""++(SU.replace "->" " &rarr; " (printTransition t))++"\""
+printVertexLabel (VT t) = "label=\"" ++ (prettyTransition t) ++ "\""
 -- printVertexLabel _ = ""
 printVertexLabel (VP p) = "label=\""++(printPlace p)++"\""
 printVertexLabel f@(VF (PT(_,_))) = "label=\""++(printVertexId f)++"\""

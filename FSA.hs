@@ -45,7 +45,6 @@ determinise m = flat (states, q0_, acts, trxs)
     m'@(_,q0,acts, _) = pTransitionsRemoval m isTau
     q0_ = S.singleton q0
     (states,trxs) = aux (S.singleton q0_) S.empty (S.singleton q0_, S.empty)
---     aux (S.singleton q0_) (S.singleton q0_, q0_, acts, S.emtpy)
     aux todo done current =
       if S.null todo
       then current
@@ -58,12 +57,15 @@ determinise m = flat (states, q0_, acts, trxs)
                          then amap
                          else
                            let q = S.elemAt 0 qqs
-                               dq = goutgoing m' q
-                               mapIns (_,act,q') = if M.member act amap
-                                                   then M.insert act (S.insert q' (amap!act)) amap
-                                                   else M.insert act (S.singleton q') amap
-                               amap' = S.map mapIns dq
-                           in actMap (S.delete q qqs) (M.unions (S.toList amap'))
+                               mapIns :: Map Action (Set State) -> [LTrans] -> Map Action (Set State)
+                               mapIns amap_ trxs_  =
+                                 case trxs_ of
+                                   []                -> amap_
+                                   (_,act,q'):trsx_' -> if M.member act amap_
+                                                        then mapIns (M.insert act (S.insert q' (amap_!act)) amap_) trsx_'
+                                                        else mapIns (M.insert act (S.singleton q') amap_) trsx_'
+                               amap' = mapIns amap (S.toList $ step m' q)
+                           in actMap (S.delete q qqs) amap'
                        rset  = actMap s M.empty
                        strxs = S.map (\(act, _) -> (s, act, rset!act)) (S.foldr S.union S.empty (S.map (\q -> (succs m' q)) s))
                        (newqs , newtrxs) = (S.fromList $ M.elems rset, strxs)

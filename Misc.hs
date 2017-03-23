@@ -394,44 +394,188 @@ gpath' gr incoming cp s trs l
           addpath _ [] m     = m
           addpath c (p:ps) m = M.insert c (if c € M.keys m' then (m'!c ++ [p]) else [p]) m'
               where m' = addpath c ps m
-         
+
+
+underscore :: String
+underscore = "UNDERSCORE"
+
+plus :: String
+plus = "PLUS"
+
+minus :: String
+minus = "MINUS"
+
+times :: String
+times = "TIMES"
+
+eq :: String
+eq = "EQ"
+
+fwdslash :: String
+fwdslash = "FWDSLASH"
+
+bckslash :: String
+bckslash = "BCKSLASH"
+
+orbra :: String
+orbra = "ORBRA"
+
+crbra :: String
+crbra = "CRBRA"
+
+osbra :: String
+osbra = "OSBRA"
+
+csbra :: String
+csbra = "CSBRA"
+
+ocbra :: String
+ocbra = "OCBRA"
+
+ccbra :: String
+ccbra = "CCBRA"
+
+eee :: String
+eee = "EEE"
+
+acute :: String
+acute = "ACUTE"
+
+precent :: String
+precent = "PRECENT"
+
+dollar :: String
+dollar = "DOLLAR"
+
+sharp :: String
+sharp = "SHARP"
+
+at :: String
+at = "AT"
+
+emark :: String
+emark = "EMARK"
+
+qmark :: String
+qmark = "QMARK"
+
+plusminus :: String
+plusminus = "PLUSMINUS"
+
+para :: String
+para = "PARA"
+
+accent :: String
+accent = "ACCENT"
+
+colon :: String
+colon = "COLON"
+
+semicolon :: String
+semicolon = "SEMICOLON"
+
+par :: String
+par = "PAR"
+
+lt :: String
+lt = "LT"
+
+gt :: String
+gt = "GT"
+
+comma :: String
+comma = "COMMA"
+
+period :: String
+period = "PERIOD"
+
+quote :: String
+quote = "QUOTE"
+
+tilde :: String
+tilde = "TILDE"
+
+blank :: String
+blank = "BLANK"
+
 tokenifychar :: Char -> String
 tokenifychar c = case c of
-                 '_'  -> "UNDERSCORE"
-                 '+'  -> "PLUS"
-                 '-'  -> "MINUS"
-                 '*'  -> "TIMES"
-                 '='  -> "EQ"
-                 '/'  -> "FWDSLASH"
-                 '\\' -> "BCKSLASH"
-                 '('  -> "ORBRA"
-                 ')'  -> "CRBRA"
-                 '['  -> "OSBRA"
-                 ']'  -> "CSBRA"
-                 '{'  -> "OCBRA"
-                 '}'  -> "CCBRA"
-                 '&'  -> "EEE"
-                 '^'  -> "ACUTE"
-                 '%'  -> "PRECENT"
-                 '$'  -> "DOLLAR"
-                 '#'  -> "SHARP"
-                 '@'  -> "AT"
-                 '!'  -> "EMARK"
-                 '?'  -> "QMARK"
-                 '±'  -> "PLUSMINUS"
-                 '§'  -> "PARA"
-                 '\'' -> "ACCENT"
-                 ':'  -> "COLON"
-                 ';'  -> "SEMICOLON"
-                 '|'  -> "PAR"
-                 '<'  -> "LT"
-                 '>'  -> "GT"
-                 ','  -> "COMMA"
-                 '.'  -> "PERIOD"
-                 '\"' -> "QUOTE"
-                 '~'  -> "TILDE"
-                 ' '  -> "BLANK"
-                 _    -> [c]
+  '_'  -> underscore
+  '+'  -> plus
+  '-'  -> minus
+  '*'  -> times
+  '='  -> eq
+  '/'  -> fwdslash
+  '\\' -> bckslash
+  '('  -> orbra
+  ')'  -> crbra
+  '['  -> osbra
+  ']'  -> csbra
+  '{'  -> ocbra
+  '}'  -> ccbra
+  '&'  -> eee
+  '^'  -> acute
+  '%'  -> precent
+  '$'  -> dollar
+  '#'  -> sharp
+  '@'  -> at
+  '!'  -> emark
+  '?'  -> qmark
+  '±'  -> plusminus
+  '§'  -> para
+  '\'' -> accent
+  ':'  -> colon
+  ';'  -> semicolon
+  '|'  -> par
+  '<'  -> lt
+  '>'  -> gt
+  ','  -> comma
+  '.'  -> period
+  '\"' -> quote
+  '~'  -> tilde
+  ' '  -> blank
+  _    -> [c]
+
+-- change to String -> String to replace substrings with the right symbol
+-- detokenifychar :: String -> String
+
+detokenifyTable :: [(String,String)]
+detokenifyTable = [
+  (underscore ,  "_"),
+  (plus , "+"),
+  (minus , "-"),
+  (times , "*"),
+  (eq , "="),
+  (fwdslash , "/"),
+  (bckslash , "\\"),
+  (orbra , "("),
+  (crbra , ")" ),
+  (osbra , "["),
+  (csbra , "]"),
+  (ocbra , "{"),
+  (ccbra , "}"),
+  (eee , "&" ),
+  (acute , "^"),
+  (precent , "%"),
+  (dollar , "$"),
+  (sharp , "#"),
+  (at , "@"),
+  (emark , "!"),
+  (qmark , "?"),
+  (plusminus , "±"),
+  (para , "§"),
+  (accent , "\""),
+  (colon , ":"),
+  (semicolon , ";"),
+  (par , "|"),
+  (lt , "<"),
+  (gt , ">"),
+  (comma , ","),
+  (period , "."),
+  (quote , "\""),
+  (tilde , "~"),
+  (blank , " ")
+  ]
 
 tokenifymsg :: Message -> String
 tokenifymsg msg = L.concat $ L.map tokenifychar msg
