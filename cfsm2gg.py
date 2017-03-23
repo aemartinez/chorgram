@@ -151,8 +151,6 @@ PGLO = "_preglobal"
 GLOB = "_global"
 
 
-############################### START HERE ###################################
-
 def debugMsg(msg, force = False):
     """Prints debugging messages"""
     if args.debug or force:
@@ -166,11 +164,19 @@ debugMsg("\n   Executing with...\n\tgmc\t\t" + GMC +
          "\n\tdir\t\t" + args.dir +
          "\n\tCFSMs\t\t" + args.filename + "\n"
 )
-
-loginfo = [date, basename, args.filename]
 date = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 starttime = time.time()
 debugMsg("Execution Started on " + date, True)
+
+
+loginfo = [date, basename, args.filename]
+def logexperiment(str = ""):
+    logfilename = "experiments/experiments.idx"
+    logfile = open(logfilename, "a+")
+    logfile.write('\t'.join(loginfo + [str]) + '\n')
+
+
+############################### START HERE ###################################
 
 callgmc = ([GMC,
             "-d", args.dir,
@@ -200,9 +206,11 @@ with open(dir + '.machines') as f:
 
 if machine_number < 2:
     debugMsg("Less than 2 machines! Bye...",True)
+    logexperiment("< 2 machines")
     sys.exit()
 
 if args.ts:
+    logexperiment("ts only")
     sys.exit()
 else:
     debugMsg("Checking projections...")
@@ -285,16 +293,16 @@ debugMsg("All done.\n\tTotal execution time: " +  str(endtime - starttime) +
 )
 
 
-################################## LOGGING EXPERIMENTS #########################################
-logfilename = "experiments/experiments.idx"
-logfile = open(logfilename, "a+")
-logfile.write('\t'.join(loginfo))
+logexperiment("done.")
 
 
 ########################################## DOT #################################################
 debugMsg("Transforming dot files in " + args.df + " format", True)
 dot = ["dot"] + ([] if (args.dot==None) else (['-' + d for d in args.dot])) + ["-T" , args.df]
-for x in ["machines", "ts0"] + (["ts" + str(args.bound)] if args.bound > 0 else []) + (["projection_"+ str(i) for i in range(machine_number)]) :
+for x in (["machines", "ts0"] +
+          (["ts" + str(args.bound)] if args.bound > 0 else []) +
+          (["projection_"+ str(i) for i in range(machine_number)])
+          ):
     debugMsg("Dot-tifying " + basename + "_" + x + ".dot")
     subprocess.call(dot + [basename + "_" + x + ".dot"] + ["-o", basename + "_" + x + "." + args.df])
 if debug:
