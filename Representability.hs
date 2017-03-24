@@ -36,12 +36,25 @@ repLanguageConcurrent file (sys,ptps) ts =
           flines <- getDotConf
           let p = ptps!i
           let projected = minimise $ projectTS ts p
-          writeToFile (file ++ "_projection_" ++ (show i) ++ ".dot") (
-            "digraph CFSM_proj_" ++ p ++ "{\n graph [color=white ratio=compress margin=0];\n" ++
-            (printCfsm projected p flines) ++
-            "\n}"
+          -- file with the dot format
+          _ <- forkIO $
+            writeToFile (file ++ "_projection_" ++ (show i) ++ ".dot") (
+              "digraph CFSM_proj_" ++ p ++ "{\n graph [color=white ratio=compress margin=0];\n" ++
+              (printCfsm projected p flines) ++
+              "\n}"
             )
-          appendFile (file ++ "_projected") (cfsm2String p projected)
+          -- file with the mCRL2 format
+          _ <- forkIO $
+            writeToFile (file ++ "_projection_" ++ (show i) ++ ".fsm") (
+              fst (cfsm2fsm flines projected)
+            )
+          _ <- forkIO $
+            writeToFile (file ++ "_machine_" ++ (show i) ++ ".fsm") (
+              fst (cfsm2fsm flines x)
+            )
+          _ <- forkIO $
+            appendFile (file ++ "_projected") (cfsm2String p projected)
+          -- files with the timbuk format
           _ <- forkIO $ 
                (writeToFile (file ++ "_machine_" ++ (show i)) (cfsm2timbuk x p)) `finally` putMVar v1 (Right p)
           _ <- forkIO $ 

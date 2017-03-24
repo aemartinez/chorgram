@@ -385,6 +385,16 @@ cfsm2String sbj m = ".outputs " ++ sbj ++ "\n.state graph\n" ++ (rmChar '\"' tx)
                                          LoopSnd -> show s ++ show msg
                                          LoopRcv -> show r ++ show msg
 
+cfsm2fsm :: Map String String -> CFSM -> (String, Map State Int)
+cfsm2fsm flines (states, initn, actions, trans) =
+-- Transforms a cfsm into the fsm format of mcrl2; the result is a string for the fsm format and a map 
+  let env = (M.fromList $ snd $  mapAccumL (\x y -> (x+1,(y,x))) 1 (S.toList states)) :: Map State Int
+      liststates = intercalate "\n" $ nub $ (show $ env!initn):(L.map show $ M.elems env)
+      listtrans = intercalate "\n" $
+                  L.map (\(x,y,z) -> (show $ env!x)
+                                     ++" "++(show $ env!z)++" \""++(printAction y flines)++"\"") (S.toList trans)
+  in ("n(0)\n---\n"++liststates++"\n---\n"++listtrans++"\n" , env)
+
 system2String :: System -> String -> String
 system2String ( cfsms, ptps ) _ =
   L.concat [ cfsm2String (ptps!i) (cfsms!!i) | i <- [ 0 .. (L.length cfsms) - 1 ] ]
