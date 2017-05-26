@@ -45,8 +45,15 @@ printingThread system ts filename flines var = do
      writeToFile (filename ++ "_toPetrify") (ts2petrify ts (flines!qsep))
      putMVar var True
 
-parseSYS :: String -> System
-parseSYS txt = (sysgrammar . lexer) txt
+parseSystem :: String -> String -> System
+parseSystem ext txt =
+  -- if 'ext' is a valid extension (.fsa, .sys, .cms), returns the parsing of txt as a system of CFSMs 
+  case ext of
+    ".fsa" -> parseFSA (Prelude.map (\x -> words x) (lines txt))
+    ".sys" -> (sysgrammar . lexer) txt
+    ".cms" -> (sysgrammar . lexer) txt
+    ""     -> parseFSA (Prelude.map (\x -> words x) (lines txt))
+    _      -> error ("unknown extension " ++ ext)
 
 main :: IO ()
 main =  do progargs <- getArgs
@@ -60,13 +67,7 @@ main =  do progargs <- getArgs
                cfsmFile <- readFile sourcefile
                let ( dir, destfile, basename, ext ) =
                      setFileNames sourcefile flags
-               let (sys , ptps) =
-                     case ext of
-                      ".fsa" -> parseFSA (Prelude.map (\x -> words x) (lines cfsmFile))
-                      ".sys" -> parseSYS cfsmFile
-                      ".cms" -> parseSYS cfsmFile
-                      ""     -> parseFSA (Prelude.map (\x -> words x) (lines cfsmFile))
-                      _      -> error ("unknown extension " ++ ext)
+               let (sys , ptps) = parseSystem ext cfsmFile
                let sys' = case (flags!"-D") of
                             "min" -> L.map FSA.minimise sys
                             "det" -> L.map FSA.determinise sys
