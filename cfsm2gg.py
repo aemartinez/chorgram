@@ -116,7 +116,7 @@ parser.add_argument("-m",
 parser.add_argument("-D",
                     dest = "D",
                     default = "no",
-                    help = "Applies determinisation, minimisation or nothing to machines"
+                    help = "Applies determinisation if D = det, minimisation if D = min, or nothing otherwise"
 )
 parser.add_argument("filename",
                     help = "Specify the path to file containing the CFSMs"
