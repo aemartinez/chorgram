@@ -68,6 +68,11 @@ receiver ( _, _, _, r, _, _ ) = r
 machines :: KTrans -> Set Ptp
 machines ( _,e,_ ) = S.insert (receiver e) (S.singleton $ sender e)
 
+--
+-- deriv n ts
+--  PRE: n a configuration of ts
+--  POST:return the set of transitions of ts departing from n
+--
 deriv :: Configuration -> TSb -> Set KTrans
 deriv n = \(_, _, _, trans) -> (S.filter (\(n', _, _) -> n == n') trans)
 
@@ -107,7 +112,7 @@ firstActions :: TSb -> Configuration -> Ptp -> Set Action -> Set Action
 firstActions (_,_,_,trans) n0 m goal = traverse [n0] S.empty S.empty
   where 
     traverse (n:ns) visited current
-      | goal == current =  current
+      | goal == current = current
       | otherwise = if S.member n visited 
                     then traverse ns visited current 
                     else let pairs   = S.map (\(_,y,z) -> (y,z)) (S.filter (\(x,_,_) -> x == n) trans)
@@ -117,8 +122,8 @@ firstActions (_,_,_,trans) n0 m goal = traverse [n0] S.empty S.empty
     traverse [] _ current = current
          
 possibleActions :: System -> Ptp -> Configuration -> Set Action
-possibleActions (sys,ptps) p n = S.map (\(_,y,_) -> y) $ S.filter (\(x,_,_) -> x == ((fst n)!!i)) trans
-    where (_,_,_,trans) = (sys!!i)
+possibleActions (sys,ptps) p n = S.map (\(_,y,_) -> y) $ CFSM.step (sys!!i) ((fst n)!!i) -- S.map (\(_,y,_) -> y) $ S.filter (\(x,_,_) -> x == ((fst n)!!i)) trans
+    where -- (_,_,_,trans) = (sys!!i)
           i             = findId p (M.assocs ptps)
 
 ample :: TSb -> Configuration -> [Set KTrans]
