@@ -74,7 +74,7 @@ checkNodes mysys@(_,ptps) ts lessRel nodes = L.concat $ L.map checkNode nodes
          else checkBranch (res ++ analysis) n evs
          where oneSender   = uniqueSender mysys ts n e1 map1 e2 map2
                noRace      = checkReceivers (sender e1) mysys ts map1 map2 rng n e1 e2 -- Dependency relations
-               chAwareness = (checkParticipants ts rng n e1 map1 e2 map2) -- Good Choice
+               chAwareness = checkParticipants ts rng n e1 map1 e2 map2 -- Good Choice
                msg1        = if oneSender   then "" else "Not unique sender"
                msg2        = if noRace      then "" else "There is a race"
                msg3        = if chAwareness then "" else "No choice awareness"

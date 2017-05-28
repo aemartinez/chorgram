@@ -48,8 +48,8 @@ parser.add_argument("--dot",
 )
 parser.add_argument("-l",
                     dest = "leg",
-                    action = "store_true",
-                    help = "Suppress legend from dot files"
+                    action = "store_false",
+                    help = "Generates a legend from dot files"
 )
 parser.add_argument("-dw",
                     dest = "dw",

@@ -35,7 +35,7 @@ repLanguageConcurrent file (sys,ptps) ts =
         helper (x:xs) i v1 v2 = do
           flines <- getDotConf
           let p = ptps!i
-          let projected = minimise $ projectTS ts p
+          let projected = projectTS ts p
           -- file with the dot format
           _ <- forkIO $
             writeToFile (file ++ "_projection_" ++ (show i) ++ ".dot") (

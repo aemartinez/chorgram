@@ -349,7 +349,7 @@ printAction ( dir, (s,r), msg ) flines =
 printCfsm :: CFSM -> Ptp -> Map String String -> String
 printCfsm ( states, q0, _, trxs ) sbj flines =
   pstates ++ ptx
-  where pstates = "\t" ++ printState q0 sbj ++ "\t[style=" ++ (flines!q0style) ++ ", color=" ++ (flines!q0col) ++ "]\n" ++ S.foldr (++) "" (S.map (\x -> "\t" ++ (printState x sbj) ++ "\t\t[label = \"" ++ (replaceStateSep x (flines!statesep)) ++ "\"];\n") states)
+  where pstates = "\t" ++ printState q0 sbj ++ "\t[style=" ++ (flines!q0style) ++ ", color=" ++ (flines!q0col) ++ "]\n" ++ S.foldr (++) "" (S.map (\x -> "\t" ++ (printState x sbj) ++ "\t[label = \"" ++ (replaceStateSep x (flines!statesep)) ++ "\"];\n") states)
         ptx     = S.foldr (++) "" (
           S.map (\( s, act, t ) -> 
                   "\t" ++ (printState s sbj)
