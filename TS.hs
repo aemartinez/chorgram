@@ -55,10 +55,11 @@ succEvents :: TSb -> Configuration -> Set KEvent
 succEvents ts n = S.map (\(_, e, _) -> e) (deriv n ts)
 
 reinit :: TSb -> Configuration -> TSb
-reinit (states, _, events, trans) q0 = (nodes, q0, nevents, ntrans)
-    where nodes   = S.fromList $ reachableNode (states, q0, events, trans) q0
+reinit (states, _, events, trans) n0 = (nodes, n0, nevents, ntrans)
+    where nodes   = S.fromList $ reachableNode (states, n0, events, trans) n0
           ntrans  = S.filter (\(n, _, n') -> S.member n nodes && S.member n' nodes) trans
-          nevents = S.fromList [e | (_, e, _) <- S.toList ntrans]
+          nevents = S.map (\(_, e, _) -> e) ntrans
+--          nevents = S.fromList [e | (_, e, _) <- S.toList ntrans]
 
 sender :: KEvent -> Ptp
 sender (_, _, s, _, _, _) = s
@@ -110,18 +111,18 @@ projectTS (nodes, initnode, _, trans) p = (states, q0, actions, finalTrans)
           traverse [] _ acc           = acc
           
 firstActions :: TSb -> Configuration -> Ptp -> Set Action -> Set Action
-firstActions (_,_,_,trans) n0 m goal = traverse [n0] S.empty S.empty
+firstActions ts@(_,_,_,trans) n0 p goal = traverse [n0] S.empty S.empty
   where 
+    traverse [] _ current = current
     traverse (n:ns) visited current
       | goal == current = current
       | otherwise = if S.member n visited 
                     then traverse ns visited current 
-                    else let pairs   = S.map (\(_,y,z) -> (y,z)) (S.filter (\(x,_,_) -> x == n) trans)
-                             actions = S.map (\(Just e) -> e) $ S.filter isJust $ S.map (\(event, _) -> (project event m)) pairs
-                             todo    = S.map (\(_,y) -> y) $ S.filter (\(x,_) -> isNothing x ) $ S.map (\(event, node) -> ((project event m), node)) pairs
+                    else let pairs   = S.map (\(_,y,z) -> (y,z)) (deriv n ts)
+                             actions = S.map (\(Just e) -> e) $ S.filter isJust $ S.map (\(e, _) -> (project e p)) pairs
+                             todo    = S.map (\(_,y) -> y) $ S.filter (\(x,_) -> isNothing x ) $ S.map (\(e, n') -> ((project e p), n')) pairs
                          in traverse (ns++(S.toList todo)) (S.insert n visited) (S.union current actions)
-    traverse [] _ current = current
-         
+
 possibleActions :: System -> Ptp -> Configuration -> Set Action
 possibleActions (sys,ptps) p n = S.map (\(_,y,_) -> y) $ CFSM.step (sys!!i) ((fst n)!!i) -- S.map (\(_,y,_) -> y) $ S.filter (\(x,_,_) -> x == ((fst n)!!i)) trans
     where -- (_,_,_,trans) = (sys!!i)

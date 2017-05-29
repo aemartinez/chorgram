@@ -24,21 +24,14 @@ sameMachines (s, r, _) (s', r', _) = (s' == s) && (r == r')
 
 
 dependencyTS :: Ptp -> Ptp -> TSb -> Configuration -> KEvent -> Set Interaction -> Set Interaction -> Bool
-dependencyTS s r oldts n e good bad = 
-  let initacc =  if S.member (evt2interaction e) good
-                 then [e]
-                 else []
-      out = explore n [] initacc bad
-  in out
-  where ts = reduce $ reinit oldts n
-        --
-        filterEdge visited current (label,node) = not $ L.elem (current,label,node) visited
+dependencyTS s r ts n e good bad = explore n [] (if S.member (evt2interaction e) good then [e] else []) bad
+  where filterEdge visited current (label,node) = not $ L.elem (current,label,node) visited
         --
         --addHead h = L.map (\x -> h:x)
         --
         explore current visited acc nbad = 
-          let newpairs =  L.nub $ L.map (\(x,y) -> (current,x,y)) $
-                          L.filter (\edge -> filterEdge visited current edge) [(e',n') | (_,e',n') <- S.toList $ deriv current ts]
+          let newpairs = L.nub $ L.map (\(x,y) -> (current,x,y)) $
+                         L.filter (\edge -> filterEdge visited current edge) [(e',n') | (_,e',n') <- S.toList $ deriv current (reduce $ reinit ts n)]
           in L.and $ L.map (\t -> dispatch t visited acc nbad) newpairs
         --
         dispatch t@(_,l,n') visited acc nbad

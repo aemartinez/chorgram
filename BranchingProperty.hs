@@ -73,28 +73,28 @@ checkNodes mysys ts lessRel nodes = L.concat $ L.map checkNode nodes
          then checkBranch res n evs
          else checkBranch (res ++ analysis) n evs
          where oneSender   = uniqueSender mysys ts n e1 map1 e2 map2
-               noRace      = checkReceivers (sender e1) mysys ts map1 map2 rng n e1 e2
-               chAwareness = checkParticipants ts rng n e1 map1 e2 map2
+               norace      = noRace (sender e1) mysys ts map1 map2 ids n e1 e2
+               chAwareness = choiceAwareness ts ids n e1 map1 e2 map2
                msg1        = if oneSender   then "" else "Not unique sender"
-               msg2        = if noRace      then "" else "There is a race"
+               msg2        = if norace      then "" else "There is a race"
                msg3        = if chAwareness then "" else "No choice awareness"
-               analysis    = if oneSender && noRace && chAwareness
+               analysis    = if oneSender && norace && chAwareness
                              then []
                              else [Rp n e1 e2 (msg1 ++ " " ++ msg2 ++ " " ++ msg3)]
-               rng         = cfsmsIds mysys -- L.map snd (M.assocs ptps)
+               ids         = cfsmsIds mysys
                map1        = mapActions mysys ts (succConf ts n e1) e1
                map2        = mapActions mysys ts (succConf ts n e2) e2
 
 
 --
--- Computes all the first action of all machines from a given configuration
+-- Return all the first action of all machines from a given configuration
 --
 mapActions :: System -> TSb -> Configuration -> KEvent -> MapActions
-mapActions mysys ts n' e = M.fromList $ L.map (\x -> (x, helper x)) (cfsmsIds mysys) --(L.map snd (M.assocs ptps))
-  where helper m =
-          case (project e m) of -- n' is the target of e here
+mapActions mysys ts n' e = M.fromList $ L.map (\p -> (p, actsOf p)) (cfsmsIds mysys)
+  where actsOf p =
+          case (project e p) of -- n' is the target of e here
             Just a -> S.singleton a
-            Nothing -> firstActions ts n' m (possibleActions mysys m n')
+            Nothing -> firstActions ts n' p (possibleActions mysys p n')
 
 
 --
@@ -121,50 +121,49 @@ uniqueSender mysys _ _ _ map1 _ map2 =
 
 
 --
--- Check condition (c) of the Branching Property
+-- Check condition the no-race condition of the Branching Property
 --
-checkReceivers :: Ptp -> System -> TSb -> MapActions -> MapActions -> [Ptp] -> Configuration -> KEvent -> KEvent -> Bool
-checkReceivers sbj sys ts map1 map2 (p:ps) n e1 e2 =
-  if (checkReceiver p e1 e2) 
-  then (checkReceivers sbj sys ts map1 map2 ps n e1 e2)
+noRace :: Ptp -> System -> TSb -> MapActions -> MapActions -> [Ptp] -> Configuration -> KEvent -> KEvent -> Bool
+noRace _ _ _ _ _ [] _ _ _                  = True
+noRace sbj sys ts map1 map2 (p:ps) n e1 e2 =
+  if (check p e1 e2) 
+  then (noRace sbj sys ts map1 map2 ps n e1 e2)
   else False --error $ ("[RCV-race-condition] Machine: "++(show p)++" Node: "++(show n)++" e1: "++(show e1)++" e2: "++(show e2))
-  where
-    succ1 = succConf ts n e1
-    succ2 = succConf ts n e2
-    checkReceiver m e e' =
-      let lt1 = map1 ! m
-          lt2 = map2 ! m
-      in if (not $ existSend $ S.union lt1 lt2) && (compatibleActions lt1 lt2) && (not $ sameSenders lt1 lt2)
-         then
-           (checkRaceInChoice sbj p ts succ1 e lt1 lt2)
-           &&
-           (checkRaceInChoice sbj p ts succ2 e' lt2 lt1)
-         else True
-checkReceivers _ _ _ _ _ [] _ _ _ = True
+  where check q e e' =
+          let lt1 = map1 ! q
+              lt2 = map2 ! q
+              succ1 = succConf ts n e1
+              succ2 = succConf ts n e2
+          in if (not $ existSend $ S.union lt1 lt2) && (compatibleActions lt1 lt2) && (not $ sameSenders lt1 lt2)
+             then (checkRaceInChoice sbj p ts succ1 e lt1 lt2) && (checkRaceInChoice sbj p ts succ2 e' lt2 lt1)
+             else True
+                  -- isn't the 'if' equivalent to
+                  --   (existSend $ S.union lt1 lt2) ||
+                  --   (not $ compatibleActions lt1 lt2) ||
+                  --   (sameSenders lt1 lt2) ||
+                  --   ((checkRaceInChoice sbj p ts succ1 e lt1 lt2) && (checkRaceInChoice sbj p ts succ2 e' lt2 lt1))
 
 checkRaceInChoice :: Ptp -> Ptp -> TSb -> Configuration -> KEvent -> Set Action -> Set Action -> Bool  
-checkRaceInChoice sbj rcv ts n ei good bad =
-  dependencyTS sbj rcv ts n ei (S.map action2interaction good) (S.map action2interaction bad)
+checkRaceInChoice sbj rcv ts n e good bad =
+  dependencyTS sbj rcv ts n e (S.map action2interaction good) (S.map action2interaction bad)
 
 --
 -- Check condition (a) of the Branching Property
+-- TODO: this is to be changed
 --
-checkParticipants :: TSb -> [Ptp] -> Configuration -> KEvent -> MapActions -> KEvent -> MapActions -> Bool
-checkParticipants ts (p:ps) n e1 map1 e2 map2 =
-    if (checkParticipant p n e1 e2) 
-    then (checkParticipants ts ps n e1 map1 e2 map2)
+choiceAwareness :: TSb -> [Ptp] -> Configuration -> KEvent -> MapActions -> KEvent -> MapActions -> Bool
+choiceAwareness ts (p:ps) n e1 map1 e2 map2 =
+    if (isAware p n e1 e2) 
+    then (choiceAwareness ts ps n e1 map1 e2 map2)
     else False --error $ ("Machine: " ++ (show p) ++ " Node: " ++ (show n) ++ "\n\te1: " ++ (show e1) ++ "\n\te2: " ++ (show e2))
     where
       succ1 = succConf ts n e1
       succ2 = succConf ts n e2
-      checkParticipant q n' e e' = 
-          let lt1 = map1 ! q
-              lt2 = map2 ! q
-          in 
-           if (compatibleActions lt1 lt2)
-           then True
-           else goodMergeNode ts q n' succ1 e succ2 e'
-checkParticipants _ [] _ _ _ _ _  = True
+      isAware q n' e e' =
+        let lt1 = map1 ! q
+            lt2 = map2 ! q
+        in (compatibleActions lt1 lt2) || (goodMergeNode ts q n' succ1 e succ2 e')
+choiceAwareness _ [] _ _ _ _ _  = True
        
         
 compatibleActions :: Set Action -> Set Action -> Bool

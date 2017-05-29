@@ -36,37 +36,37 @@ checkC1 ts amp others =
 --
 checkC3 :: TSb -> Set Configuration -> Configuration -> Set KTrans -> Bool
 checkC3 ts visited current amp = 
-  -- F.or $ S.map (\(x,y,z) -> not $ L.elem current $ reachableNode ts z) amp
+  --    F.or $ S.map (\(x,y,z) -> not $ L.elem current $ reachableNode ts z) amp
   not $ F.or $ S.map (\(_,y,_) -> S.member (succConf ts current y) visited) amp
 
 
 chooseCandidate :: TSb -> Set Configuration -> Configuration -> Set KTrans
-chooseCandidate ts visited current = findAmple (ample ts current) alltrans 
+chooseCandidate ts visited n = findAmple (ample ts n) (deriv n ts)
   where findAmple (x:xs) allt = if (x==allt
                                    )
                                    || 
                                    (
                                      (checkC1 ts x (S.difference allt x))
                                      &&
-                                     (checkC3 ts visited current x)
+                                     (checkC3 ts visited n x)
                                    )
-                                then x 
+                                then x
                                 else findAmple xs allt
         findAmple [] allt = allt
-        alltrans = deriv current ts
 
 
 --
 --
 reduce :: TSb -> TSb
-reduce ts@(_,initnode,_,_) = (newConfs, initnode, newEvents, newTrans) 
+reduce ts@(_,n0,_,_) = (newConfs, n0, newEvents, newTrans) 
   where newConfs  = S.fold S.union S.empty $ S.map (\((x,bx),_,(z,bz)) -> S.insert (x,bx) (S.singleton (z,bz))) newTrans
         newEvents = S.fold S.union S.empty $ S.map (\(_,y,_) ->  S.singleton y) newTrans
-        newTrans  = S.fromList $ rebuild [initnode] S.empty []
+        newTrans  = S.fromList $ rebuild [n0] S.empty []
         --
-        rebuild (current:xs) visited acc
-          | S.member current visited = rebuild xs visited acc
-          | otherwise = let nextrans = S.toList $ chooseCandidate ts visited current
-                            nextstates = L.map (\(_,_,z) -> z) nextrans
-                        in rebuild (xs++nextstates) (S.insert current visited) (acc++nextrans)
         rebuild [] _ acc = acc
+        rebuild (n:ns) visited acc
+          | S.member n visited = rebuild ns visited acc
+          | otherwise =
+              let nextrans   = S.toList $ chooseCandidate ts visited n
+                  nextstates = L.map (\(_,_,n') -> n') nextrans
+              in rebuild (ns ++ nextstates) (S.insert n visited) (acc ++ nextrans)
