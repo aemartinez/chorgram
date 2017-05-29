@@ -45,9 +45,12 @@ type Diamond = Set ( ( State, Action ), ( State, Action ) )
 --- type ECFSM     = (CFSM, Map LTrans Cond) -- TODO: remove
 --- type ESystem   = ([ECFSM] , [String]) -- TODO: remove
 
+
+cfsmsIds :: System -> [Ptp]
+cfsmsIds (_,ptps) = L.map snd (M.assocs ptps)
+
 isTau :: Action -> Bool
 isTau (d, _, _) = (d == Tau)
-
 
 emptyCFSM :: CFSM
 emptyCFSM = ( S.empty, "", S.empty, S.empty )
@@ -386,7 +389,7 @@ cfsm2String sbj m = ".outputs " ++ sbj ++ "\n.state graph\n" ++ (rmChar '\"' tx)
                                          LoopRcv -> show r ++ show msg
 
 cfsm2fsm :: Map String String -> CFSM -> (String, Map State Int)
-cfsm2fsm flines (states, initn, actions, trans) =
+cfsm2fsm flines (states, initn, _, trans) =
 -- Transforms a cfsm into the fsm format of mcrl2; the result is a string for the fsm format and a map 
   let env = (M.fromList $ snd $  mapAccumL (\x y -> (x+1,(y,x))) 1 (S.toList states)) :: Map State Int
       liststates = intercalate "\n" $ nub $ (show $ env!initn):(L.map show $ M.elems env)

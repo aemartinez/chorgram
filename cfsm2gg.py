@@ -239,7 +239,7 @@ for i in range(machine_number):
     hkc_boolean_position = 1              # position of the boolean returned by hkc after the split
     res = spa[hkc_boolean_position].split(',')[0]
     tmpbool = tmpbool and (res == "true")
-    debugMsg("Is machine " + str(i) + " representable? "+ res, True)
+    debugMsg("Is machine " + str(i) + " equivalent to its projection? "+ res)
 
 debugMsg("Language-equivalence (Representability part (i))? " + str(tmpbool), True)
 

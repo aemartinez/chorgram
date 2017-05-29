@@ -21,7 +21,6 @@ import Data.Foldable as F
 import Control.Concurrent
 import Control.Exception
 import DotStuff
-import FSA
 
 --
 -- Language equivalence between machine and projected TS
@@ -64,22 +63,22 @@ repLanguageConcurrent file (sys,ptps) ts =
                                  waitChildren idx v2
         --
         waitChildren idx v
-          | idx > 0 = do var <- takeMVar v
-                         case var of
-                          Right _ -> return () -- putStrLn $ "Machine "++(show j)++" to timbuk done."
-                          Left _  -> return () -- putStrLn $ "Projection "++(show j)++" to timbuk done."
-                         waitChildren (idx-1) v
+          | idx >  0 = do var <- takeMVar v
+                          case var of
+                            Right _ -> return () -- putStrLn $ "Machine "++(show j)++" to timbuk done."
+                            Left _  -> return () -- putStrLn $ "Projection "++(show j)++" to timbuk done."
+                          waitChildren (idx-1) v
           | idx == 0 = return ()
-        
+          | idx <  0 = error "Wrong machine index"
 
 --
--- All branchings in TS
+-- All branchings in TS: def. 3.5(2) of journal
 --
 repBranching :: System -> TSb -> [Cause State KEvent]
-repBranching mysys@(sys,ptps) ts@(confs, _, _,_) = checkCfsms 0 [] sys
-  where checkCfsms idx res (m:ms) = checkCfsms (1 + idx) (res ++ (checkCfsm idx m)) ms
-        checkCfsms _ res []       = res
-        checkCfsm m1 m2           = L.concat $ L.map (getCause m1 m2) (S.toList $ gnodes m2)
+repBranching mysys@(sys,ptps) ts@(confs, _, _, _) = checkCFSMS 0 [] sys
+  where checkCFSMS idx res (m:ms) = checkCFSMS (1 + idx) (res ++ (checkCFSM idx m)) ms
+        checkCFSMS _ res []       = res
+        checkCFSM m1 m2           = L.concat $ L.map (getCause m1 m2) (S.toList $ gnodes m2)
           where getCause p p' q = if (F.or $ S.map (\x -> S.isSubsetOf (S.map glabel (goutgoing p' q)) (readyset (ptps!p) x)) (S.filter (\(x,_) -> (x!!p) == q) confs))
                                   then []
                                   else [(Bp (ptps!p) q)]

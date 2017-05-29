@@ -62,7 +62,7 @@ checkBranchingProperty sys ts@(nodes, _, _, _) = checkNodes sys ts (buildLessRel
 -- Check the Branching property on all nodes and branches in TSb
 --
 checkNodes :: System -> TSb -> Set (Configuration, Configuration) -> [Configuration] -> [Cause Configuration KEvent]
-checkNodes mysys@(_,ptps) ts lessRel nodes = L.concat $ L.map checkNode nodes
+checkNodes mysys ts lessRel nodes = L.concat $ L.map checkNode nodes
    where
        checkNode n = checkBranch [] n (pairs $ S.toList $ (succEvents ts n))
        pairs xs = L.nubBy eqTest [(x,y) | x <- xs, y <- xs, x /= y]
@@ -73,15 +73,15 @@ checkNodes mysys@(_,ptps) ts lessRel nodes = L.concat $ L.map checkNode nodes
          then checkBranch res n evs
          else checkBranch (res ++ analysis) n evs
          where oneSender   = uniqueSender mysys ts n e1 map1 e2 map2
-               noRace      = checkReceivers (sender e1) mysys ts map1 map2 rng n e1 e2 -- Dependency relations
-               chAwareness = checkParticipants ts rng n e1 map1 e2 map2 -- Good Choice
+               noRace      = checkReceivers (sender e1) mysys ts map1 map2 rng n e1 e2
+               chAwareness = checkParticipants ts rng n e1 map1 e2 map2
                msg1        = if oneSender   then "" else "Not unique sender"
                msg2        = if noRace      then "" else "There is a race"
                msg3        = if chAwareness then "" else "No choice awareness"
                analysis    = if oneSender && noRace && chAwareness
                              then []
                              else [Rp n e1 e2 (msg1 ++ " " ++ msg2 ++ " " ++ msg3)]
-               rng         = L.map snd (M.assocs ptps)
+               rng         = cfsmsIds mysys -- L.map snd (M.assocs ptps)
                map1        = mapActions mysys ts (succConf ts n e1) e1
                map2        = mapActions mysys ts (succConf ts n e2) e2
 
@@ -90,12 +90,11 @@ checkNodes mysys@(_,ptps) ts lessRel nodes = L.concat $ L.map checkNode nodes
 -- Computes all the first action of all machines from a given configuration
 --
 mapActions :: System -> TSb -> Configuration -> KEvent -> MapActions
-mapActions mysys@(_,ptps) ts n' e = M.fromList $ L.map (\x -> (x, helper x)) ids
+mapActions mysys ts n' e = M.fromList $ L.map (\x -> (x, helper x)) (cfsmsIds mysys) --(L.map snd (M.assocs ptps))
   where helper m =
           case (project e m) of -- n' is the target of e here
             Just a -> S.singleton a
             Nothing -> firstActions ts n' m (possibleActions mysys m n')
-        ids = L.map snd (M.assocs ptps)
 
 
 --
@@ -103,8 +102,8 @@ mapActions mysys@(_,ptps) ts n' e = M.fromList $ L.map (\x -> (x, helper x)) ids
 -- POST: true iff there is a unique sender for e1 and e2
 --
 uniqueSender :: System -> TSb -> Configuration -> KEvent -> MapActions -> KEvent -> MapActions -> Bool
-uniqueSender (_,ptps) _ _ _ map1 _ map2 =
-  let rng     = L.map snd (M.assocs ptps)
+uniqueSender mysys _ _ _ map1 _ map2 =
+  let -- rng     = L.map snd (M.assocs ptps)
       senders = L.map 
                 (
                   \m -> let lt1 = map1 ! m
@@ -113,7 +112,7 @@ uniqueSender (_,ptps) _ _ _ map1 _ map2 =
                           if compatibleActions lt1 lt2
                           then existSend $ S.union lt1 lt2
                           else False
-                ) rng
+                ) (cfsmsIds mysys) --rng
   in checkSenders 0 senders
   where checkSenders num (x:xs) = checkSenders (if x then num+1 else num) xs
         checkSenders i [] = (i==1) -- if i == 1
@@ -158,14 +157,13 @@ checkParticipants ts (p:ps) n e1 map1 e2 map2 =
     where
       succ1 = succConf ts n e1
       succ2 = succConf ts n e2
-      checkParticipant m n' e e' = 
-          let lt1 = map1 ! m
-              lt2 = map2 ! m
+      checkParticipant q n' e e' = 
+          let lt1 = map1 ! q
+              lt2 = map2 ! q
           in 
            if (compatibleActions lt1 lt2)
            then True
-           else 
-             goodMergeNode ts m n' succ1 e succ2 e'
+           else goodMergeNode ts q n' succ1 e succ2 e'
 checkParticipants _ [] _ _ _ _ _  = True
        
         
@@ -186,18 +184,19 @@ sameSenders act1 act2 = (snds act1) == (snds act2)
 
 
 goodMergeNode :: TSb -> Ptp -> Configuration -> Configuration -> KEvent ->  Configuration -> KEvent -> Bool
-goodMergeNode ts m n n1 e1 n2 e2 =
+goodMergeNode ts p n n1 e1 n2 e2 =
   not $ S.null $ S.intersection (setX n1 e1) (setX n2 e2)
-  where setX node evt = case project evt m of
-          Just _ -> S.singleton n
-          Nothing -> epsilonReachable ts m node
+  where setX n' e =
+          case project e p of
+            Just _  -> S.singleton n
+            Nothing -> epsilonReachable ts p n'
 
 --
 -- Find all the nodes reachable from another node
 --  
 epsilonReachable :: TSb -> Ptp -> Configuration -> Set Configuration
 ---- not used: deprecated
-epsilonReachable ts m n  = 
+epsilonReachable ts p n  = 
   S.fromList $ traverse [n] S.empty [n]
   where
     traverse (n':ns) visited acc =
@@ -205,8 +204,8 @@ epsilonReachable ts m n  =
       then traverse ns visited acc
       else let sucnodes = S.toList $
                           S.map (\(_,s) -> s) $ 
-                          S.filter (\(l,s) -> (isNothing $ project l m) && (not $ S.member s visited)) $ (S.map (\(_, y, z) -> (y,z)) (deriv n' ts))
-           in traverse (ns++sucnodes) (S.insert n' visited) (acc++sucnodes)
+                          S.filter (\(l,s) -> (isNothing $ project l p) && (not $ S.member s visited)) $ (S.map (\(_, y, z) -> (y,z)) (deriv n' ts))
+           in traverse (ns ++ sucnodes) (S.insert n' visited) (acc ++ sucnodes)
     traverse [] _ acc = acc   
          
  

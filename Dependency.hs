@@ -16,11 +16,7 @@ dependentEvents e1 e2 = dependentInteraction (evt2interaction e1) (evt2interacti
 -- lhd-relation on interactions
 --
 dependentInteraction :: Interaction -> Interaction -> Bool
-dependentInteraction (m1, m2, _) (m1',m2',_) =
-  ((m1 == m1') && (m2 == m2'))
-  ||
-  (m2 == m1')
-  
+dependentInteraction (s, r, _) (s',r',_) = ((s == s') && (r == r'))  ||  (r == s')
 
 
 sameMachines :: Interaction -> Interaction -> Bool
@@ -49,7 +45,7 @@ dependencyTS s r oldts n e good bad =
           | S.null nbad = True
           | not (L.null acc) && receiver l == s && sender l == r = True
         -- If the receiver (being checked) sends something back the sender, before reaching "bad", it's
-        -- fine since there is a unique "selector"
+        -- fine since there is a unique selector
           | S.member (evt2interaction l) good = explore n' (t:visited) (acc++[l]) nbad
           | S.member (evt2interaction l) bad =
             (

@@ -59,6 +59,7 @@ reinit (states, _, events, trans) q0 = (nodes, q0, nevents, ntrans)
     where nodes   = S.fromList $ reachableNode (states, q0, events, trans) q0
           ntrans  = S.filter (\(n, _, n') -> S.member n nodes && S.member n' nodes) trans
           nevents = S.fromList [e | (_, e, _) <- S.toList ntrans]
+
 sender :: KEvent -> Ptp
 sender (_, _, s, _, _, _) = s
 
