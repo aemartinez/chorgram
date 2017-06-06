@@ -49,7 +49,7 @@ evt2interaction :: KEvent -> Interaction
 evt2interaction (_, _, s, r, _, msg) = (s, r, msg)
 
 action2interaction :: Action -> Interaction
-action2interaction (_, (_, m'), msg) = (m',m',msg)
+action2interaction (_, (s, r), msg) = (s, r, msg)
 
 succEvents :: TSb -> Configuration -> Set KEvent
 succEvents ts n = S.map (\(_, e, _) -> e) (deriv n ts)
@@ -111,7 +111,7 @@ projectTS (nodes, initnode, _, trans) p = (states, q0, actions, finalTrans)
           traverse [] _ acc           = acc
           
 firstActions :: TSb -> Configuration -> Ptp -> Set Action -> Set Action
-firstActions ts@(_,_,_,trans) n0 p goal = traverse [n0] S.empty S.empty
+firstActions ts n0 p goal = traverse [n0] S.empty S.empty
   where 
     traverse [] _ current = current
     traverse (n:ns) visited current
@@ -128,23 +128,22 @@ possibleActions (sys,ptps) p n = S.map (\(_,y,_) -> y) $ CFSM.step (sys!!i) ((fs
     where -- (_,_,_,trans) = (sys!!i)
           i             = findId p (M.assocs ptps)
 
-ample :: TSb -> Configuration -> [Set KTrans]
-ample ts conf = if allSelfLoops then [next] else L.map snd $ L.sortBy compareList events
-  where next = deriv conf ts
-        transList = S.toList $ S.map (\x -> (machines x, S.singleton x)) next
-        events =  mygroup (length transList) transList
-        fgroup (m1,_) (m2,_) = not $ S.null (S.intersection m1 m2)
-        myfold xs = L.map (\ys ->  L.foldr merge (S.empty, S.empty) ys) xs
-        merge (m1,e1) (m2,e2) = (S.union m1 m2, S.union e1 e2)
+ample :: Configuration -> TSb -> [Set KTrans]
+ample n ts = if allSelfLoops then [next] else L.map snd $ L.sortBy compareList events
+  where next          = deriv n ts
+        allSelfLoops  = F.and $ S.map (\(x,_,z) -> x==z) next
+        transList     = S.toList $ S.map (\x -> (machines x, S.singleton x)) next
+        events        = mygroup (length transList) transList
+        dijointPtps        = \ (m1,_) (m2,_) -> not $ S.null (S.intersection m1 m2)
+        pairwiseUnion = \ xs -> L.map (\ys ->  L.foldr (\ (m1,e1) (m2,e2) -> (S.union m1 m2, S.union e1 e2)) (S.empty, S.empty) ys) xs
         --
         mygroup :: Int -> [(Set Ptp, Set KTrans)] -> [(Set Ptp, Set KTrans)] 
-        mygroup i xs = let newlist = myfold (L.groupBy fgroup xs)
-                       in if i > (length newlist)
-                          then mygroup (length newlist) newlist
-                          else xs
-        compareList (_,e1) (_,e2) = compare (S.size e1) (S.size e2)
+        mygroup i xs  = let newlist = pairwiseUnion (L.groupBy dijointPtps xs)
+                        in if i > (length newlist)
+                           then mygroup (length newlist) newlist
+                           else xs
+        compareList  = \ (_,e1) (_,e2) -> compare (S.size e1) (S.size e2)
         --
-        allSelfLoops = F.and $ S.map (\(x,_,z) -> x==z) next
 
 independent:: KEvent -> KEvent -> Bool
 independent (_,_,m1,m2,_,_) (_,_,m1',m2',_,_) = (m1 /= m1')  && (m1 /= m2') && (m2 /= m1')  && (m2 /= m2') 

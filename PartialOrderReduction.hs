@@ -41,7 +41,7 @@ checkC3 ts visited current amp =
 
 
 chooseCandidate :: TSb -> Set Configuration -> Configuration -> Set KTrans
-chooseCandidate ts visited n = findAmple (ample ts n) (deriv n ts)
+chooseCandidate ts visited n = findAmple (ample n ts) (deriv n ts)
   where findAmple (x:xs) allt = if (x==allt
                                    )
                                    || 

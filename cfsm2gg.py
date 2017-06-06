@@ -171,7 +171,7 @@ debugMsg("Execution Started on " + date, True)
 
 loginfo = [date, basename, args.filename]
 def logexperiment(str = ""):
-    logfilename = "experiments/experiments.idx"
+    logfilename = "experiments/experiments.csv"
     logfile = open(logfilename, "a+")
     logfile.write('\t'.join(loginfo + [str]) + '\n')
 
