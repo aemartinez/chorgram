@@ -8,13 +8,6 @@ import Data.Map.Strict as M
 import Data.Foldable as F
 import Data.Maybe
 import Dependency
---import Control.Concurrent
---import Control.Exception
---import Data.Ord
---import Data.Tree as T
---import PartialOrderReduction
---import System.IO.Unsafe
---import Debug.Trace
 
 type MapActions = Map Ptp (Set Action)
 type EvtPath = [[(Configuration, KEvent, Configuration)]]
@@ -103,8 +96,7 @@ mapActions mysys ts n e = M.fromList $ L.map (\p -> (p, actsOf p)) (cfsmsIds mys
 --
 uniqueSender :: System -> TSb -> Configuration -> KEvent -> MapActions -> KEvent -> MapActions -> Bool
 uniqueSender mysys _ _ _ hdL1 _ hdL2 =
-  let -- rng     = L.map snd (M.assocs ptps)
-      senders = L.map 
+  let senders = L.map 
                 (
                   \m -> let lt1 = hdL1 ! m
                             lt2 = hdL2 ! m
@@ -115,10 +107,7 @@ uniqueSender mysys _ _ _ hdL1 _ hdL2 =
                 ) (cfsmsIds mysys) --rng
   in checkSenders 0 senders
   where checkSenders num (x:xs) = checkSenders (if x then num+1 else num) xs
-        checkSenders i [] = (i==1) -- if i == 1
-                                   -- then True
-                                   -- else False --error $ "No unique sender at node: "++(show n) ++ " e1: "++(show e1)++" e2: "++(show e2) ++ " ("++(show i)++" senders)"
-
+        checkSenders i [] = (i==1)
 
 --
 -- Check condition the no-race condition of the Branching Property
@@ -135,17 +124,7 @@ noRace s sys ts hdL1 hdL2 (p:ps) n e1 e2 =
               (succ, succ') = (succConf ts n e, succConf ts n e')
           in if (not $ existSend $ S.union lt lt') && (compatibleActions lt lt') && (not $ sameSenders lt lt')
              then (dependencyTS s p ts succ e lt1 lt2) && (dependencyTS s p ts succ' e' lt2 lt1)
---             then (checkRaceInChoice s p ts succ e lt lt') && (checkRaceInChoice s p ts succ' e' lt' lt)
              else True
-                  -- isn't the 'if' equivalent to
-                  --   (existSend $ S.union lt1 lt2) ||
-                  --   (not $ compatibleActions lt1 lt2) ||
-                  --   (sameSenders lt1 lt2) ||
-                  --   ((checkRaceInChoice s p ts succ1 e lt1 lt2) && (checkRaceInChoice s p ts succ2 e' lt2 lt1))
-
--- checkRaceInChoice :: Ptp -> Ptp -> TSb -> Configuration -> KEvent -> Set Action -> Set Action -> Bool  
--- checkRaceInChoice s r ts n e good bad =
---   dependencyTS s r ts n e (S.map action2interaction good) (S.map action2interaction bad)
 
 --
 -- Check condition (a) of the Branching Property
@@ -207,7 +186,6 @@ epsilonReachable ts p n  =
            in traverse (ns ++ sucnodes) (S.insert n' visited) (acc ++ sucnodes)
     traverse [] _ acc = acc   
          
- 
 
 --
 -- Find all the nodes reachable from n1 and n2 (closest nodes first)

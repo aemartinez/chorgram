@@ -268,6 +268,7 @@ generate k sys c visited pre@(cset, eset, tset) =
            pol []           = ([],[])
            pol ((_,f,s):ls) = (f:(fst ll), s:(snd ll)) where ll = pol ls
 
+
 -- initConf sys
 --  PRE:  
 --  POST: returns the initial configuration of sys

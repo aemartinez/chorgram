@@ -27,16 +27,13 @@ sameMachines (s, r, _) (s', r', _) = (s' == s) && (r == r')
 dependencyTS :: Ptp -> Ptp -> TSb -> Configuration -> KEvent -> Set Interaction -> Set Interaction -> Bool
 dependencyTS s r ts n e lt1 lt2 = explore n [] (if S.member (evt2interaction e) lt1 then [e] else []) lt2
   where explore current visited acc nlt2 = 
-          let newtrxs = --L.nub $ L.map (\(x,y) -> (current,x,y)) $
---                         L.filter (\(l,n') -> not $ L.elem (current,l,n') visited) [(e',n') | (_,e',n') <- S.toList $ deriv current (reduce $ reinit ts n)]
-                        S.filter (\(_,l,n') -> not $ L.elem (current,l,n') visited) (deriv current (reduce $ reinit ts n))
+          let newtrxs = S.filter (\(_,l,n') -> not $ L.elem (current,l,n') visited) (deriv current (reduce $ reinit ts n))
           in F.and $ S.map (\t -> dispatch t visited acc nlt2) newtrxs
-        --
         dispatch t@(_,l,n') visited acc nlt2
           | S.null nlt2 = True
           | not (L.null acc) && (receiver l == s) && (sender l == r) = True
-        -- If the receiver (being checked) sends something back the sender, before reaching "lt2", it's
-        -- fine since there is a unique selector
+            -- If the receiver (being checked) sends something back the sender, before reaching "lt2", it's
+            -- fine since there is a unique selector
           | S.member (evt2interaction l) lt1 = explore n' (t:visited) (acc++[l]) nlt2
           | S.member (evt2interaction l) lt2 =
             (
@@ -95,20 +92,4 @@ findDependency tr f list lt1 lt2 = findPath (S.singleton src)
                        ||
                        (findPath newborder)
           
-
---- -
--- -- Cut a Tree where at the first occurence of "int", if any, otherwise returns Nothing 
--- --
--- cutTree :: (Eq a, Eq b) => (a -> b) -> Tree a -> b -> Maybe (Tree a)
--- cutTree fun (Node e fs) int 
---   | (fun e) == int = Just (Node e [])
---   | otherwise = case cutForest fun fs int of
---     Just f -> Just (Node e f)
---     Nothing -> Nothing
-    
--- cutForest :: (Eq a, Eq b) => (a -> b) -> Forest a -> b -> Maybe (Forest a)
--- cutForest fun fs int = let res = L.filter isJust $ L.map (\tree -> cutTree fun tree int) fs
---                        in if L.null res
---                           then Nothing
---                           else Just (L.map (\(Just x) -> x) res)
 
