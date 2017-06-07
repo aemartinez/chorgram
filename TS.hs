@@ -42,14 +42,14 @@ emptyBuffer ptps = M.fromList [((s,r),[]) | (_,s) <- M.assocs ptps, (_,r) <- M.a
 --   PRE:  t is a configuration enabled at c
 --   POST: the event corresponding to t from c
 toKEvent :: Configuration -> P -> LTrans -> KEvent
-toKEvent (n, _) ptps (_, (d, (s,r), msg), _) = (n!!(findId s l), n!!(findId r l), s, r, d, msg)
+toKEvent (n, _) ptps (_, ((s,r), d, msg), _) = (n!!(findId s l), n!!(findId r l), s, r, d, msg)
   where l = M.assocs ptps
 
 evt2interaction :: KEvent -> Interaction
 evt2interaction (_, _, s, r, _, msg) = (s, r, msg)
 
 action2interaction :: Action -> Interaction
-action2interaction (_, (s, r), msg) = (s, r, msg)
+action2interaction ((s, r), _, msg) = (s, r, msg)
 
 succEvents :: TSb -> Configuration -> Set KEvent
 succEvents ts n = S.map (\(_, e, _) -> e) (deriv n ts)
@@ -86,9 +86,9 @@ succConf ts n e = head $ S.toList $ S.map (\(_, _, n') -> n') (S.filter (\(_, e'
 
 project :: KEvent -> Ptp -> Maybe Action
 project (_, _, s, r, _, msg) p = if s == p
-                                 then Just (Send, (s,r), msg)
+                                 then Just ((s,r), Send, msg)
                                  else if r == p
-                                      then Just (Receive, (s,r) , msg)
+                                      then Just ((s,r) , Receive, msg)
                                       else Nothing
 
 projectTS :: TSb -> Ptp -> CFSM
@@ -199,8 +199,8 @@ diamondMap (sys,_) = helper 0 sys M.empty
 
 projectUnSafe :: KEvent -> Ptp -> Action
 projectUnSafe (_,_,s,r,_,msg) p = if s == p
-                                  then (Send,    (s,r), msg)
-                                  else (Receive, (s,r), msg)
+                                  then ((s,r), Send,    msg)
+                                  else ((s,r), Receive, msg)
        
 
 --
@@ -216,14 +216,14 @@ enabled k (sys, _) (n, b)
     | k == 0    =  M.fromList $ L.concat pairs
     | otherwise = helper 0 (L.concat $ L.map S.toList l)
     where rng             = range $ L.length n
-          l               = L.map (\m -> (S.filter (\(_, (d, ch, msg), _) ->
+          l               = L.map (\m -> (S.filter (\(_, (ch, d, msg), _) ->
                                                      (d == Send    && (length $ b!ch) < k && bs) ||
                                                      (d == Receive && (length $ b!ch) > 0 && (head $ b!ch) == msg) ||
                                                      (d == Tau)
                                                    ) (mstep m))) rng
           mstep m         = CFSM.step (sys!!m) (n!!m)
           match m t       = [t' | i <- [m+1 .. (length n-1)], t' <- (S.toList $ mstep i), dual t t']
-          pairs           = L.map (\m -> L.map (\t@(q,(_,ch,msg),q') -> ((m, (q,(Tau,ch,msg),q')), (match m t))) (S.toList $ mstep m)) rng
+          pairs           = L.map (\m -> L.map (\t@(q,(ch,_,msg),q') -> ((m, (q,(ch,Tau,msg),q')), (match m t))) (S.toList $ mstep m)) rng
           bs              = True -- TODO: to be used to implement 1buffer semantics
           helper _ []     = M.empty
           helper m (t:ts) = M.insert (m, t) [] (helper (m+1) ts)
@@ -232,7 +232,7 @@ enabled k (sys, _) (n, b)
 --  PRE:  trans is enabled at conf
 --  POST: conf' is the update of conf after applying the transtion
 apply :: P -> Configuration -> LTrans -> (KEvent, Configuration)
-apply ptps c@(n, b) t@(_, (d, ch@(s,r), msg), q)
+apply ptps c@(n, b) t@(_, (ch@(s,r), d, msg), q)
     | d == Send    = (toKEvent c ptps t, (Misc.update (findId s (M.assocs ptps)) q n, M.insert ch ((b!ch)++[msg]) b))
     | d == Receive = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, M.insert ch (tail $ b!ch) b))
     | d == Tau     = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, b))
@@ -247,7 +247,7 @@ step k sys@(_, ptps) conf@(n,_)
     | k > 0     = S.map (\(_,t) -> apply ptps conf t) (M.keysSet ets)
     | otherwise = S.fold S.union S.empty (S.map f (M.keysSet ets))
     where ets = enabled k sys conf
-          f   = \(m,t@(_, (_, (s, r), _), q)) -> let sidx = findId s (M.assocs ptps)
+          f   = \(m,t@(_, ((s, r), _, _), q)) -> let sidx = findId s (M.assocs ptps)
                                                      ridx = findId r (M.assocs ptps)
                                                  in if m==sidx
                                                     then S.fromList [(toKEvent conf ptps t, (Misc.update ridx q' (Misc.update sidx q  n), emptyBuffer ptps)) | (_, _, q') <- (ets!(m,t))]

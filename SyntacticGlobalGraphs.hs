@@ -159,7 +159,7 @@ ggptp ptps g = case g of
 proj :: GG -> Ptp -> State -> State -> Int -> (CFSM, State)
 proj gg p q0 qe n =
   let suf = show n
-      tau = (Tau, (p,p), "")
+      tau = ((p,p), Tau, "")
       dm  = ( (S.fromList [q0,qe], q0, S.singleton tau, tautrx q0 qe) , qe )
       tautrx q1 q2 = if q1==q2 then S.empty else S.singleton (q1, tau, q2)
   in case gg of
@@ -167,7 +167,7 @@ proj gg p q0 qe n =
       Act (s,r) m -> if (p/=s && p/=r)
                      then dm
                      else ( ((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0,c,qe))) , qe )
-        where c = if (p == s) then (Send,(p,r),m) else (Receive,(s,p),m)
+        where c = if (p == s) then ((p,r),Send,m) else ((s,p),Receive,m)
       Par ggs     -> ( replaceState (initialOf m) q0 ( S.union (S.singleton qe) (statesOf m ) ,
                                                        initialOf m ,
                                                        S.union (actionsOf m) (S.singleton tau) ,

@@ -157,7 +157,7 @@ compatibleActions set1 set2 =
 
 sameSenders :: Set Action -> Set Action -> Bool
 sameSenders act1 act2 = (snds act1) == (snds act2)
-  where snds acts = S.map (\(_,(s,_),_) -> s) acts
+  where snds acts = S.map (\((s,_), _, _) -> s) acts
 
 
 

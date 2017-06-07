@@ -39,16 +39,16 @@ type HG = (Set HE, Set E, Set E, Set HE, Set HE)
 type Mu = K
 
 ptpsOf :: E -> Maybe (Ptp, Ptp)
-ptpsOf (_, Just (_,(s,r),_)) = Just (s,r)
+ptpsOf (_, Just ((s,r), _, _)) = Just (s,r)
 ptpsOf (_, Nothing)          = Nothing
 
 sbjOf :: E -> Maybe Ptp
 sbjOf (_, Nothing)                  = Nothing
-sbjOf (_, Just (Tau, _, _))         = Nothing
-sbjOf (_, Just (Send, (s,_), _))    = Just s
-sbjOf (_, Just (Receive, (_,r), _)) = Just r
-sbjOf (_, Just (LoopSnd, (s,_), _)) = Just s
-sbjOf (_, Just (LoopRcv, (_,r), _)) = Just r
+sbjOf (_, Just (_, Tau, _))         = Nothing
+sbjOf (_, Just ((s,_), Send, _))    = Just s
+sbjOf (_, Just ((_,r), Receive, _)) = Just r
+sbjOf (_, Just ((s,_), LoopSnd, _)) = Just s
+sbjOf (_, Just ((_,r), LoopRcv, _)) = Just r
 
 emptyHG :: (Set HE, Set E, Set E, Set HE, Set HE)
 emptyHG = (S.empty, S.empty, S.empty, S.empty, S.empty)
@@ -81,7 +81,7 @@ actOf :: E -> Maybe Action
 actOf = snd
 
 sbj :: E -> Maybe Ptp
-sbj (_, Just (d,(s,r),_)) = case d of
+sbj (_, Just ((s,r), d, _)) = case d of
                              Send    -> Just s
                              Receive -> Just r
                              LoopSnd -> Just s
@@ -162,8 +162,8 @@ sem mu gg ptps =
    Emp         -> ( mu, emptyHG )
    Act (s,r) m -> ( i, ( rel, S.singleton e, S.singleton e', rel, rel ) )
        where i   = 1 + mu
-             e   = ( i, Just ( Send, ( s, r ), m ) )
-             e'  = ( i, Just ( Receive, ( s, r ), m ) )
+             e   = ( i, Just ( ( s, r ), Send, m ) )
+             e'  = ( i, Just ( ( s, r ), Receive, m ) )
              rel = S.singleton ( S.singleton e, S.singleton e' )
    Par ggs     -> if isJust hgu then (mu', fromJust hgu) else error (msgFormat SGG "Something wrong in a fork: " ++ (show (Par ggs)))
      where ( mu', l ) = semList mu ggs ptps
@@ -190,7 +190,7 @@ sem mu gg ptps =
      where ps                = ggptp S.empty gg'
            ( mu', hgb )     = if S.member p ps then sem mu gg' ptps else error (msgFormat SGG "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
            ( i, suf )       = ( 1+mu' , show i )
-           ( eL, eE )       = (S.singleton (i, Just ( LoopSnd , ( p , p ) , lpref ++ suf )), S.singleton ((-i), Just ( LoopRcv , ( p , p ) , epref ++ suf )))
+           ( eL, eE )       = (S.singleton (i, Just ( ( p , p ) , LoopSnd , lpref ++ suf )), S.singleton ((-i), Just ( ( p , p ) , LoopRcv , epref ++ suf )))
            rel              = S.fromList ([( S.singleton e , eE ) | e <- S.toList $ maxOf $ hgb] ++
                                           [( eL , S.singleton e ) | e <- S.toList $ minOf $ hgb] ++
                                           [( eE , eL )]
@@ -225,15 +225,15 @@ cp2dot ev = "node" ++ (replaceChar '-' '_' $ show $ fst ev) ++ suf
               then ""
               else let act = (fromJust $ snd ev) in
                     case act of
-                     ( Send, _, _ )    -> "snd"
-                     ( Receive, _, _ ) -> "rcv"
-                     ( LoopSnd, _, _ ) -> subjectOf act
-                     ( LoopRcv, _, _ ) -> subjectOf act
+                     ( _, Send, _ )    -> "snd"
+                     ( _, Receive, _ ) -> "rcv"
+                     ( _, LoopSnd, _ ) -> subjectOf act
+                     ( _, LoopRcv, _ ) -> subjectOf act
                      _                 -> error (msgFormat SGG "ERROR " ++ show ev)
 
 ev2dot :: E -> Map String String -> String
 ev2dot ev@(_, Nothing) _  = cp2dot ev ++ cpV
-ev2dot ev@(_, Just (d, (s,r), m)) flines =
+ev2dot ev@(_, Just ((s,r), d, m)) flines =
   case d of
    LoopSnd -> cp2dot ev ++ " [label=\"" ++ (rmChar '\"' $ show s) ++ actstr  ++ "]\n"
    LoopRcv -> cp2dot ev ++ " [label=\"" ++ (rmChar '\"' $ show s) ++ actstr  ++ "]\n"

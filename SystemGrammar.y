@@ -118,10 +118,10 @@ B : pre ';' cho                       { cfsmPref $1 (choice $3) }
   | pre "do" str                      { cfsmJump $1 $3 }
   | '(' M ')'                         { $2 }
 
-pre : str '!' str		      { (Send,(self,$1),$3) }
-    | str '?' str                     { (Receive,($1,self),$3) }
-    | "tau" str                       { (Tau,(self,self),$2) }
-    | "tau"                           { (Tau,(self,self),"") }
+pre : str '!' str		      { ((self,$1),Send,$3) }
+    | str '?' str                     { (($1,self),Receive,$3) }
+    | "tau" str                       { ((self,self),Tau,$2) }
+    | "tau"                           { ((self,self),Tau,"") }
 
 ptps : str                            { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
      | str ',' ptps	              { if (isPtp $1) then ($1: $3) else myErr ("Bad name " ++ $1) }
@@ -235,9 +235,9 @@ systemFrom d l =
 checkSelf :: (Ptp,CFSM) -> (Ptp,CFSM)
 checkSelf (ptp, m@(states,q0,acts,trxs)) =
   let check act = case act of
-                   (Send,(s,r),_)    -> (ptp == r)
-                   (Receive,(s,r),_) -> (ptp == s)
-                   (Tau,_,_)         -> False
+                   ((s,r),Send,_)    -> (ptp == r)
+                   ((s,r),Receive,_) -> (ptp == s)
+                   (_,Tau,_)         -> False
    in if S.null $ S.filter check acts
       then (ptp,m)
       else myErr ("Machine " ++ ptp ++ " cannot communicate with itself: " ++ (show m))
