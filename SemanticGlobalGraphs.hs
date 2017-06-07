@@ -106,7 +106,8 @@ hg # hg' = ( rel, minOf hg, maxOf hg', fstOf hg, lstOf hg' )
 
 -- rmEvs hg evs returns the hypergraph obtained by restricting hg to events not in evs
 rmEvs :: HG -> Set E -> HG
-rmEvs hg = ( S.fromList rel, S.fromList min, S.fromList max, fst, lst )
+rmEvs hg evs =
+  ( S.fromList rel, S.fromList min, S.fromList max, fst, lst )
   where
     evs' = [ e | e <- eventsOf hg, not (S.member e evs) ]
     rel  = [(e,e') | e <- comms, e' <- comms, precHG hg (e,e') ]
@@ -154,12 +155,13 @@ ws hg hg' = L.all (precHG (seqHG hg hg')) chkl
   where chkl = [( e, e' ) | e  <- L.concat $ S.toList (S.map (S.toList . cs) (lstOf $ hg)),
                             e' <- L.concat $ S.toList (S.map (S.toList . ef) (fstOf $ hg'))]
 
-hgwb :: [HG] -> [HG]
-hgwb [] = []
-hgwb hg:hgs =
-  case rmEvs hg () of
-    [] -> []
-    _  -> let min = fstOf hg
+-- TOBEFINISHED-------------------------------------------------
+-- hgwb :: [HG] -> [HG]
+-- hgwb [] = []
+-- hgwb hg:hgs =
+--   case rmEvs hg () of
+--     [] -> []
+--     _  -> let min = fstOf hg
 
 --
 -- PRE: 

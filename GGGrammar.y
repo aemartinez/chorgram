@@ -10,7 +10,7 @@
 --
 -- the binary operators |, +, and ; are given in ascending order of
 -- precedence.  The parser generator is Haskell's 'Happy' and the
--- parser (GGparser.hs) is obtained by typing'make parser'. Note that
+-- parser (GGparser.hs) is obtained by typing 'make parser'. Note that
 -- the empty graph has been removed as not necessary.
 --
 -- The only syntactic check made (right now) during the parsing are

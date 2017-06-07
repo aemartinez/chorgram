@@ -116,7 +116,7 @@ ggptp env ptps g =
 proj :: (Map String GG) -> GG -> Ptp -> State -> State -> Int -> (CFSM, State)
 proj env gg p q0 qe n =
   let suf    = show n
-      tauact = (Tau, (p,p), "")
+      tauact = ((p,p), Tau, "")
       dm     = ( (S.fromList [q0,qe], q0, S.singleton tauact, tautrx q0 qe) , qe )
       tautrx = \q1 -> \q2 -> if q1==q2 then S.empty else S.singleton (q1, tauact, q2)
   in case gg of
@@ -124,7 +124,7 @@ proj env gg p q0 qe n =
       Act (s,r) m -> if (p/=s && p/=r)
                      then dm
                      else ( ((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0,c,qe))) , qe )
-        where c = if (p == s) then (Send,(p,r),m) else (Receive,(s,p),m)
+        where c = if (p == s) then ((p,r), Send, m) else ((s,p), Receive, m)
       Par ggs     -> ( replaceState (initialOf m) q0 ( S.union (S.singleton qe) (statesOf m ) ,
                                                        initialOf m ,
                                                        S.union (actionsOf m) (S.singleton tauact) ,

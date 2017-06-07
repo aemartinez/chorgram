@@ -31,7 +31,7 @@ data Dir     = Send
              | LoopRcv
                deriving (Eq,Ord,Show)
 type Channel = ( Ptp, Ptp )
-type Action  = ( Dir, Channel, Message )
+type Action  = ( Channel, Dir, Message )
 type LTrans  = Atrans State Action
 type CFSM    = Agraph State Action
 
@@ -67,14 +67,14 @@ stateNumbers :: System -> [Int]
 stateNumbers ( sys, _ ) = L.map stateNumber sys
 
 existSend :: Set Action -> Bool
-existSend set = F.or $ S.map (\( dir, _, _ ) -> dir == Send) set
+existSend set = F.or $ S.map (\( _, dir, _ ) -> dir == Send) set
 
 dualAction :: Action -> Action
-dualAction (d,ch,msg) =
+dualAction (ch,d,msg) =
   case d of
-   Send    -> ( Receive, ch, msg )
-   Receive -> ( Send, ch, msg )
-   _       -> ( d, ch, msg )
+   Send    -> ( ch, Receive, msg )
+   Receive -> ( ch, Send, msg )
+   _       -> ( ch, d, msg )
 
 dualCFSM :: CFSM -> CFSM
 dualCFSM ( states, q0, acts, trxs ) =
@@ -84,7 +84,7 @@ msgOf :: Action -> Message
 msgOf ( _, _, msg ) = msg
 
 subjectOf :: Action -> Ptp
-subjectOf ( d, ( s, r ), _ ) = case d of
+subjectOf ( ( s, r ), d, _ ) = case d of
                                 Send    -> s
                                 Receive -> r
                                 _       -> s
@@ -137,12 +137,12 @@ replaceStates cond q m@( states, _, _, _ ) =
 renamePtp :: Ptp -> Ptp -> CFSM -> CFSM
 renamePtp old new ( states, q0, acts, trxs ) = ( states, q0, acts', trxs' )
   where acts' = S.map ract acts
-        ract  = \( d, ( s, r ), m ) -> ( d, (aux s, aux r) , m )
+        ract  = \( ( s, r ), d, m ) -> ( (aux s, aux r), d, m )
         trxs' = S.map (\(q, act ,q') -> ( q, ract act, q' )) trxs
         aux p = if p == old then new else p
 
 dActions :: CFSM -> State -> Dir -> Set LTrans
-dActions m q d = (S.filter (\( _, ( d', _, _ ), _ ) -> d == d') (step m q))
+dActions m q d = (S.filter (\( _, ( _, d', _ ), _ ) -> d == d') (step m q))
 
 sndActions :: CFSM -> State -> Set (Action, State)
 sndActions m q = S.map (\( _, e , q' ) -> ( e, q' )) (dActions m q Send)
@@ -249,13 +249,13 @@ cfsmUnion q0 l = (L.foldr (\(states, _, _,_) -> S.union states) (S.singleton q0)
 
 strToAction :: P -> Id -> [String] -> [Action]
 strToAction _ _ [] = []
-strToAction ptps sbj [s] = [( Tau, ((ptps!sbj), (ptps!sbj) ), "not action: " ++ s)]
-strToAction ptps sbj [s,s'] = [( Tau, (ptps!sbj, ptps!sbj ), "not action: " ++ s ++ " - " ++ s')]
+strToAction ptps sbj [s] = [( ((ptps!sbj), (ptps!sbj) ), Tau, "not action: " ++ s)]
+strToAction ptps sbj [s,s'] = [( (ptps!sbj, ptps!sbj ), Tau, "not action: " ++ s ++ " - " ++ s')]
 strToAction ptps sbj (p:d:msg:xs)
-  | d == "!"   = ( Send,    (ptps!sbj, ptps!(read p :: Id)), msg ):(strToAction ptps sbj xs)
-  | d == "?"   = ( Receive, (ptps!(read p :: Id), ptps!sbj), msg ):(strToAction ptps sbj xs)
-  | d == "tau" = ( Tau,     (ptps!sbj, ptps!(read p :: Id)), msg ):(strToAction ptps sbj xs)
-  | otherwise  = ( Tau,     (ptps!sbj, ptps!(read p :: Id)), msg++"unknown direction: " ++ d ):(strToAction ptps sbj xs)
+  | d == "!"   = ( (ptps!sbj, ptps!(read p :: Id)), Send,    msg ):(strToAction ptps sbj xs)
+  | d == "?"   = ( (ptps!(read p :: Id), ptps!sbj), Receive, msg ):(strToAction ptps sbj xs)
+  | d == "tau" = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ):(strToAction ptps sbj xs)
+  | otherwise  = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ++ "unknown direction: " ++ d ):(strToAction ptps sbj xs)
 
 --
 -- parse text returns a system provided that 'text' represents a few
@@ -313,8 +313,8 @@ parseFSA text = if L.length pairs == L.length outs &&
                                                                        _            -> error ("gmc: Line " ++ (show l) ++ ": bad CFSM")
            []        -> ms
         str2act line sbj d msg p = case d of
-                                    "!" -> ( Send,    (ptps'!sbj, ptps'!p), msg )
-                                    "?" -> ( Receive, (ptps'!p, ptps'!sbj), msg )
+                                    "!" -> ( (ptps'!sbj, ptps'!p), Send,    msg )
+                                    "?" -> ( (ptps'!p, ptps'!sbj), Receive, msg )
                                     _   -> error ("gmc: Line " ++ show line ++ "unrecognised communication action " ++ d)
 
 printState :: State -> String -> String
@@ -336,7 +336,7 @@ printMessage :: Message -> String
 printMessage msg = msg
 
 printAction :: Action -> Map String String -> String
-printAction ( dir, (s,r), msg ) flines =
+printAction ( (s,r), dir, msg ) flines =
   case dir of
    LoopSnd -> show s ++ show msg
    LoopRcv -> show r ++ show msg
@@ -374,7 +374,7 @@ cfsm2String sbj m = ".outputs " ++ sbj ++ "\n.state graph\n" ++ (rmChar '\"' tx)
      where tx = L.concat $ L.map (\t -> (rmChar '\"' $ prt t) ++ "\n") (S.toList $ gtrans m)
            finish = ".marking " ++ (rmChar '\"' $ show $ ginitialnode m) ++ "\n.end\n\n"
            prt t = (show $ gsource t) ++ " " ++ (lab $ glabel t) ++ " " ++ (show $ gtarget t)
-           lab ( dir, ( s, r ), msg ) = case dir of
+           lab ( ( s, r ), dir, msg ) = case dir of
                                          Send    -> show r ++ " ! " ++ show msg
                                          Receive -> show s ++ " ? " ++ show msg
                                          Tau     -> " tau " ++ show msg

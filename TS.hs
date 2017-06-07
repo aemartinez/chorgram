@@ -42,14 +42,14 @@ emptyBuffer ptps = M.fromList [((s,r),[]) | (_,s) <- M.assocs ptps, (_,r) <- M.a
 --   PRE:  t is a configuration enabled at c
 --   POST: the event corresponding to t from c
 toKEvent :: Configuration -> P -> LTrans -> KEvent
-toKEvent (n, _) ptps (_, (d, (s,r), msg), _) = (n!!(findId s l), n!!(findId r l), s, r, d, msg)
+toKEvent (n, _) ptps (_, ((s,r), d, msg), _) = (n!!(findId s l), n!!(findId r l), s, r, d, msg)
   where l = M.assocs ptps
 
 evt2interaction :: KEvent -> Interaction
 evt2interaction (_, _, s, r, _, msg) = (s, r, msg)
 
 action2interaction :: Action -> Interaction
-action2interaction (_, (_, m'), msg) = (m',m',msg)
+action2interaction ((s,r), _, msg) = (m',m',msg)
 
 succEvents :: TSb -> Configuration -> Set KEvent
 succEvents ts n = S.map (\(_, e, _) -> e) (deriv n ts)
