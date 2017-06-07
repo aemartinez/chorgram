@@ -49,7 +49,7 @@ evt2interaction :: KEvent -> Interaction
 evt2interaction (_, _, s, r, _, msg) = (s, r, msg)
 
 action2interaction :: Action -> Interaction
-action2interaction ((s,r), _, msg) = (m',m',msg)
+action2interaction ((s,r), _, msg) = (s,r,msg)
 
 succEvents :: TSb -> Configuration -> Set KEvent
 succEvents ts n = S.map (\(_, e, _) -> e) (deriv n ts)

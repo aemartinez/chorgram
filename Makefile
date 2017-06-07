@@ -14,7 +14,7 @@ all:
 	$(ccmd) BuildGlobal.hs &&\
 	$(ccmd) GGparser.hs &&\
 	$(ccmd) SystemParser.hs &&\
-#	$(ccmd) sgg.hs &&\
+	$(ccmd) sgg.hs &&\
 	$(ccmd) sysparser.hs
 
 debug:
