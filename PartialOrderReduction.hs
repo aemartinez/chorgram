@@ -5,6 +5,7 @@
 
 module PartialOrderReduction where
 
+import CFSM
 import TS
 import Data.Set as S
 import Data.List as L
@@ -55,6 +56,21 @@ chooseCandidate ts visited n = findAmple (ample n ts) (deriv n ts)
         findAmple [] allt = allt
 
 
+ample :: Configuration -> TSb -> [Set KTrans]
+ample n ts = if allSelfLoops then [next] else L.map snd $ L.sortBy compareList events
+  where next          = deriv n ts
+        allSelfLoops  = F.and $ S.map (\(x,_,z) -> x==z) next
+        transList     = S.toList $ S.map (\x -> (machines x, S.singleton x)) next
+        events        = mygroup (length transList) transList
+        dijointPtps        = \ (m1,_) (m2,_) -> not $ S.null (S.intersection m1 m2)
+        pairwiseUnion = \ xs -> L.map (\ys ->  L.foldr (\ (m1,e1) (m2,e2) -> (S.union m1 m2, S.union e1 e2)) (S.empty, S.empty) ys) xs
+        --
+        mygroup :: Int -> [(Set Ptp, Set KTrans)] -> [(Set Ptp, Set KTrans)] 
+        mygroup i xs  = let newlist = pairwiseUnion (L.groupBy dijointPtps xs)
+                        in if i > (length newlist)
+                           then mygroup (length newlist) newlist
+                           else xs
+        compareList  = \ (_,e1) (_,e2) -> compare (S.size e1) (S.size e2)
 --
 --
 reduce :: TSb -> TSb

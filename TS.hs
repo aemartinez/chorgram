@@ -109,7 +109,8 @@ projectTS (nodes, initnode, _, trans) p = (states, q0, actions, finalTrans)
                                         else let sucnodes = S.toList $ S.map (\(_,s) -> s) $ S.filter (\(l,s) -> (isNothing $ l) && (not $ S.member s visited)) $ (mysucc n)
                                              in traverse (ns++sucnodes) (S.insert n visited) (acc++sucnodes)
           traverse [] _ acc           = acc
-          
+
+
 firstActions :: TSb -> Configuration -> Ptp -> Set Action -> Set Action
 firstActions ts n0 p goal = traverse [n0] S.empty S.empty
   where 
@@ -123,30 +124,16 @@ firstActions ts n0 p goal = traverse [n0] S.empty S.empty
                              todo    = S.map (\(_,y) -> y) $ S.filter (\(x,_) -> isNothing x ) $ S.map (\(e, n') -> ((project e p), n')) pairs
                          in traverse (ns++(S.toList todo)) (S.insert n visited) (S.union current actions)
 
+
 possibleActions :: System -> Ptp -> Configuration -> Set Action
 possibleActions (sys,ptps) p n = S.map (\(_,y,_) -> y) $ CFSM.step (sys!!i) ((fst n)!!i) -- S.map (\(_,y,_) -> y) $ S.filter (\(x,_,_) -> x == ((fst n)!!i)) trans
     where -- (_,_,_,trans) = (sys!!i)
           i             = findId p (M.assocs ptps)
 
-ample :: Configuration -> TSb -> [Set KTrans]
-ample n ts = if allSelfLoops then [next] else L.map snd $ L.sortBy compareList events
-  where next          = deriv n ts
-        allSelfLoops  = F.and $ S.map (\(x,_,z) -> x==z) next
-        transList     = S.toList $ S.map (\x -> (machines x, S.singleton x)) next
-        events        = mygroup (length transList) transList
-        dijointPtps        = \ (m1,_) (m2,_) -> not $ S.null (S.intersection m1 m2)
-        pairwiseUnion = \ xs -> L.map (\ys ->  L.foldr (\ (m1,e1) (m2,e2) -> (S.union m1 m2, S.union e1 e2)) (S.empty, S.empty) ys) xs
-        --
-        mygroup :: Int -> [(Set Ptp, Set KTrans)] -> [(Set Ptp, Set KTrans)] 
-        mygroup i xs  = let newlist = pairwiseUnion (L.groupBy dijointPtps xs)
-                        in if i > (length newlist)
-                           then mygroup (length newlist) newlist
-                           else xs
-        compareList  = \ (_,e1) (_,e2) -> compare (S.size e1) (S.size e2)
-        --
 
-independent:: KEvent -> KEvent -> Bool
+independent :: KEvent -> KEvent -> Bool
 independent (_,_,m1,m2,_,_) (_,_,m1',m2',_,_) = (m1 /= m1')  && (m1 /= m2') && (m2 /= m1')  && (m2 /= m2') 
+
 
 reachableNode :: TSb -> Configuration -> [Configuration]
 reachableNode ts@(confs, _, _, _) n0 = traverse (S.singleton n0) (S.singleton n0) [n0]
