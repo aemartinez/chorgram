@@ -55,6 +55,18 @@ parseSystem ext txt =
     ""     -> parseFSA (Prelude.map (\x -> words x) (lines txt))
     _      -> error ("unknown extension " ++ ext)
 
+-- to be moved in TS.hs
+--
+--
+--
+renameStates :: Map Node Node -> TSb -> TSb
+renameStates sigma (confs, n0, events, trans) = (confs', n0', events, trans')
+  where confs'     = S.map aux confs
+        n0'        = aux n0
+        trans'     = S.map (\(n, e, n') -> (aux n, e, aux n')) trans
+        aux (ls,b) = if M.member ls sigma then (sigma!ls, b) else (ls,b)
+  
+
 main :: IO ()
 main =  do progargs <- getArgs
            if L.null progargs
