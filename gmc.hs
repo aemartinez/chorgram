@@ -40,10 +40,12 @@ branchingPropertyThread system ts var = do
       putMVar var braprop
       
 printingThread :: System -> TSb -> FilePath -> Map String String -> MVar Bool -> IO ()
-printingThread system ts filename flines var = do
-     system2file filename ".dot" flines system
-     writeToFile (filename ++ "_toPetrify") (ts2petrify ts (flines!qsep))
-     putMVar var True
+printingThread system ts@(confs, _, _, _) filename flines var = do
+  let nodes = S.toList $ S.map fst confs
+  let sigma = M.fromList $ zip nodes [[show i] | i <- [0 .. L.length nodes]]
+  system2file filename ".dot" flines system
+  writeToFile (filename ++ "_toPetrify") (ts2petrify (renameStates sigma ts) (flines!qsep))
+  putMVar var True
 
 parseSystem :: String -> String -> System
 parseSystem ext txt =
