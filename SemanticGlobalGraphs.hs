@@ -68,6 +68,14 @@ fstOf (_,_,_,fsts,_) = fsts
 lstOf :: HG -> Set HE
 lstOf (_,_,_,_,lsts) = lsts
 
+isOutEvent :: E -> Bool
+isOutEvent (_,Nothing) = False
+isOutEvent (_, Just ((_,_), d, _)) = d == Send || d == LoopSnd
+
+isInpEvent :: E -> Bool
+isInpEvent (_,Nothing) = False
+isInpEvent (_, Just ((_,_), d, _)) = d == Receive || d == LoopRcv
+
 eventsOf :: Set HE -> [E]
 eventsOf rel = S.foldr (\l l' -> l++l') [] set
   where set = S.map (\(es,es')->((S.toList es) ++ (S.toList es'))) rel
@@ -128,13 +136,22 @@ hb ( rel, _, _, _, _ ) = S.fromList [ (e,e') | (es,es') <- S.toList rel, e <- S.
 -- ws checks that two HG can be composed sequentially
 ws :: HG -> HG -> Bool
 ws pg pg' = L.all (precHG (seqHG pg pg')) chkl
-  where chkl = [( e, e' ) | e  <- L.concat $ S.toList (S.map (S.toList . csFst) (lstOf $ pg)),
-                            e' <- L.concat $ S.toList (S.map (S.toList . csSnd) (fstOf $ pg'))]
+  where chkl = [(e,e') | e  <- L.filter isOutEvent (eventsOf (relOf pg)),
+                         e' <- L.filter isInpEvent (eventsOf (relOf pg'))]
+  -- where chkl = [( e, e' ) | e  <- L.concat $ S.toList (S.map (S.toList . csFst) (lstOf $ pg)),
+  --                           e' <- L.concat $ S.toList (S.map (S.toList . csSnd) (fstOf $ pg'))]
 
 unionHG :: Maybe HG -> Maybe HG -> Maybe HG
 unionHG hg hg' 
-  | (isJust hg) && (isJust hg') = let (hg1,hg1') = (fromJust hg, fromJust hg')
-                                  in Just ( S.union (relOf hg1) (relOf hg1'), S.union (minOf hg1) (minOf hg1'), S.union (maxOf hg1) (maxOf hg1'), S.union (fstOf hg1) (fstOf hg1'), S.union (lstOf hg1) (lstOf hg1') )
+  | (isJust hg) && (isJust hg') =
+      let (hg1,hg1') = (fromJust hg, fromJust hg')
+      in Just (
+               S.union (relOf hg1) (relOf hg1'),
+               S.union (minOf hg1) (minOf hg1'),
+               S.union (maxOf hg1) (maxOf hg1'),
+               S.union (fstOf hg1) (fstOf hg1'),
+               S.union (lstOf hg1) (lstOf hg1')
+              )
   | otherwise                   = Nothing
 
 unionsHG :: [Maybe HG] -> Maybe HG
@@ -158,16 +175,26 @@ semList mu ggs ptps = case ggs of
 --
 sem :: Mu -> GG -> P -> (Mu, HG)
 sem mu gg ptps =
-  case factorise $ normGG gg of
+  case gg of    -- Note: no longer normalisation and factorisation...factorise $ normGG gg
    Emp         -> ( mu, emptyHG )
    Act (s,r) m -> ( i, ( rel, S.singleton e, S.singleton e', rel, rel ) )
        where i   = 1 + mu
              e   = ( i, Just ( ( s, r ), Send, m ) )
              e'  = ( i, Just ( ( s, r ), Receive, m ) )
              rel = S.singleton ( S.singleton e, S.singleton e' )
-   Par ggs     -> if isJust hgu then (mu', fromJust hgu) else error (msgFormat SGG "Something wrong in a fork: " ++ (show (Par ggs)))
+   Par ggs     -> (i, hgu)
      where ( mu', l ) = semList mu ggs ptps
-           hgu        = unionsHG l
+           i          = 1 + mu'
+           hgu_       = unionsHG l
+           (e1,e2)    = ((S.singleton (i,Nothing), minOf $ fromJust hgu_), (maxOf $ fromJust hgu_, S.singleton ((-i), Nothing)))
+           hgu        = if isJust hgu_
+                        then (S.union (relOf $ fromJust hgu_) (S.fromList [e1, e2]),
+                              minOf $ fromJust hgu_,
+                              maxOf $ fromJust hgu_,
+                              S.singleton e1,
+                              S.singleton e2
+                             )
+                        else error (msgFormat SGG "Something wrong in a fork: " ++ (show (Par ggs)))
    Bra ggs     -> (i, fromJust hg')
      where ( mu', l )  = semList mu (S.toList ggs) ptps
            i           = 1 + mu'
