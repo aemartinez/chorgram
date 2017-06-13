@@ -24,7 +24,7 @@ event2petrify (q1,q2,m1,m2,_,msg) =
       st_comma = "CCC"
       st_colon = "COCO"
       st_del   = "delPTP" -- This odd delimiter is to avoid problems with the odd restrictions required by petrify
-  in rmChar '\"' (
+  in rmChars "_\"" (
     (state2petrify q1)++st_comma++
     (state2petrify q2)++st_comma++
     (show m1)++st_del++st_arrow++

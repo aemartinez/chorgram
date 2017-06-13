@@ -178,7 +178,7 @@ writeToFile file content = writeFile file content
 usage :: Command -> String
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
-               GMC  -> "gmc [-b | --bound number] [-m | --multiplicity number] [--minimise] [--determinise] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] [-l] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n"
+               GMC  -> "gmc [-b | --bound number] [-l] [-m | --multiplicity number] [--minimise] [-sn] [--determinise] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] [-l] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n"
                GG   -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG  -> "sgg [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SYS  -> "systemparser [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
@@ -226,6 +226,7 @@ getFlags cmd args =
       []                 -> defaultFlags(cmd)
       "-l":xs            -> M.insert "-l" "no"  (getFlags cmd xs)
       "-ts":xs           -> M.insert "-ts" "ts" (getFlags cmd xs)
+      "-sn":xs           -> M.insert "-sn" "no" (getFlags cmd xs)      
       "-D":y:xs          -> M.insert "-D"  y    (getFlags cmd xs)
       "-b":y:xs          -> M.insert "-b"  y    (getFlags cmd xs)
       "-m":y:xs          -> M.insert "-m"  y    (getFlags cmd xs)
@@ -311,6 +312,15 @@ glabel (_, e, _) = e
 
 gtarget :: Atrans vertex label -> vertex
 gtarget (_, _, v) = v
+
+-- Some utilities
+
+grenameVertex :: Ord vertex => Ord label => Map vertex vertex -> Agraph vertex label -> Agraph vertex label
+grenameVertex sigma (nodes, n0, labels, trans) = (nodes', n0', labels, trans')
+  where nodes' = S.map aux nodes
+        n0'    = aux n0
+        trans' = S.map (\(n, e, n') -> (aux n, e, aux n')) trans
+        aux n  = if M.member n sigma then sigma!n else n
 
 isTerminal ::  Eq vertex => vertex -> Agraph vertex label -> Bool
 isTerminal q (_,_,_,trxs) =

@@ -61,6 +61,15 @@ reinit (states, _, events, trans) n0 = (nodes, n0, nevents, ntrans)
           nevents = S.map (\(_, e, _) -> e) ntrans
 --          nevents = S.fromList [e | (_, e, _) <- S.toList ntrans]
 
+
+renameNodes :: Map Node Node -> TSb -> TSb
+renameNodes sigma (confs, n0, events, trans) = (confs', n0', events, trans')
+  where confs'     = S.map aux confs
+        n0'        = aux n0
+        trans'     = S.map (\(n, e, n') -> (aux n, e, aux n')) trans
+        aux (ls,b) = if M.member ls sigma then (sigma!ls, b) else (ls,b)
+
+
 sender :: KEvent -> Ptp
 sender (_, _, s, _, _, _) = s
 

@@ -12,8 +12,11 @@ import time
 import glob
 import argparse
 
+from utils import *
+
 SGG = "./sgg"
 dotCFG = '.dot.cfg'
+cmd = "chosem"
 
 # Setting flags
 parser = argparse.ArgumentParser(description="sgg: semantics of syntactic global graphs and their projections to communicating machines")
@@ -42,28 +45,15 @@ parser.add_argument("filename",
                     help = "Specify the path to file containing the CFSMs")
 args = parser.parse_args()
 
-
-debug = True if args.debug else False
-
 bname = os.path.basename((os.path.splitext(args.filename))[0])
 dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) + bname + os.sep
-try:
-    os.makedirs(dir)
-except OSError:
-    if os.path.exists(dir):
-        pass
-    else:
-        raise
+mkDir(dir)
 basename = dir + bname # os.path.basename(args.filename)
 
 ##################################### START HERE ###############################################
 
-def debugMsg(msg, force = False):
-    """Prints debugging messages"""
-    if args.debug or force:
-        print "chosem: " + ("{---" if not(force) else "") + msg + ("---}" if not(force) else "")
 
-debugMsg("\n   Generating " + bname + "\n\tResult in " + dir + "\n")
+debugMsg(args.debug, cmd, "\n   Generating " + bname + "\n\tResult in " + dir + "\n")
 
 starttime = time.time()
 
@@ -71,7 +61,7 @@ callsgg = ([SGG, "-d", args.dir] +
            (["-l"] if args.leg else []) +
            [args.filename])
 
-debugMsg(string.join(callsgg))
+debugMsg(args.debug, cmd, string.join(callsgg))
 sggtime = time.time()
 subprocess.check_call(callsgg)
 
@@ -94,12 +84,12 @@ gopt = copt + ["-Gsplines=" + dotmap['gglines']]
 sopt = copt + ["-Gsplines=" + dotmap['semlines']]
 
 for x in [d for d in os.listdir(dir) if d[-4:] == ".dot" and d[:4] != "cfsm" and d[:3] != "sem"]:
-    debugMsg("Dot-tifying " + dir + x)
+    debugMsg(args.debug, cmd, "Dot-tifying " + dir + x)
     subprocess.call(dot + gopt + [dir + x] + ["-o", dir + x[:-3] + args.df])
 
 for x in [d for d in os.listdir(dir) if d[-4:] == ".dot" and d[:4] == "cfsm"]:
-    debugMsg("Dot-tifying " + dir + x)
+    debugMsg(args.debug, cmd, "Dot-tifying " + dir + x)
     subprocess.call(dot + [gopt[0]] + [dir + x] + ["-o", dir + x[:-3] + args.df])
 
-debugMsg("Dot-tifying " + dir + "sem_sgg.dot")
+debugMsg(args.debug, cmd, "Dot-tifying " + dir + "sem_sgg.dot")
 subprocess.call(dot + sopt + [dir + "sem_sgg.dot"] + ["-o", dir + "sem_sgg." + args.df])

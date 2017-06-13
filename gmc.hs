@@ -44,7 +44,7 @@ printingThread system ts@(confs, _, _, _) filename flines var = do
   let nodes = S.toList $ S.map fst confs
   let sigma = M.fromList $ zip nodes [[show i] | i <- [0 .. L.length nodes]]
   system2file filename ".dot" flines system
-  writeToFile (filename ++ "_toPetrify") (ts2petrify (renameStates sigma ts) (flines!qsep))
+  writeToFile (filename ++ "_toPetrify") (ts2petrify (renameNodes sigma ts) (flines!qsep))
   putMVar var True
 
 parseSystem :: String -> String -> System
@@ -56,18 +56,6 @@ parseSystem ext txt =
     ".cms" -> (sysgrammar . lexer) txt
     ""     -> parseFSA (Prelude.map (\x -> words x) (lines txt))
     _      -> error ("unknown extension " ++ ext)
-
--- to be moved in TS.hs
---
---
---
-renameStates :: Map Node Node -> TSb -> TSb
-renameStates sigma (confs, n0, events, trans) = (confs', n0', events, trans')
-  where confs'     = S.map aux confs
-        n0'        = aux n0
-        trans'     = S.map (\(n, e, n') -> (aux n, e, aux n')) trans
-        aux (ls,b) = if M.member ls sigma then (sigma!ls, b) else (ls,b)
-  
 
 main :: IO ()
 main =  do progargs <- getArgs
@@ -87,7 +75,8 @@ main =  do progargs <- getArgs
                             "det" -> L.map FSA.determinise sys
                             "no"  -> sys
                             _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
-               let system = (sys',ptps)
+               let sigma (states, _, _, _) = M.fromList [( (S.toList states)!!i, "q" ++ show i ) | i <- range (S.size states)]
+               let system = (if (M.member "-sn" flags) then (L.map (\cfsm -> (grenameVertex (sigma cfsm) cfsm)) sys') else sys', ptps)
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (cfsmsIds system)) -- (L.map snd (M.assocs $ snd system)))
                let bufferSize =
                      read (flags ! "-b") :: Int

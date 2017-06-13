@@ -8,12 +8,14 @@
 
 import sys
 import subprocess
-import os
-import os
 import string
 import time
 import glob
 import argparse
+
+from utils import *
+
+cmdname = "chorgram"
 
 # Tools to combine
 cfgfile = 'config.cfg'
@@ -44,12 +46,17 @@ parser.add_argument("--dot",
                     dest = "dot",
                     action = "append",
                     type=str,
-                    help = "Options for dot starting without '-' (e.g., --dot Nnodesep=.5)"
+                    help = "Options for dot starting without '-' (e.g., --dot Nnodesep=.5). Use 'none' if no manipulation of dot files is required"
 )
 parser.add_argument("-l",
                     dest = "leg",
                     action = "store_false",
                     help = "Generates a legend from dot files"
+)
+parser.add_argument("-sn",
+                    dest = "sn",
+                    action = "store_false",
+                    help = "Suppresses simple names for states"
 )
 parser.add_argument("-dw",
                     dest = "dw",
@@ -123,22 +130,15 @@ parser.add_argument("filename",
 )
 args = parser.parse_args()
 
-debug = True if args.debug else False
 if args.hkc: HKC   = args.hkc
 if args.pn:  PETRY = args.pn
 if args.gmc: GMC   = args.gmc
 if args.gg:  BG    = args.gg
 
-bname = os.path.basename((os.path.splitext(args.filename))[0])
-dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) + bname + os.sep
-try:
-    os.makedirs(dir)
-except OSError:
-    if os.path.exists(dir):
-        pass
-    else:
-        raise
-basename = dir + bname      # os.path.basename(args.filename)
+basename_ = os.path.basename((os.path.splitext(args.filename))[0])
+dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) + basename_ + os.sep
+mkdir(dir)
+basename = dir + basename_      # os.path.basename(args.filename)
 
 factor = str(args.mul)
 
@@ -150,13 +150,7 @@ FINP = "_finalpn"
 PGLO = "_preglobal"
 GLOB = "_global"
 
-
-def debugMsg(msg, force = False):
-    """Prints debugging messages"""
-    if args.debug or force:
-        print "chorgram: " + ("{---" if not(force) else "") + msg + ("---}" if not(force) else "")
-
-debugMsg("\n   Executing with...\n\tgmc\t\t" + GMC +
+debugMsg(args.debug, cmdname, "\n   Executing with...\n\tgmc\t\t" + GMC +
          "\n\tBuildGraph\t" + BG +
          "\n\tHKC\t\t" + HKC +
          "\n\tPETRIFY\t\t" + PETRY +
@@ -166,7 +160,7 @@ debugMsg("\n   Executing with...\n\tgmc\t\t" + GMC +
 )
 date = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 starttime = time.time()
-debugMsg("Execution Started on " + date, True)
+debugMsg(args.debug, cmdname, "Execution Started on " + date, True)
 
 
 loginfo = [date, basename, args.filename]
@@ -188,16 +182,17 @@ callgmc = ([GMC,
             "-D", str(args.D),
             "-v", "" if args.shh else "v"] +
            (["-l"] if args.leg else []) +
+           (["-sn"] if args.sn else []) +
            (["-ts"] if args.ts else []) +
            [args.filename]
 )
 
-debugMsg(string.join(callgmc))
+debugMsg(args.debug, cmdname, string.join(callgmc))
 gmctime = time.time()
 try:
     subprocess.check_call(callgmc)
 except:
-    debugMsg(GMC + " failed")
+    debugMsg(args.debug, cmdname, GMC + " failed")
     loginfo = loginfo + ["gmc err"]
 
 with open(dir + '.machines') as f:
@@ -205,7 +200,7 @@ with open(dir + '.machines') as f:
     machine_number = len(machines)
 
 if machine_number < 2:
-    debugMsg("Less than 2 machines! Bye...",True)
+    debugMsg(args.debug, cmdname, "Less than 2 machines! Bye...",True)
     logexperiment("< 2 machines")
     sys.exit()
 
@@ -213,14 +208,14 @@ if args.ts:
     logexperiment("ts only")
     sys.exit()
 else:
-    debugMsg("Checking projections...")
+    debugMsg(args.debug, cmdname, "Checking projections...")
 
 tmpbool = True
 hkctime = 0
 
 for i in range(machine_number):
-    debugMsg("Testing machine "+ MACH + str(i) + " for language equivalence")
-    debugMsg(HKC + " -equiv " + basename + MACH + str(i) + " " + basename + PROJ + str(i))
+    debugMsg(args.debug, cmdname, "Testing machine "+ MACH + str(i) + " for language equivalence")
+    debugMsg(args.debug, cmdname, HKC + " -equiv " + basename + MACH + str(i) + " " + basename + PROJ + str(i))
     start = time.time()
     try:
         cmd = subprocess.Popen([HKC,
@@ -230,23 +225,25 @@ for i in range(machine_number):
                                 stdout=subprocess.PIPE
         )
     except:
-        debugMsg("Language equivalence check failed. Something wrong with " + HKC)
+        debugMsg(args.debug, cmdname, "Language equivalence check failed. Something wrong with " + HKC)
         loginfo = loginfo + ["hkc err"]
     stop = time.time()
     hkctime = hkctime + stop - start
     for line in cmd.stdout: spa = line    # read the last line produced by hkc
     spa = line.split(': ')                # after ': ' on the last line of its output hkc returns the boolean
     hkc_boolean_position = 1              # position of the boolean returned by hkc after the split
+    print spa
     res = spa[hkc_boolean_position].split(',')[0]
     tmpbool = tmpbool and (res == "true")
-    debugMsg("Is machine " + str(i) + " equivalent to its projection? "+ res)
+    debugMsg(args.debug, cmdname, "Is machine " + str(i) + " equivalent to its projection? "+ res)
 
-debugMsg("Language-equivalence (Representability part (i))? " + str(tmpbool), True)
+txt = "Language-equivalence (Representability part (i))? " + str(tmpbool)
+debugMsg(args.debug, cmdname, txt, True)
 
 
 ######################################## PETRIFY ###############################################
 
-debugMsg("Calling petrify...")
+debugMsg(args.debug, cmdname, "Calling petrify...")
 start = time.time()
 try:
     subprocess.check_call([PETRY,
@@ -255,7 +252,7 @@ try:
                            "-o" , dir + TEMP]
     )
 except:
-    debugMsg("Petrification failed. Something wrong with " + PETRY)
+    debugMsg(args.debug, cmdname, "Petrification failed. Something wrong with " + PETRY)
     loginfo = loginfo + ["petrify err"]
 stop = time.time()
 petritime = stop - start
@@ -275,58 +272,58 @@ try:
             lines = map(lambda x: x.replace(src,target), lines)
         with open(basename + PNET, "wt") as fout:
             for l in lines: fout.write(l)
-        debugMsg("Generating Global Graph...")
+        debugMsg(args.debug, cmdname, "Generating Global Graph...")
         ggstarttime = time.time()
         subprocess.check_call([BG, "-d" , dir, "-v", "" if args.shh else "v", basename + PNET])
         endtime = time.time()
 except:
-    debugMsg("Something wrong with the generation of global graph...")
+    debugMsg(args.debug, cmdname, "Something wrong with the generation of global graph...")
     loginfo = loginfo + [BG + " err"]
     ggstarttime = time.time()
     endtime = time.time()
-debugMsg("All done.\n\tTotal execution time: " +  str(endtime - starttime) +
-         "\n\t\tGMC check:\t\t\t" + str( gmctime - starttime) +
-         "\n\t\tHKC minimisation:\t\t" + str(hkctime) +
-         "\n\t\tPetrify:\t\t\t" + str(petritime) +
-         "\n\t\tGlobal graph generation:\t" + str(endtime - ggstarttime),
-         True
-)
+txt = "All done.\n\tTotal execution time: " +  str(endtime - starttime) +\
+         "\n\t\tGMC check:\t\t\t" + str( gmctime - starttime) +\
+         "\n\t\tHKC minimisation:\t\t" + str(hkctime) +\
+         "\n\t\tPetrify:\t\t\t" + str(petritime) +\
+         "\n\t\tGlobal graph generation:\t" + str(endtime - ggstarttime)
+debugMsg(args.debug, cmdname, txt, True)
 
 
 logexperiment("done.")
 
 
 ########################################## DOT #################################################
-debugMsg("Transforming dot files in " + args.df + " format", True)
-dot = ["dot"] + ([] if (args.dot==None) else (['-' + d for d in args.dot])) + ["-T" , args.df]
-for x in (["machines", "ts0"] +
-          (["ts" + str(args.bound)] if args.bound > 0 else []) +
-          (["projection_"+ str(i) for i in range(machine_number)])
-          ):
-    debugMsg("Dot-tifying " + basename + "_" + x + ".dot")
-    subprocess.call(dot + [basename + "_" + x + ".dot"] + ["-o", basename + "_" + x + "." + args.df])
-if debug:
-    subprocess.check_call(dot + [basename + PNET + FINP + ".dot", "-o", basename + FINP + "." + args.df])
-    subprocess.check_call(dot + [basename + PNET + PGLO + ".dot", "-o", basename + PGLO + "." + args.df],
-                          stderr=subprocess.PIPE
-    )
-subprocess.check_call(dot + ["-Gsplines=ortho", basename + PNET + GLOB + ".dot", "-o", basename + GLOB + "." + args.df],
-                      stderr=subprocess.PIPE
-)
+if not (args.dot==["none"]):
+    debugMsg(args.debug, cmdname, "Transforming dot files in " + args.df + " format", True)
+    dot = ["dot"] + ([] if (args.dot==None) else (['-' + d for d in args.dot])) + ["-T" , args.df]
+    for x in (["machines", "ts0"] +
+              (["ts" + str(args.bound)] if args.bound > 0 else []) +
+              (["projection_"+ str(i) for i in range(machine_number)])
+    ):
+        debugMsg(args.debug, cmdname, "Dot-tifying " + basename + "_" + x + ".dot")
+        subprocess.call(dot + [basename + "_" + x + ".dot"] + ["-o", basename + "_" + x + "." + args.df])
+    if args.debug:
+        subprocess.check_call(dot + [basename + PNET + FINP + ".dot", "-o", basename + FINP + "." + args.df])
+        subprocess.check_call(dot + [basename + PNET + PGLO + ".dot", "-o", basename + PGLO + "." + args.df],
+                              stderr=subprocess.PIPE
+        )
+        subprocess.check_call(dot + ["-Gsplines=ortho", basename + PNET + GLOB + ".dot", "-o", basename + GLOB + "." + args.df],
+                              stderr=subprocess.PIPE
+        )
 
 
 ###################################### CLEANING UP #############################################
 
-if args.nc and not debug:
+if args.nc and not args.debug:
     to_be_deleted = [
         f for sub in (glob.glob("./" + basename + x + "*")
                       for x in [PROJ,MACH,PNET,"_toPetrify", FINP, "_preglobal*"]
         )
         for f in sub
         ] + [dir + ".machines", dir + TEMP]
-    debugMsg("Deleting auxiliary files")
+    debugMsg(args.debug, cmdname, "Deleting auxiliary files")
     for fl in to_be_deleted:
-        debugMsg("\tDeleting " + fl)
+        debugMsg(args.debug, cmdname, "\tDeleting " + fl)
         try:
             os.remove(fl)
-        except: debugMsg("Expected file " + fl + " missing")
+        except: debugMsg(args.debug, cmdname, "Expected file " + fl + " missing")
