@@ -103,6 +103,19 @@ csFst = fst
 csSnd :: HE -> Set E
 csSnd = snd
 
+(@@) :: HG -> Ptp -> Set HE
+hg @@ p = S.map (\(v1,v2) -> (S.map aux v1, S.map aux v2)) (relOf hg)
+  where aux e = let q = sbj e
+                in if (((isJust q) && fromJust q == p) || q == Nothing)
+                   then e
+                   else (if isOutEvent e
+                         then (cp e, Nothing)
+                         else (if isInpEvent e then ((-(cp e)), Nothing) else error "!!!")
+                        )
+                                                                                                           
+communicationsOf :: HG -> Ptp -> [E]
+communicationsOf hg p = L.filter (\e -> isOutEvent e || isInpEvent e) (eventsOf (hg @@ p))
+
 -- # is not used
 (#) :: HG -> HG -> HG
 hg # hg' = ( rel, minOf hg, maxOf hg', fstOf hg, lstOf hg' )
@@ -129,9 +142,9 @@ reach es e' ker = not(S.null es) && ( e==e' || reach (S.union es' (stepHG e ker)
 stepHG :: E -> Set (E, E) -> Set E
 stepHG e ker = S.map snd (S.filter (\(e',_) -> e == e') ker)
 
--- happens-before relation
+-- happens-before relation; \widehat relation in the paper
 hb :: HG -> Set (E,E)
-hb ( rel, _, _, _, _ ) = S.fromList [ (e,e') | (es,es') <- S.toList rel, e <- S.toList es, e' <- S.toList es' ]
+hb hg = S.fromList [ (e,e') | (es,es') <- S.toList $ relOf hg, e <- S.toList es, e' <- S.toList es' ]
 
 -- ws checks that two HG can be composed sequentially
 ws :: HG -> HG -> Bool
@@ -197,15 +210,15 @@ sem mu gg ptps =
                         else error (msgFormat SGG "Something wrong in a fork: " ++ (show (Par ggs)))
    Bra ggs     -> (i, fromJust hg')
      where ( mu', l )  = semList mu (S.toList ggs) ptps
-           i           = 1 + mu'
-           hgu         = unionsHG l
-           hg'         = if (wb ggs && isJust hgu)
-                         then unionHG hgu
-                              (Just ( S.fromList $ L.concat $ L.map helper l, e, e', fstOf $ fromJust hgu, lstOf $ fromJust hgu ))
-                         else error (msgFormat SGG "Violation of well-branchedness: " ++ show (Bra ggs))
-           e           = S.singleton (i, Nothing)
-           e'          = S.singleton ((-i), Nothing)
-           helper x    = if isJust x then let x' = fromJust x in [(e, minOf x')] ++ [(maxOf x', e')] else error (msgFormat SGG "ERROR ...")
+           i   = 1 + mu'
+           hgu = unionsHG l
+           hg' = if (wb ggs && isJust hgu)
+                 then unionHG hgu
+                      (Just ( S.fromList $ L.concat $ L.map aux l, e, e', fstOf $ fromJust hgu, lstOf $ fromJust hgu ))
+                 else error (msgFormat SGG "Violation of well-branchedness: " ++ show (Bra ggs))
+           e   = S.singleton (i, Nothing)
+           e'  = S.singleton ((-i), Nothing)
+           aux = \x -> if isJust x then let x' = fromJust x in [(e, minOf x')] ++ [(maxOf x', e')] else error (msgFormat SGG "ERROR ...")
    Seq ggs     -> case ggs of
                    []            -> ( mu, emptyHG )
                    [g']          -> sem mu g' ptps
