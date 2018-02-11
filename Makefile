@@ -64,4 +64,4 @@ e:
 	 emacs -T $(title) -mm gmc.hs &
 
 git:
-	git commit -am "$(gitmsg)" && git push
+	git commit -am $(gitmsg) && git push
