@@ -38,9 +38,49 @@ type HG = (Set HE, Set E, Set E, Set HE, Set HE)
 --
 type Mu = K
 
+--
+-- sameAct aV returns the subject of the actions of aV provided that those are
+-- the same actions
+--
+sameAct :: Set E -> Maybe Action
+sameAct aV =
+  if (S.size acts) == 1 then S.elemAt 0 acts else Nothing
+  where acts = (S.map (\e -> if (isJust $ snd e) then (snd e) else Nothing) aV) S.\\ (S.singleton Nothing)
+
+-- TODO: to be finished
+sameThread :: HG -> E -> E -> Bool
+sameThread hg e e' =
+  (S.member (e,e') hbrel) || (S.member (e',e) hbrel) || (False)
+  where hbrel = hb hg
+
+-- to be moved
+--
+-- reflectsHG aV aV' checks that two lists of events are partitions and form a bijection between aV and aV'
+--
+reflectHG :: HG -> [Set E] -> [Set E] -> Maybe ([Set E] -> [Set E])
+reflectHG hg aV aV' =
+  if (L.length aV) == (L.length aV') && (checkPart aV) && (checkPart aV') && (eachSameAct pairs) && (upwardClose pairs)
+  then f
+  else Nothing
+  where
+    f = Nothing
+    pairs = L.zip aV aV'
+    eachSameAct l =
+      case l of
+        []         -> True
+        (aX,aY):l' -> if (sameAct aX == sameAct aY) then (eachSameAct l') else False
+    checkPart l =
+      case l of
+        []    -> True
+        aX:l' -> (S.null (S.intersection aX (S.unions l'))) && checkPart l'
+    upwardClose l =
+      case l of
+        []         -> True
+        (aX,aY):l' -> False -------------------------------
+
 ptpsOf :: E -> Maybe (Ptp, Ptp)
 ptpsOf (_, Just ((s,r), _, _)) = Just (s,r)
-ptpsOf (_, Nothing)          = Nothing
+ptpsOf (_, Nothing)            = Nothing
 
 sbjOf :: E -> Maybe Ptp
 sbjOf (_, Nothing)                  = Nothing
@@ -88,15 +128,6 @@ cp = fst
 actOf :: E -> Maybe Action
 actOf = snd
 
-sbj :: E -> Maybe Ptp
-sbj (_, Just ((s,r), d, _)) = case d of
-                             Send    -> Just s
-                             Receive -> Just r
-                             LoopSnd -> Just s
-                             LoopRcv -> Just r
-                             Tau     -> Nothing
-sbj (_, Nothing) = Nothing
-
 csFst :: HE -> Set E
 csFst = fst
 
@@ -105,7 +136,7 @@ csSnd = snd
 
 (@@) :: HG -> Ptp -> Set HE
 hg @@ p = S.map (\(v1,v2) -> (S.map aux v1, S.map aux v2)) (relOf hg)
-  where aux e = let q = sbj e
+  where aux e = let q = sbjOf e
                 in if (((isJust q) && fromJust q == p) || q == Nothing)
                    then e
                    else (if isOutEvent e
@@ -127,7 +158,7 @@ seqHG hg hg' = ( rel, minOf hg, maxOf hg', fstOf hg, lstOf hg' )
         l   = [( S.singleton e, S.singleton e' ) |
                e  <- eventsOf $ lstOf hg,  isJust $ actOf e,
                e' <- eventsOf $ fstOf hg', isJust $ actOf e',
-               (sbj e == sbj e')]
+               (sbjOf e == sbjOf e')]
 
 -- reflexive and transitive closure of the order induce by a hg
 precHG :: HG -> (E, E) -> Bool

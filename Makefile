@@ -8,7 +8,8 @@ petripath := $(shell find . -type d -name petrify)/bin
 os := $(shell uname -s)
 
 compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs
-	$(ccmd)
+	$(MAKE) all
+
 all:
 	$(ccmd) gmc.hs &&\
 	$(ccmd) BuildGlobal.hs &&\
