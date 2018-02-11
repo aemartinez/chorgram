@@ -7,6 +7,7 @@ profiling = -prof -auto-all -caf-all
 hkcpath := $(shell find . -type d -name 'hknt*')
 petripath := $(shell find . -type d -name petrify)/bin
 os := $(shell uname -s)
+gitmsg = "checkpoint"
 
 # compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs
 #	$(ccmd)
@@ -61,3 +62,6 @@ setup:
 
 e:
 	 emacs -T $(title) -mm gmc.hs &
+
+git:
+	git commit -am "$(gitmsg)" && git push
