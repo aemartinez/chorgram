@@ -49,16 +49,16 @@ import CFSM
   '§'	        { TokenEmp    }
   '->'	     	{ TokenArr    }
   '=>'	        { TokenMAr    }
-  '|'	        { TokenPar    }
+  '|'	        { TokenraP    }
   '+'	        { TokenBra    }
-  ';'	        { TokenSeq    }
+  ';'	        { TokenqeS    }
   ':'	        { TokenSec    }
   '('	        { TokenBro    }
   ')'	        { TokenBrc    }
   ','	        { TokenCom    }
   '{'	        { TokenCurlyo }
   '}'	        { TokenCurlyc }
-  'sel'         { TokenArb    }
+  'sel'         { TokenarB    }
   'repeat'      { TokenPer    }
   'end'         { TokenEnd    }
   'unless'      { TokenUnl    }
@@ -82,20 +82,20 @@ G : '§'				{ myErr "§ not permitted" } -- it used to be (Emps, S.empty) when d
                                   (True, True)   -> case $3 of
                                                     []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
                                                     s:[] -> ((Tca ($1 , s) $5), S.fromList([$1,s]))
-                                                    _    -> (Rap (L.map (\s -> (Act ($1 , s) $5)) $3),S.fromList($1:$3))
+                                                    _    -> (Rap (L.map (\s -> (Tca ($1 , s) $5)) $3),S.fromList($1:$3))
                                   (True, False)  -> myErr ($1 ++ " must be in " ++ (show $3))
                                   (False, _)     -> myErr ("Bad name " ++ $1)
                                 }
-  | G '|' G  	     		{ (Rap ((checkToken TokenPar $1) ++ (checkToken TokenPar $3)), S.union (snd $1) (snd $3)) }
+  | G '|' G  	     		{ (Rap ((checkToken TokenraP $1) ++ (checkToken TokenraP $3)), S.union (snd $1) (snd $3)) }
   | 'sel' str '{' G 'unless' str '+' G 'unless' str '}'	{ case (isPtp $2, (S.member $2 (S.union (snd $4) (snd $8)))) of
-                                                            (True, True) -> (Arb $2 ($4,$6,$8,$9), S.union (snd $4) (snd $8))
+                                                            (True, True) -> (Arb $2 (fst $4,$6,fst $8,$10), S.union (snd $4) (snd $8))
                                                             (False,_)    -> myErr ("Bad name " ++ $2)
                                                             (True,False) -> myErr ("Participant " ++ $2 ++ " cannot be the selector")
                                                          }
-  | G ';' G  	     		{ (Qes ((checkToken TokenSeq $1) ++ (checkToken TokenSeq $3)), S.union (snd $1) (snd $3)) }
+  | G ';' G  	     		{ (Qes ((checkToken TokenqeS $1) ++ (checkToken TokenqeS $3)), S.union (snd $1) (snd $3)) }
   | str 'repeat' G 'end'        {
       				  case ((isPtp $1), (S.member $1 (snd $3))) of
-                                       (True, True)  -> (Rep (fst $3) $1 , S.union (S.singleton $1) (snd $3))
+                                       (True, True)  -> (Per $1 (fst $3) , (snd $3))
                                        (False, _)    -> myErr ("Bad name " ++ $1)
                                        (True, False) -> myErr ("Participant " ++ $1 ++ " is not in the loop")
                                 }
@@ -116,11 +116,11 @@ data Token =
   | TokenPtps [Ptp]
   | TokenEmp
   | TokenArr
-  | TokenPar
-  | TokenBra
-  | TokenSeq
+  | TokenraP
+  | TokenqeS
   | TokenUnt
   | TokenSec
+  | TokenBra
   | TokenBro
   | TokenBrc
   | TokenCom
@@ -129,7 +129,7 @@ data Token =
   | TokenMAr
   | TokenCurlyo
   | TokenCurlyc
-  | TokenArb
+  | TokenarB
   | TokenPer
   | TokenEnd
   | TokenUnl
@@ -149,10 +149,10 @@ lexer s = case s of
     '-':'>':r -> TokenArr : (lexer $ tail r)
     '=':'>':r -> TokenMAr : (lexer $ tail r)
     '§':r     -> TokenEmp : lexer r
-    '|':r     -> TokenPar : lexer r
+    '|':r     -> TokenraP : lexer r
     '+':r     -> TokenBra : lexer r
     ':':r     -> TokenSec : lexer r
-    ';':r     -> TokenSeq : lexer r
+    ';':r     -> TokenqeS : lexer r
     ',':r     -> TokenCom : lexer r
     '(':r     -> TokenBro : lexer r
     ')':r     -> TokenBrc : lexer r
@@ -208,28 +208,16 @@ catchErr m k = case m of
 -- Plagiarism done
 --
 -- checkToken 'flattens', parallel, branching, and sequential composition
-checkToken :: Token -> (GG, Set Ptp) -> [GG]
+checkToken :: Token -> (RGG, Set Ptp) -> [RGG]
 checkToken t (g,_) = case t of
-                      TokenPar -> case g of
-                                   Par l -> l
+                      TokenraP -> case g of
+                                   Rap l -> l
                                    _ -> [g]
-                      TokenBra -> case g of
-                                   Bra l -> S.toList l
-                                   _ -> [g]
-                      TokenSeq -> case g of
-                                   Seq l -> l
+                      TokenqeS -> case g of
+                                   Qes l -> l
                                    _ -> [g]
                       _        -> [g]
 
--- ggsptp computes the set of participants of a syntactic global graph
-ggsptp :: Set Ptp -> GG -> Set Ptp
-ggsptp ps g = case g of
-               Emp         -> ps
-               Act (s,r) _ -> S.union ps (S.fromList [s,r])
-               Par gs      -> S.union ps (S.unions (L.map (ggsptp S.empty) gs))
-               Bra gs      -> S.union ps (S.unions (L.map (ggsptp S.empty) (S.toList gs)))
-               Seq gs      -> S.union ps (S.unions (L.map (ggsptp S.empty) gs))
-               Rep g' p    -> S.union ps (ggsptp (S.singleton p) g')
 
 myErr :: String -> a
 myErr err = error ("sggparser: ERROR - " ++ err)
