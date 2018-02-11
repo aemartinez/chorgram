@@ -25,6 +25,16 @@ data GG = Emp
         | Rep GG Ptp
         deriving (Eq, Ord, Show)
 
+-- A syntactic reversible global graph is like a syntactic global
+-- graph with guards and selectors on branches; for simplicity we
+-- consider just binary parallel and branches
+data RGG = Tca Channel Message
+         | Rap [RGG]
+         | Arb Ptp (RGG,String,RGG,String)
+         | Qes [RGG]
+         | Per Ptp RGG
+         deriving (Eq, Ord, Show)
+
 type Endpoint = String
 
 -- Syntactic global graphs can be normalised by flattening nested | and +
@@ -281,6 +291,34 @@ gg2dot gg name nodeSize =
       dotedges as = L.concat $ L.map (\(s,t) -> "\tnode" ++ (myshow s) ++ " -> node" ++ (myshow t) ++ "\n") as
       (vertexes, edges) = helper [(0,sourceV),(-1,sinkV)] [(0,-1)] gg
   in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
+
+--
+-- gg2erl gg generates a string encoding gg in Erlang's format
+--        for the reversible computation syntax
+-- Pre: Branches must me decorated with the selector and guards
+--      must be Erlang expressions
+-- Post: a string in the format expected by encoding.erl
+--
+gg2erl :: Int -> RGG -> (String, Int) 
+gg2erl ln _rgg =
+  let sep = ","
+  in case _rgg of
+    Tca (s,r) m           -> ("[{" ++ (show ln) ++ sep ++ "{" ++ "com" ++ sep ++ s ++ sep ++ r ++ sep ++ m ++ "}}]", ln+1)
+    Rap rggs        ->
+      L.foldr (\rg -> \(t,l) -> let (t',l') = gg2erl l rg in (t ++ t', l')) ("",ln) rggs
+      -- let (t1,ln1) = gg2erl ln rgg
+      --     (t2,ln') = gg2erl ln1 rgg'
+      -- in ("[{" ++ (show ln') ++ sep ++ "{" ++ "par" ++ sep ++ t1 ++ sep ++ t2 ++ "}}]", ln'+1)
+    Arb p (rgg,g,rgg',g') ->
+      let (t1,ln1) = gg2erl ln rgg
+          (t2,ln') = gg2erl ln1 rgg'
+      in ("[{" ++ (show ln) ++ sep ++ "{" ++ "cho" ++ sep ++ p ++ sep ++ t1 ++ sep ++ g ++ sep ++ t2 ++ sep ++ g' ++ "}}]", 1+ln')
+    Qes rggs ->
+      let rggs' = L.foldr (\rg -> \(t,l) -> let (t',l') = gg2erl l rg in (t ++ t',l')) ("",0) rggs
+      in ("[{" ++ (show ln) ++ sep ++ "{" ++ (fst rggs') ++ "}}]", 1+ln)
+    Per p rgg ->
+      let (body,ln') = gg2erl ln rgg
+      in ("[{" ++ (show ln) ++ sep ++ "{" ++ "itr" ++ sep ++ p ++ sep ++ body ++ "}}]", 1+ln')
 
 labelOf :: GG -> String
 labelOf gg = case gg of

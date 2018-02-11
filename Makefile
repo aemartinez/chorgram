@@ -1,4 +1,5 @@
 ccmd = ghc -threaded --make
+title = chorgram
 debug = -auto-all -caf-all -rtsopts
 ccdebug = $(ccmd) -Wall -threaded --make $(debug)
 cfgfile = config.cfg
@@ -7,8 +8,9 @@ hkcpath := $(shell find . -type d -name 'hknt*')
 petripath := $(shell find . -type d -name petrify)/bin
 os := $(shell uname -s)
 
-compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs
-	$(ccmd)
+# compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs
+#	$(ccmd)
+
 all:
 	$(ccmd) gmc.hs &&\
 	$(ccmd) BuildGlobal.hs &&\
@@ -35,6 +37,7 @@ clean:
 
 parser:
 	happy -a -i  GGGrammar.y -o GGparser.hs && $(ccmd) GGparser.hs
+	happy -a -i  RGGGrammar.y -o RGGparser.hs && $(ccmd) RGGparser.hs
 	happy -a -i  SystemGrammar.y -o SystemParser.hs && $(ccmd) SystemParser.hs
 
 config:
@@ -55,3 +58,6 @@ setup:
 	make hp
 	make parser
 	make all
+
+e:
+	 emacs -T $(title) -mm gmc.hs &
