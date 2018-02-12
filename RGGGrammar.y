@@ -6,12 +6,11 @@
 -- The grammar is the one used in the ICE16 paper with the addition
 -- of the repeat-until construct:
 --
---    G ::= P -> P : M | G|G | G+G | G;G | * G @ P | { G }
+--    G ::= P -> P : M | G|G | sel A { G unless phi § + G unless phi § } | G;G | repeat  P { G } | ( G )
 --
--- the binary operators |, +, and ; are given in ascending order of
+-- the binary operators | and ; are given in ascending order of
 -- precedence.  The parser generator is Haskell's 'Happy' and the
--- parser (GGparser.hs) is obtained by typing'make parser'. Note that
--- the empty graph has been removed as not necessary.
+-- parser (RGGparser.hs) is obtained by typing'make parser'.
 --
 -- The only syntactic check made (right now) during the parsing are
 -- (i) that sender and receiver of interactions have to be different,
@@ -30,7 +29,7 @@
 -- TODO: add line numbers
 --
 {
-module GGparser where
+module RGGparser where
 import SyntacticGlobalGraphs
 import Data.List as L
 import Data.Set as S
@@ -46,7 +45,7 @@ import CFSM
 
 %token
   str	        { TokenStr $$ }
-  '§'	        { TokenEmp    }
+  '§'	        { TokenGrd    }
   '->'	     	{ TokenArr    }
   '=>'	        { TokenMAr    }
   '|'	        { TokenraP    }
@@ -69,8 +68,7 @@ import CFSM
 
 %%
 
-G : '§'				{ myErr "§ not permitted" } -- it used to be (Emps, S.empty) when designers where allowed to use §; 
-  | str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
+G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
 				    (True, True, True)   -> ((Tca ($1 , $3) $5), S.fromList [$1,$3])
 				    (True, False, True)  -> myErr ("Bad name " ++ $3)
 				    (True, _, False)     -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver")
@@ -87,19 +85,22 @@ G : '§'				{ myErr "§ not permitted" } -- it used to be (Emps, S.empty) when d
                                   (False, _)     -> myErr ("Bad name " ++ $1)
                                 }
   | G '|' G  	     		{ (Rap ((checkToken TokenraP $1) ++ (checkToken TokenraP $3)), S.union (snd $1) (snd $3)) }
-  | 'sel' str '{' G 'unless' str '+' G 'unless' str '}'	{ case (isPtp $2, (S.member $2 (S.union (snd $4) (snd $8)))) of
+  | 'sel' str '{' G 'unless' guard '+' G 'unless' guard '}'	{ case (isPtp $2, (S.member $2 (S.union (snd $4) (snd $8)))) of
                                                             (True, True) -> (Arb $2 (fst $4,$6,fst $8,$10), S.union (snd $4) (snd $8))
                                                             (False,_)    -> myErr ("Bad name " ++ $2)
                                                             (True,False) -> myErr ("Participant " ++ $2 ++ " cannot be the selector")
                                                          }
   | G ';' G  	     		{ (Qes ((checkToken TokenqeS $1) ++ (checkToken TokenqeS $3)), S.union (snd $1) (snd $3)) }
-  | str 'repeat' G 'end'        {
-      				  case ((isPtp $1), (S.member $1 (snd $3))) of
-                                       (True, True)  -> (Per $1 (fst $3) , (snd $3))
-                                       (False, _)    -> myErr ("Bad name " ++ $1)
-                                       (True, False) -> myErr ("Participant " ++ $1 ++ " is not in the loop")
+  | 'repeat' str '{' G '}'      {
+      				  case ((isPtp $2), (S.member $2 (snd $4))) of
+                                       (True, True)  -> (Per $2 (fst $4) , (snd $4))
+                                       (False, _)    -> myErr ("Bad name " ++ $2)
+                                       (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
                                 }
   | '(' G ')'			{ ( $2 ) }
+
+guard : str '§'                 { $1 }
+      | str guard               { $1 ++ " " ++ $2 }
 
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
   | str ',' ptps                { if (isPtp $1)
@@ -114,7 +115,7 @@ ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name 
 data Token =
   TokenStr String
   | TokenPtps [Ptp]
-  | TokenEmp
+  | TokenGrd
   | TokenArr
   | TokenraP
   | TokenqeS
@@ -141,24 +142,28 @@ data Token =
 -- lexer :: (Token -> Err a) -> Err a
 lexer s = case s of
     [] -> []
-    '[':r     -> lexer $ tail (L.dropWhile (\c->c/=']') r)
-    '.':'.':r -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
-    ' '  :r   -> lexer r
-    '\n' :r   -> lexer r
-    '\t' :r   -> lexer r
-    '-':'>':r -> TokenArr : (lexer $ tail r)
-    '=':'>':r -> TokenMAr : (lexer $ tail r)
-    '§':r     -> TokenEmp : lexer r
-    '|':r     -> TokenraP : lexer r
-    '+':r     -> TokenBra : lexer r
-    ':':r     -> TokenSec : lexer r
-    ';':r     -> TokenqeS : lexer r
-    ',':r     -> TokenCom : lexer r
-    '(':r     -> TokenBro : lexer r
-    ')':r     -> TokenBrc : lexer r
-    '{':r     -> TokenCurlyo : lexer r
-    '}':r     -> TokenCurlyc : lexer r
-    _         -> TokenStr (fst s') : (lexer $ snd s')
+    '[':r                     -> lexer $ tail (L.dropWhile (\c->c/=']') r)
+    '.':'.':r                 -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
+    ' '  :r                   -> lexer r
+    '\n' :r                   -> lexer r
+    '\t' :r                   -> lexer r
+    '-':'>':r                 -> TokenArr : (lexer $ tail r)
+    '=':'>':r                 -> TokenMAr : (lexer $ tail r)
+    'e':'n':'d':r             -> TokenEnd : (lexer $ tail r)
+    's':'e':'l':r             -> TokenarB : (lexer $ tail r)
+    'u':'n':'l':'e':'s':'s':r -> TokenUnl : (lexer $ tail r)
+    'r':'e':'p':'e':'a':'t':r -> TokenPer : (lexer $ tail r)
+    '§':r                     -> TokenGrd : lexer r
+    '|':r                     -> TokenraP : lexer r
+    '+':r                     -> TokenBra : lexer r
+    ':':r                     -> TokenSec : lexer r
+    ';':r                     -> TokenqeS : lexer r
+    ',':r                     -> TokenCom : lexer r
+    '(':r                     -> TokenBro : lexer r
+    ')':r                     -> TokenBrc : lexer r
+    '{':r                     -> TokenCurlyo : lexer r
+    '}':r                     -> TokenCurlyc : lexer r
+    _                         -> TokenStr (fst s') : (lexer $ snd s')
         where s' = span isAlpha s
     
 parseError :: [Token] -> a

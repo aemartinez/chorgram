@@ -299,26 +299,26 @@ gg2dot gg name nodeSize =
 --      must be Erlang expressions
 -- Post: a string in the format expected by encoding.erl
 --
-gg2erl :: Int -> RGG -> (String, Int) 
-gg2erl ln _rgg =
+rgg2erl :: Int -> RGG -> (String, Int) 
+rgg2erl ln _rgg =
   let sep = ","
   in case _rgg of
-    Tca (s,r) m           -> ("[{" ++ (show ln) ++ sep ++ "{" ++ "com" ++ sep ++ s ++ sep ++ r ++ sep ++ m ++ "}}]", ln+1)
-    Rap rggs        ->
-      L.foldr (\rg -> \(t,l) -> let (t',l') = gg2erl l rg in (t ++ t', l')) ("",ln) rggs
-      -- let (t1,ln1) = gg2erl ln rgg
-      --     (t2,ln') = gg2erl ln1 rgg'
+    Tca (s,r) m -> ("[{" ++ (show ln) ++ sep ++ "{" ++ "com" ++ sep ++ s ++ sep ++ r ++ sep ++ m ++ "}}]", ln+1)
+    Rap rggs ->
+      L.foldr (\rg -> \(t,l) -> let (t',l') = rgg2erl l rg in (t ++ t', l')) ("",ln) rggs
+      -- let (t1,ln1) = rgg2erl ln rgg
+      --     (t2,ln') = rgg2erl ln1 rgg'
       -- in ("[{" ++ (show ln') ++ sep ++ "{" ++ "par" ++ sep ++ t1 ++ sep ++ t2 ++ "}}]", ln'+1)
     Arb p (rgg,g,rgg',g') ->
-      let (t1,ln1) = gg2erl ln rgg
-          (t2,ln') = gg2erl ln1 rgg'
-      in ("[{" ++ (show ln) ++ sep ++ "{" ++ "cho" ++ sep ++ p ++ sep ++ t1 ++ sep ++ g ++ sep ++ t2 ++ sep ++ g' ++ "}}]", 1+ln')
+      let (t1,ln1) = rgg2erl ln rgg
+          (t2,ln') = rgg2erl ln1 rgg'
+      in ("[{" ++ (show ln') ++ sep ++ "{" ++ "cho" ++ sep ++ p ++ sep ++ t1 ++ sep ++ g ++ sep ++ t2 ++ sep ++ g' ++ "}}]", 1+ln')
     Qes rggs ->
-      let rggs' = L.foldr (\rg -> \(t,l) -> let (t',l') = gg2erl l rg in (t ++ t',l')) ("",0) rggs
-      in ("[{" ++ (show ln) ++ sep ++ "{" ++ (fst rggs') ++ "}}]", 1+ln)
+      let (rggs',ln') = L.foldr (\rg -> \(t,l) -> let (t',l') = rgg2erl l rg in (t ++ t',l')) ("",ln) rggs
+      in ("[{" ++ (show ln') ++ sep ++ "{" ++ rggs' ++ "}}]", 1+ln')
     Per p rgg ->
-      let (body,ln') = gg2erl ln rgg
-      in ("[{" ++ (show ln) ++ sep ++ "{" ++ "itr" ++ sep ++ p ++ sep ++ body ++ "}}]", 1+ln')
+      let (body,ln') = rgg2erl ln rgg
+      in ("[{" ++ (show ln') ++ sep ++ "{" ++ "itr" ++ sep ++ p ++ sep ++ body ++ "}}]", 1+ln')
 
 labelOf :: GG -> String
 labelOf gg = case gg of
