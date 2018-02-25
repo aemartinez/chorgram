@@ -155,6 +155,8 @@ lexer s = case s of
     ',':r     -> TokenCom : lexer r
     '(':r     -> TokenBro : lexer r
     ')':r     -> TokenBrc : lexer r
+    '{':r     -> TokenCbo : lexer r
+    '}':r     -> TokenCbc : lexer r
     _         -> TokenStr (fst s') : (lexer $ snd s')
         where s' = span isAlpha s
     
