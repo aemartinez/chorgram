@@ -60,6 +60,8 @@ import CFSM
   ','	        { TokenCom    }
   '['	        { TokenCtb    }
   ']'	        { TokenCte    }
+  '{'	        { TokenCbo    }
+  '}'	        { TokenCbc    }
 
 %right '|'
 %right '+'
@@ -92,6 +94,12 @@ G : '§'				{ myErr "§ not permitted" } -- it used to be (Emps, S.empty) when d
                                     (True, True)  -> (Rep (fst $2) $4 , S.union (S.singleton $4) (snd $2))
                                     (False, _)    -> myErr ("Bad name " ++ $4)
                                     (True, False) -> myErr ("Participant " ++ $4 ++ " is not in the loop")
+                                }
+  | 'repeat' str '{' G '}'      {
+      				  case ((isPtp $2), (S.member $2 (snd $4))) of
+                                    (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
+                                    (False, _)    -> myErr ("Bad name " ++ $2)
+                                    (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
                                 }
   | '(' G ')'			{ ( $2 ) }
 
