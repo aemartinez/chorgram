@@ -6,12 +6,13 @@
 -- The grammar is the one used in the ICE16 paper with the addition
 -- of the repeat-until construct:
 --
---    G ::= P -> P : M | G|G | G+G | G;G | * G @ P | { G }
+--    G ::= P -> P : M | G|G | G+G | G;G | * G @ P | repeat P { G } | ( G )
 --
 -- the binary operators |, +, and ; are given in ascending order of
 -- precedence.  The parser generator is Haskell's 'Happy' and the
 -- parser (GGparser.hs) is obtained by typing'make parser'. Note that
--- the empty graph has been removed as not necessary.
+-- the empty graph has been removed as not necessary. We have that syntaxes
+-- * G @ P and repeat P { G } are equivalent.
 --
 -- The only syntactic check made (right now) during the parsing are
 -- (i) that sender and receiver of interactions have to be different,
@@ -60,8 +61,9 @@ import CFSM
   ','	        { TokenCom    }
   '['	        { TokenCtb    }
   ']'	        { TokenCte    }
-  '{'	        { TokenCbo    }
-  '}'	        { TokenCbc    }
+  '{'	        { TokenCurlyo }
+  '}'	        { TokenCurlyc }
+  'repeat'      { TokenSta    }
 
 %right '|'
 %right '+'
@@ -131,33 +133,36 @@ data Token =
   | TokenCte
   | TokenMAr
   | TokenErr String
+  | TokenCurlyo
+  | TokenCurlyc
   deriving Show
 
 
 -- lexer :: String -> [Token]
 -- lexer :: (Token -> Err a) -> Err a
 lexer s = case s of
-    [] -> []
-    '[':r     -> lexer $ tail (L.dropWhile (\c->c/=']') r)
-    '.':'.':r -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
-    ' '  :r   -> lexer r
-    '\n' :r   -> lexer r
-    '\t' :r   -> lexer r
-    '-':'>':r -> TokenArr : (lexer $ tail r)
-    '=':'>':r -> TokenMAr : (lexer $ tail r)
-    '§':r     -> TokenEmp : lexer r
-    '|':r     -> TokenPar : lexer r
-    '+':r     -> TokenBra : lexer r
-    '*':r     -> TokenSta : lexer r
-    '@':r     -> TokenUnt : lexer r
-    ':':r     -> TokenSec : lexer r
-    ';':r     -> TokenSeq : lexer r
-    ',':r     -> TokenCom : lexer r
-    '(':r     -> TokenBro : lexer r
-    ')':r     -> TokenBrc : lexer r
-    '{':r     -> TokenCbo : lexer r
-    '}':r     -> TokenCbc : lexer r
-    _         -> TokenStr (fst s') : (lexer $ snd s')
+    []                        -> []
+    '[':r                     -> lexer $ tail (L.dropWhile (\c->c/=']') r)
+    '.':'.':r                 -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
+    ' '  :r                   -> lexer r
+    '\n' :r                   -> lexer r
+    '\t' :r                   -> lexer r
+    '-':'>':r                 -> TokenArr : (lexer $ tail r)
+    '=':'>':r                 -> TokenMAr : (lexer $ tail r)
+    '§':r                     -> TokenEmp : lexer r
+    '|':r                     -> TokenPar : lexer r
+    '+':r                     -> TokenBra : lexer r
+    '*':r                     -> TokenSta : lexer r
+    'r':'e':'p':'e':'a':'t':r -> TokenSta : (lexer $ tail r)
+    '@':r                     -> TokenUnt : lexer r
+    ':':r                     -> TokenSec : lexer r
+    ';':r                     -> TokenSeq : lexer r
+    ',':r                     -> TokenCom : lexer r
+    '(':r                     -> TokenBro : lexer r
+    ')':r                     -> TokenBrc : lexer r
+    '{':r                     -> TokenCurlyo : lexer r
+    '}':r                     -> TokenCurlyc : lexer r
+    _                         -> TokenStr (fst s') : (lexer $ snd s')
         where s' = span isAlpha s
     
 parseError :: [Token] -> a
