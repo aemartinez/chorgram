@@ -326,7 +326,7 @@ rgg2erl ln _rgg =
     Tca (s,r) m -> (erlList $ erlTuple [ (show ln), erlTuple ["com", erlAtom s "ptp_", erlAtom r "ptp_", erlAtom m "msg_"] ], ln+1)
     Rap rggs ->
       let (threads, ln') = L.foldr aux ("", ln) rggs
-      in (erlList $ erlTuple [(show ln), erlTuple ["par", erlList threads]], 1 + ln')
+      in (erlList $ erlTuple [(show ln'), erlTuple ["par", threads]], 1 + ln')
     Arb p (rgg, g, rgg', g') ->
       let (t1, ln1) = rgg2erl ln rgg
           (t2, ln') = rgg2erl ln1 rgg'

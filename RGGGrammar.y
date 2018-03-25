@@ -68,11 +68,13 @@ import CFSM
 
 %%
 
-G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
+G : str '->' str ':' str        {
+                                  case ((isPtp $1), (isPtp $3), not($1 == $3)) of
 				    (True, True, True)   -> ((Tca ($1 , $3) $5), S.fromList [$1,$3])
 				    (True, False, True)  -> myErr ("Bad name " ++ $3)
-				    (True, _, False)     -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
-				    (False, True, True)  -> myErr ("Bad name " ++ $1)
+				    (True, True, False)  -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
+				    (True, False, False) -> myErr ("Now, this is odd... A sender " ++ $1 ++ " and " ++ $3 ++ " are equal but different")
+				    (False, True, True)  -> myErr ("Now, this is odd... A sender " ++ $1 ++ " and " ++ $3 ++ " are equal but different")
 				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
 				    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
                                 }
@@ -147,11 +149,11 @@ data Token =
 -- lexer :: (Token -> Err a) -> Err a
 lexer s = case s of
     [] -> []
-    '[':r                     -> lexer $ tail (L.dropWhile (\c->c/=']') r)
-    '.':'.':r                 -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
-    ' '  :r                   -> lexer r
-    '\n' :r                   -> lexer r
-    '\t' :r                   -> lexer r
+    '[':r                     -> lexer $ tail (L.dropWhile (\c->c/=']') r)   -- multi-line comment
+    '.':'.':r                 -> lexer $ tail (L.dropWhile (\c->c/='\n') r)  -- single-line comment
+    ' ':r                     -> lexer r
+    '\n':r                    -> lexer r
+    '\t':r                    -> lexer r
     '-':'>':r                 -> TokenArr : (lexer $ tail r)
     '=':'>':r                 -> TokenMAr : (lexer $ tail r)
     'e':'n':'d':r             -> TokenEnd : (lexer $ tail r)
@@ -217,7 +219,7 @@ catchErr m k = case m of
 --
 -- Plagiarism done
 --
--- checkToken 'flattens', parallel, branching, and sequential composition
+-- checkToken 'flattens', parallel and sequential composition
 checkToken :: Token -> (RGG, Set Ptp) -> [RGG]
 checkToken t (g,_) = case t of
                       TokenraP -> case g of
