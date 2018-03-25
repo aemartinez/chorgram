@@ -159,6 +159,12 @@ nop = sequence_ []
 verbose :: Map String String -> String -> String -> String -> IO()
 verbose m f v s = do if m ! f == v then (putStrLn $ s) else nop
 
+mkSep :: [String] -> String -> String
+mkSep l sep =
+  case l of
+    [] -> ""
+    s:l' -> s ++ (if (l' == []) then "" else (", " ++ (mkSep l' sep)))
+
 setFileNames :: String -> Map String String -> (String, String, String, String)
 setFileNames f flags = (dir, dir ++ baseFile, baseFile , takeExtension f)
   where baseFile = takeBaseName f

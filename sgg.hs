@@ -67,4 +67,4 @@ main = do putStrLn $ msgFormat SGG "start"
                       (rgggrammar . RGGparser.lexer) ggtxt
                 writeToFile (dir ++ "in_rgg_parsed.txt") (show rgg) >>=
                   (\_ -> putStrLn $ "\t" ++ dir ++ "in.rgg: is the initial reversible gg") >>=
-                  (\_ -> writeToFile (dir ++ "rgg.txt") (fst (rgg2erl 0 rgg)))
+                  (\_ -> writeToFile (dir ++ "rgg.txt") (fst (rgg2erl 1 rgg)))

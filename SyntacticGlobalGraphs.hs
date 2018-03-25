@@ -292,6 +292,14 @@ gg2dot gg name nodeSize =
       (vertexes, edges) = helper [(0,sourceV),(-1,sinkV)] [(0,-1)] gg
   in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
 
+erlTuple :: [String] -> String
+erlTuple tuple = case tuple of
+  [] -> ""
+  _  -> "{ " ++ (mkSep tuple ", ") ++ " }"
+
+erlList :: String -> String
+erlList els = "[ " ++ els ++ " ]"
+      
 --
 -- gg2erl gg generates a string encoding gg in Erlang's format
 --        for the reversible computation syntax
@@ -299,13 +307,13 @@ gg2dot gg name nodeSize =
 --      must be Erlang expressions
 -- Post: a string in the format expected by encoding.erl
 --
-rgg2erl :: Int -> RGG -> (String, Int) 
+rgg2erl :: Int -> RGG -> (String, Int)
 rgg2erl ln _rgg =
-  let sep = ","
+  let sep = ", "
   in case _rgg of
-    Tca (s,r) m -> ("[{" ++ (show ln) ++ sep ++ "{" ++ "com" ++ sep ++ s ++ sep ++ r ++ sep ++ m ++ "}}]", ln+1)
-    Rap rggs ->
-      L.foldr (\rg -> \(t,l) -> let (t',l') = rgg2erl l rg in (t ++ t', l')) ("",ln) rggs
+    Tca (s,r) m -> (erlList $ erlTuple [ (show ln), erlTuple [ mkSep ["com", s, r, m] sep ] ], ln+1)
+    Rap rggs -> let (par,ln') = L.foldr (\rg -> \(t,l) -> let (t',l') = rgg2erl l rg in (t ++ ", " ++ t', l')) ("", ln) rggs in
+      ("[{" ++ (show ln) ++ sep ++ "{" ++ "par, [" ++ par ++ "] }}]", ln'+1)
       -- let (t1,ln1) = rgg2erl ln rgg
       --     (t2,ln') = rgg2erl ln1 rgg'
       -- in ("[{" ++ (show ln') ++ sep ++ "{" ++ "par" ++ sep ++ t1 ++ sep ++ t2 ++ "}}]", ln'+1)
@@ -314,11 +322,18 @@ rgg2erl ln _rgg =
           (t2,ln') = rgg2erl ln1 rgg'
       in ("[{" ++ (show ln') ++ sep ++ "{" ++ "cho" ++ sep ++ p ++ sep ++ t1 ++ sep ++ g ++ sep ++ t2 ++ sep ++ g' ++ "}}]", 1+ln')
     Qes rggs ->
-      let (rggs',ln') = L.foldr (\rg -> \(t,l) -> let (t',l') = rgg2erl l rg in (t ++ t',l')) ("",ln) rggs
+      let (rggs',ln') = L.foldr (\rg -> \(t,l) ->
+                                  let (t', l') = rgg2erl l rg
+                                  in case (t,t') of
+                                    ("","") -> ("", l')
+                                    ("", _) -> (tail (init t'), l')
+                                    (_ , _) -> (erlList $ tail (L.init t) ++ sep ++ (tail (init t')), l')
+                                )
+            ("", ln) rggs
       in ("[{" ++ (show ln') ++ sep ++ "{" ++ rggs' ++ "}}]", 1+ln')
     Per p rgg ->
       let (body,ln') = rgg2erl ln rgg
-      in ("[{" ++ (show ln') ++ sep ++ "{" ++ "itr" ++ sep ++ p ++ sep ++ body ++ "}}]", 1+ln')
+      in ("[{" ++ (show ln') ++ sep ++ "{" ++ "rec" ++ sep ++ p ++ sep ++ body ++ "}}]", 1+ln')
 
 labelOf :: GG -> String
 labelOf gg = case gg of
