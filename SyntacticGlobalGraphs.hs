@@ -302,7 +302,7 @@ erlList :: String -> String
 erlList els = "[ " ++ els ++ " ]"
 
 erlAtom :: String -> String -> String
-erlAtom s pre = case s of
+erlAtom pre s = case s of
   "" -> ""
   _  -> if isLower(head s) then s else pre ++ s
       
@@ -316,26 +316,32 @@ erlAtom s pre = case s of
 rgg2erl :: Int -> RGG -> (String, Int)
 rgg2erl ln _rgg =
   let sep = ", "
-      aux = \rg -> \(t,l) ->
+      auxQes = \rg -> \(t,l) ->
                      let (t',l') = rgg2erl l rg in
                        case (t,t') of
                          ("","") -> ("", l')
                          ("", _) -> (tail (init t'), l')
                          (_ , _) -> (erlList $ tail (init t) ++ sep ++ (tail (init t')), l')
+      auxRap = \rg -> \(t,l) ->
+                     let (t',l') = rgg2erl l rg in
+                       case (t,t') of
+                         ("","") -> ("", l')
+                         ("", _) -> (t', l')
+                         (_ , _) -> (t ++ sep ++ t', l')
   in case _rgg of
-    Tca (s,r) m -> (erlList $ erlTuple [ (show ln), erlTuple ["com", erlAtom s "ptp_", erlAtom r "ptp_", erlAtom m "msg_"] ], ln+1)
+    Tca (s,r) m -> (erlList $ erlTuple [ (show ln), erlTuple ["com", erlAtom "ptp_" s, erlAtom "ptp_" r, erlAtom "msg_" m] ], 1 + ln)
     Rap rggs ->
-      let (threads, ln') = L.foldr aux ("", ln) rggs
-      in (erlList $ erlTuple [(show ln'), erlTuple ["par", threads]], 1 + ln')
+      let (threads, ln') = L.foldr auxRap ("", ln) rggs
+      in (erlList $ erlTuple [(show ln'), erlTuple ["par", erlList threads]], 1 + ln')
     Arb p (rgg, g, rgg', g') ->
       let (t1, ln1) = rgg2erl ln rgg
           (t2, ln') = rgg2erl ln1 rgg'
-      in ("[{" ++ (show ln') ++ sep ++ "{" ++ "cho" ++ sep ++ erlAtom p "ptp_" ++ sep ++ t1 ++ sep ++ g ++ sep ++ t2 ++ sep ++ g' ++ "}}]", 1+ln')
+      in (erlList $ erlTuple [show ln', erlTuple ["cho", erlAtom "ptp_" p, erlTuple [t1,  "\"" ++ g ++ "\""], erlTuple [t2, "\"" ++ g' ++ "\""]]], 1+ln')
     Qes rggs ->
-      L.foldr aux ("", ln) rggs
+      L.foldr auxQes ("", ln) rggs
     Per p rgg ->
       let (body, ln') = rgg2erl ln rgg
-      in (erlList(erlTuple [(show ln'), erlTuple ["rec", erlAtom p "ptp_", body]]), 1+ln')
+      in (erlList(erlTuple [(show ln'), erlTuple ["rec", erlAtom "ptp_" p, body]]), 1 + ln')
 
 labelOf :: GG -> String
 labelOf gg = case gg of
