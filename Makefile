@@ -61,7 +61,7 @@ setup:
 	make all
 
 e:
-	 emacs -T $(title) -mm gmc.hs &
+	 e -T $(title) gmc.hs &
 
 git:
 	git commit -am $(gitmsg) && git push

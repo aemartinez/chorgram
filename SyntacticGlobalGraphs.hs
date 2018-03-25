@@ -10,6 +10,7 @@ module SyntacticGlobalGraphs where
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
+import Data.Char
 import Misc
 import CFSM
 import DotStuff
@@ -299,6 +300,11 @@ erlTuple tuple = case tuple of
 
 erlList :: String -> String
 erlList els = "[ " ++ els ++ " ]"
+
+erlAtom :: String -> String -> String
+erlAtom s pre = case s of
+  "" -> ""
+  _  -> if isLower(head s) then s else pre ++ s
       
 --
 -- gg2erl gg generates a string encoding gg in Erlang's format
@@ -310,30 +316,26 @@ erlList els = "[ " ++ els ++ " ]"
 rgg2erl :: Int -> RGG -> (String, Int)
 rgg2erl ln _rgg =
   let sep = ", "
+      aux = \rg -> \(t,l) ->
+                     let (t',l') = rgg2erl l rg in
+                       case (t,t') of
+                         ("","") -> ("", l')
+                         ("", _) -> (tail (init t'), l')
+                         (_ , _) -> (erlList $ tail (init t) ++ sep ++ (tail (init t')), l')
   in case _rgg of
-    Tca (s,r) m -> (erlList $ erlTuple [ (show ln), erlTuple [ mkSep ["com", s, r, m] sep ] ], ln+1)
-    Rap rggs -> let (par,ln') = L.foldr (\rg -> \(t,l) -> let (t',l') = rgg2erl l rg in (t ++ ", " ++ t', l')) ("", ln) rggs in
-      ("[{" ++ (show ln) ++ sep ++ "{" ++ "par, [" ++ par ++ "] }}]", ln'+1)
-      -- let (t1,ln1) = rgg2erl ln rgg
-      --     (t2,ln') = rgg2erl ln1 rgg'
-      -- in ("[{" ++ (show ln') ++ sep ++ "{" ++ "par" ++ sep ++ t1 ++ sep ++ t2 ++ "}}]", ln'+1)
-    Arb p (rgg,g,rgg',g') ->
-      let (t1,ln1) = rgg2erl ln rgg
-          (t2,ln') = rgg2erl ln1 rgg'
-      in ("[{" ++ (show ln') ++ sep ++ "{" ++ "cho" ++ sep ++ p ++ sep ++ t1 ++ sep ++ g ++ sep ++ t2 ++ sep ++ g' ++ "}}]", 1+ln')
+    Tca (s,r) m -> (erlList $ erlTuple [ (show ln), erlTuple ["com", erlAtom s "ptp_", erlAtom r "ptp_", erlAtom m "msg_"] ], ln+1)
+    Rap rggs ->
+      let (threads, ln') = L.foldr aux ("", ln) rggs
+      in (erlList $ erlTuple [(show ln), erlTuple ["par", erlList threads]], 1 + ln')
+    Arb p (rgg, g, rgg', g') ->
+      let (t1, ln1) = rgg2erl ln rgg
+          (t2, ln') = rgg2erl ln1 rgg'
+      in ("[{" ++ (show ln') ++ sep ++ "{" ++ "cho" ++ sep ++ erlAtom p "ptp_" ++ sep ++ t1 ++ sep ++ g ++ sep ++ t2 ++ sep ++ g' ++ "}}]", 1+ln')
     Qes rggs ->
-      let (rggs',ln') = L.foldr (\rg -> \(t,l) ->
-                                  let (t', l') = rgg2erl l rg
-                                  in case (t,t') of
-                                    ("","") -> ("", l')
-                                    ("", _) -> (tail (init t'), l')
-                                    (_ , _) -> (erlList $ tail (L.init t) ++ sep ++ (tail (init t')), l')
-                                )
-            ("", ln) rggs
-      in ("[{" ++ (show ln') ++ sep ++ "{" ++ rggs' ++ "}}]", 1+ln')
+      L.foldr aux ("", ln) rggs
     Per p rgg ->
-      let (body,ln') = rgg2erl ln rgg
-      in ("[{" ++ (show ln') ++ sep ++ "{" ++ "rec" ++ sep ++ p ++ sep ++ body ++ "}}]", 1+ln')
+      let (body, ln') = rgg2erl ln rgg
+      in (erlList(erlTuple [(show ln'), erlTuple ["rec", erlAtom p "ptp_", body]]), 1+ln')
 
 labelOf :: GG -> String
 labelOf gg = case gg of

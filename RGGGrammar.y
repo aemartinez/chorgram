@@ -71,26 +71,31 @@ import CFSM
 G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
 				    (True, True, True)   -> ((Tca ($1 , $3) $5), S.fromList [$1,$3])
 				    (True, False, True)  -> myErr ("Bad name " ++ $3)
-				    (True, _, False)     -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver")
+				    (True, _, False)     -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
 				    (False, True, True)  -> myErr ("Bad name " ++ $1)
 				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
 				    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
                                 }
-  | str '=>' ptps ':' str       { case ((isPtp $1), not(L.elem $1 $3)) of
-                                  (True, True)   -> case $3 of
+  | str '=>' ptps ':' str       {
+                                  case ((isPtp $1), not(L.elem $1 $3)) of
+                                     (True, True)   -> case $3 of
                                                     []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
                                                     s:[] -> ((Tca ($1 , s) $5), S.fromList([$1,s]))
                                                     _    -> (Rap (L.map (\s -> (Tca ($1 , s) $5)) $3),S.fromList($1:$3))
-                                  (True, False)  -> myErr ($1 ++ " must be in " ++ (show $3))
-                                  (False, _)     -> myErr ("Bad name " ++ $1)
+                                     (True, False)  -> myErr ($1 ++ " must be in " ++ (show $3))
+                                     (False, _)     -> myErr ("Bad name " ++ $1)
                                 }
-  | G '|' G  	     		{ (Rap ((checkToken TokenraP $1) ++ (checkToken TokenraP $3)), S.union (snd $1) (snd $3)) }
+  | G '|' G  	     		{
+                                  (Rap ((checkToken TokenraP $1) ++ (checkToken TokenraP $3)), S.union (snd $1) (snd $3))
+                                }
   | 'sel' str '{' G 'unless' guard '+' G 'unless' guard '}'	{ case (isPtp $2, (S.member $2 (S.union (snd $4) (snd $8)))) of
                                                             (True, True) -> (Arb $2 (fst $4,$6,fst $8,$10), S.union (snd $4) (snd $8))
                                                             (False,_)    -> myErr ("Bad name " ++ $2)
                                                             (True,False) -> myErr ("Participant " ++ $2 ++ " cannot be the selector")
                                                          }
-  | G ';' G  	     		{ (Qes ((checkToken TokenqeS $1) ++ (checkToken TokenqeS $3)), S.union (snd $1) (snd $3)) }
+  | G ';' G  	     		{
+                                  (Qes ((checkToken TokenqeS $1) ++ (checkToken TokenqeS $3)), S.union (snd $1) (snd $3))
+                                }
   | 'repeat' str '{' G '}'      {
       				  case ((isPtp $2), (S.member $2 (snd $4))) of
                                        (True, True)  -> (Per $2 (fst $4) , (snd $4))
