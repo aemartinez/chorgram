@@ -52,15 +52,12 @@ import Data.Map.Strict as M
   ':'	        { TokenBod    }
   '!'	        { TokenSnd    }
   '?'	     	{ TokenRcv    }
-  '|'	        { TokenPar    }
   '+'	        { TokenBra    }
   '*'	        { TokenSta    }
   ';'	        { TokenPre    }
   ','	        { TokenCom    }
   '('	        { TokenOrb    }
   ')'	        { TokenCrb    }
-  '['	        { TokenCtb    }
-  ']'	        { TokenCte    }
   "tau"         { TokenTau    }
   "do"          { TokenJmp    }
   "system"      { TokenSys    }
@@ -149,15 +146,12 @@ data Token =
   | TokenBod
   | TokenSnd
   | TokenRcv
-  | TokenPar
   | TokenBra
   | TokenSta
   | TokenPre
   | TokenCom
   | TokenOrb
   | TokenCrb
-  | TokenCtb
-  | TokenCte
   | TokenTau
   | TokenJmp
   | TokenSys
@@ -183,7 +177,6 @@ lexer s = case s of
     'd':'o':r                 -> TokenJmp    : lexer r
     '=':r                     -> TokenEqu    : lexer r
     ':':r                     -> TokenBod    : lexer r
-    '|':r                     -> TokenPar    : lexer r
     '+':r                     -> TokenBra    : lexer r
     '*':r                     -> TokenSta    : lexer r
     '!':r                     -> TokenSnd    : lexer r

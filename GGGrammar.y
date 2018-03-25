@@ -6,13 +6,13 @@
 -- The grammar is the one used in the ICE16 paper with the addition
 -- of the repeat-until construct:
 --
---    G ::= P -> P : M | G|G | G+G | G;G | * G @ P | repeat P { G } | ( G )
+--    G ::= P -> P : M | G|G | G+G | G;G | * G @ P | repeat P { G } | ( G ) 
 --
 -- the binary operators |, +, and ; are given in ascending order of
 -- precedence.  The parser generator is Haskell's 'Happy' and the
 -- parser (GGparser.hs) is obtained by typing'make parser'. Note that
 -- the empty graph has been removed as not necessary. We have that syntaxes
--- * G @ P and repeat P { G } are equivalent.
+-- repeat P { G } and  * G @ P are equivalent.
 --
 -- The only syntactic check made (right now) during the parsing are
 -- (i) that sender and receiver of interactions have to be different,
@@ -59,8 +59,6 @@ import CFSM
   '('	        { TokenBro    }
   ')'	        { TokenBrc    }
   ','	        { TokenCom    }
-  '['	        { TokenCtb    }
-  ']'	        { TokenCte    }
   '{'	        { TokenCurlyo }
   '}'	        { TokenCurlyc }
   'repeat'      { TokenSta    }
@@ -104,6 +102,7 @@ G : '§'				{ myErr "§ not permitted" } -- it used to be (Emps, S.empty) when d
                                     (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
                                 }
   | '(' G ')'			{ ( $2 ) }
+  | '{' G '}'			{ ( $2 ) }
 
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
   | str ',' ptps                { if (isPtp $1)
@@ -129,8 +128,6 @@ data Token =
   | TokenBro
   | TokenBrc
   | TokenCom
-  | TokenCtb
-  | TokenCte
   | TokenMAr
   | TokenErr String
   | TokenCurlyo
