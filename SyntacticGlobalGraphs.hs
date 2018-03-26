@@ -299,7 +299,8 @@ erlTuple tuple = case tuple of
   _  -> "{ " ++ (mkSep tuple ", ") ++ " }"
 
 erlList :: String -> String
-erlList els = "[ " ++ els ++ " ]"
+erlList els = if (head els) == '[' then els else "[ " ++ els ++ " ]"
+-- erlList els = "[ " ++ els ++ " ]"
 
 erlAtom :: String -> String -> String
 erlAtom pre s = case s of
@@ -316,32 +317,33 @@ erlAtom pre s = case s of
 rgg2erl :: Int -> RGG -> (String, Int)
 rgg2erl ln _rgg =
   let sep = ", "
-      auxQes = \rg -> \(t,l) ->
-                     let (t',l') = rgg2erl l rg in
-                       case (t,t') of
-                         ("","") -> ("", l')
-                         ("", _) -> (tail (init t'), l')
-                         (_ , _) -> (erlList $ tail (init t) ++ sep ++ (tail (init t')), l')
-      auxRap = \rg -> \(t,l) ->
-                     let (t',l') = rgg2erl l rg in
-                       case (t,t') of
-                         ("","") -> ("", l')
-                         ("", _) -> (t', l')
-                         (_ , _) -> (t ++ sep ++ t', l')
   in case _rgg of
-    Tca (s,r) m -> (erlList $ erlTuple [ (show ln), erlTuple ["com", erlAtom "ptp_" s, erlAtom "ptp_" r, erlAtom "msg_" m] ], 1 + ln)
+    Tca (s,r) m -> (erlTuple [show ln, erlTuple ["com", erlAtom "ptp_" s, erlAtom "ptp_" r, erlAtom "msg_" m] ], 1 + ln)
     Rap rggs ->
-      let (threads, ln') = L.foldr auxRap ("", ln) rggs
-      in (erlList $ erlTuple [(show ln'), erlTuple ["par", erlList threads]], 1 + ln')
+      let aux = \rg -> \(t,l) ->
+            let (t',l') = rgg2erl l rg in
+            case (t,t') of
+              ("","") -> ("", l')
+              ("", _) -> (erlList t', l')
+              (_ , _) -> (erlList t' ++ sep ++ t, l')
+          (threads, ln') = L.foldr aux ("", ln) rggs
+      in (erlTuple [show ln', erlTuple ["par", "[ " ++ threads ++ " ]" ]], 1 + ln')
     Arb p (rgg, g, rgg', g') ->
       let (t1, ln1) = rgg2erl ln rgg
           (t2, ln') = rgg2erl ln1 rgg'
-      in (erlList $ erlTuple [show ln', erlTuple ["cho", erlAtom "ptp_" p, erlTuple [t1,  "\"" ++ g ++ "\""], erlTuple [t2, "\"" ++ g' ++ "\""]]], 1+ln')
+      in (erlTuple [show ln', erlTuple ["cho", erlAtom "ptp_" p, erlTuple [t1,  "\"" ++ g ++ "\""], erlTuple [t2, "\"" ++ g' ++ "\""]]], 1+ln')
     Qes rggs ->
-      L.foldr auxQes ("", ln) rggs
+      let aux = \rg -> \(t,l) ->
+            let (t',l') = rgg2erl l rg in
+            case (t,t') of
+              ("","") -> ("", l')
+              ("", _) -> (t', l')
+              (_ , _) -> (t' ++ sep ++ t, l')
+          (seq, ln') = L.foldr aux ("", ln) rggs
+      in (erlList seq, ln') 
     Per p rgg ->
       let (body, ln') = rgg2erl ln rgg
-      in (erlList(erlTuple [(show ln'), erlTuple ["rec", erlAtom "ptp_" p, body]]), 1 + ln')
+      in (erlTuple [show ln', erlTuple ["rec", erlAtom "ptp_" p, erlList body]], 1 + ln')
 
 labelOf :: GG -> String
 labelOf gg = case gg of

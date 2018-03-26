@@ -69,4 +69,4 @@ main = do putStrLn $ msgFormat SGG "start"
                   >>=
                   (\_ -> putStrLn $ "\t" ++ dir ++ "in_rgg_parsed.txt: is the initial reversible gg")
                   >>=
-                  (\_ -> writeToFile (dir ++ "rgg.txt") (fst (rgg2erl 1 rgg)))
+                  (\_ -> writeToFile (dir ++ "rgg.txt") (if (head $ fst (rgg2erl 1 rgg)) == '[' then fst (rgg2erl 1 rgg) else erlList $ fst (rgg2erl 1 rgg)))
