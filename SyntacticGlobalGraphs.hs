@@ -331,7 +331,7 @@ rgg2erl ln _rgg =
     Arb p (rgg, g, rgg', g') ->
       let (t1, ln1) = rgg2erl ln rgg
           (t2, ln') = rgg2erl ln1 rgg'
-      in (erlTuple [show ln', erlTuple ["cho", erlAtom "ptp_" p, erlTuple [t1,  "\"" ++ g ++ "\""], erlTuple [t2, "\"" ++ g' ++ "\""]]], 1+ln')
+      in (erlTuple [show ln', erlTuple ["cho", erlAtom "ptp_" p, erlTuple [erlList t1,  "\"" ++ g ++ "\""], erlTuple [erlList t2, "\"" ++ g' ++ "\""]]], 1 + ln')
     Qes rggs ->
       let aux = \rg -> \(t,l) ->
             let (t',l') = rgg2erl l rg in
