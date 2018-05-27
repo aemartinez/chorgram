@@ -159,6 +159,12 @@ nop = sequence_ []
 verbose :: Map String String -> String -> String -> String -> IO()
 verbose m f v s = do if m ! f == v then (putStrLn $ s) else nop
 
+mkSep :: [String] -> String -> String
+mkSep l sep =
+  case l of
+    [] -> ""
+    s:l' -> s ++ (if (l' == []) then "" else (", " ++ (mkSep l' sep)))
+
 setFileNames :: String -> Map String String -> (String, String, String, String)
 setFileNames f flags = (dir, dir ++ baseFile, baseFile , takeExtension f)
   where baseFile = takeBaseName f
@@ -224,20 +230,21 @@ getFlags cmd args =
   case cmd of
     GMC -> case args of
       []                 -> defaultFlags(cmd)
-      "-l":xs            -> M.insert "-l" "no"  (getFlags cmd xs)
-      "-ts":xs           -> M.insert "-ts" "ts" (getFlags cmd xs)
-      "-sn":xs           -> M.insert "-sn" "no" (getFlags cmd xs)      
-      "-D":y:xs          -> M.insert "-D"  y    (getFlags cmd xs)
-      "-b":y:xs          -> M.insert "-b"  y    (getFlags cmd xs)
-      "-m":y:xs          -> M.insert "-m"  y    (getFlags cmd xs)
-      "--muliply":y:xs   -> M.insert "-m"  y    (getFlags cmd xs)
-      "-d":y:xs          -> M.insert "-d"  y    (getFlags cmd xs)
-      "--dir":y:xs       -> M.insert "-d"  y    (getFlags cmd xs)
-      "--fontsize":y:xs  -> M.insert "-fs" y    (getFlags cmd xs)
-      "-cp":y:xs         -> M.insert "-cp" y    (getFlags cmd xs)
-      "-tp":y:xs         -> M.insert "-tp" y    (getFlags cmd xs)
-      "-p":y:xs          -> M.insert "-p"  y    (getFlags cmd xs)
-      "-v":y:xs          -> M.insert "-v"  y    (getFlags cmd xs)
+      "-l":xs            -> M.insert "-l" "no"    (getFlags cmd xs)
+      "-rg":xs           -> M.insert "-rg" "rg"   (getFlags cmd xs) -- for reversible ggs TODO: add to manual
+      "-ts":xs           -> M.insert "-ts" "ts"   (getFlags cmd xs)
+      "-sn":xs           -> M.insert "-sn" "no"   (getFlags cmd xs)      
+      "-D":y:xs          -> M.insert "-D"  y      (getFlags cmd xs)
+      "-b":y:xs          -> M.insert "-b"  y      (getFlags cmd xs)
+      "-m":y:xs          -> M.insert "-m"  y      (getFlags cmd xs)
+      "--muliply":y:xs   -> M.insert "-m"  y      (getFlags cmd xs)
+      "-d":y:xs          -> M.insert "-d"  y      (getFlags cmd xs)
+      "--dir":y:xs       -> M.insert "-d"  y      (getFlags cmd xs)
+      "--fontsize":y:xs  -> M.insert "-fs" y      (getFlags cmd xs)
+      "-cp":y:xs         -> M.insert "-cp" y      (getFlags cmd xs)
+      "-tp":y:xs         -> M.insert "-tp" y      (getFlags cmd xs)
+      "-p":y:xs          -> M.insert "-p"  y      (getFlags cmd xs)
+      "-v":y:xs          -> M.insert "-v"  y      (getFlags cmd xs)
       _                  -> error $ usage(cmd)
     GG  ->  case args of
       []     -> defaultFlags(cmd)
@@ -248,6 +255,7 @@ getFlags cmd args =
     SGG -> case args of
       []        -> defaultFlags(cmd)
       "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+      "-rg":xs  -> M.insert "-rg" "yes" (getFlags cmd xs)
       _         -> error $ usage(SGG)
     SYS -> case args of
       []        -> defaultFlags(cmd)
