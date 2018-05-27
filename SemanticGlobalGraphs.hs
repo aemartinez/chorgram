@@ -25,20 +25,19 @@ type K = Int
 type E = (K, Maybe Action)
 
 --
--- A type for bijections on control points; we simply assume
--- that a mu is a control point (whose the corresponding merge/join
--- is -mu)
---
-type Mu = K
-
---
 -- Hypergraphs are sets of hyperedges on events, but we keep
--- computing also its min, max, fst, and lst sets: ie an HG
+-- computing also its min, max, fst, and lst sets: ie an hg
 -- has the form (R,min,max,fst,lst)
 --
 type HE = (Set E, Set E)
 type HG = (Set HE, Set E, Set E, Set HE, Set HE)
 
+--
+-- A type for bijections on control points; we simply assume
+-- that a mu is a control point (whose the corresponding merge/join
+-- is -mu)
+--
+type Mu = K
 
 --
 -- sameAct aV returns the subject of the actions of aV provided that those are
@@ -122,7 +121,7 @@ eventsOf :: Set HE -> [E]
 eventsOf rel = S.foldr (\l l' -> l++l') [] set
   where set = S.map (\(es,es')->((S.toList es) ++ (S.toList es'))) rel
   
--- Some auxiliary functions implementing those defined in the JLAMP17 paper
+-- Some auxiliary functions implementing those defined in the ICE16 paper
 
 cp :: E -> K
 cp = fst
@@ -133,8 +132,8 @@ actOf = snd
 csFst :: HE -> Set E
 csFst = fst
 
-ef :: HE -> Set E
-ef = snd
+csSnd :: HE -> Set E
+csSnd = snd
 
 (@@) :: HG -> Ptp -> Set HE
 hg @@ p = S.map (\(v1,v2) -> (S.map aux v1, S.map aux v2)) (relOf hg)
@@ -150,41 +149,19 @@ communicationsOf :: HG -> Ptp -> [E]
 communicationsOf hg p = L.filter (\e -> isOutEvent e || isInpEvent e) (eventsOf (hg @@ p))
 
 -- # is not used
-
 (#) :: HG -> HG -> HG
 hg # hg' = ( rel, minOf hg, maxOf hg', fstOf hg, lstOf hg' )
-  where rel =  S.fromList [ (fst es, snd es') | es  <- (S.toList $ relOf hg),
-                                                es' <- (S.toList $ relOf hg'),
-                                                (Misc.intersect (snd es) (fst es'))
-                          ]
+  where rel =  S.fromList [(fst es, snd es')| es <- (S.toList $ relOf hg), es' <- (S.toList $ relOf hg'), (Misc.intersect (snd es) (fst es')) ]
 
--- rmEvs hg evs returns the hypergraph obtained by restricting hg to events not in evs
-rmEvs :: HG -> Set E -> HG
-rmEvs hg evs =
-  ( S.fromList rel, S.fromList min, S.fromList max, fst, lst )
-  where
-    evs' = [ e | e <- eventsOf hg, not (S.member e evs) ]
-    rel  = [(e,e') | e <- comms, e' <- comms, precHG hg (e,e') ]
-    min  = [e | e <- comms, L.all (\e' -> e==e' || not(precHG hg (e', e))) comms]
-    max  = [e | e <- comms, L.all (\e' -> e==e' || not(precHG hg (e, e'))) comms]
-    fst  = S.fromList [(e,e') | (e, e') <- rel, e € min ]
-    lst  = S.fromList [(e,e') | (e, e') <- rel, e' € max ]
-
-
-
---
--- seqHG corresponds to seq in JLAMP17, but it considers only the
--- dependencies induces by lstOf and fstOf respectively
---
 seqHG :: HG -> HG -> HG
-seqHG hg hg' = ( rel, minOf hg, maxOf hg', S.union (fstOf hg) fst', S.union (lstOf hg') lst' )
+seqHG hg hg' = ( rel, minOf hg, maxOf hg', fstOf hg, lstOf hg' )
   where rel = S.unions [relOf hg, relOf hg', S.fromList l]
         l   = [( S.singleton e, S.singleton e' ) |
                e  <- eventsOf $ lstOf hg,  isJust $ actOf e,
                e' <- eventsOf $ fstOf hg', isJust $ actOf e',
                (sbjOf e == sbjOf e')]
 
--- reflexive and transitive closure of the order induced by a hg
+-- reflexive and transitive closure of the order induce by a hg
 precHG :: HG -> (E, E) -> Bool
 precHG hg ( e, e' ) = (e==e') || (reach (S.singleton e) e' (hb hg))
 
@@ -198,7 +175,6 @@ stepHG :: E -> Set (E, E) -> Set E
 stepHG e ker = S.map snd (S.filter (\(e',_) -> e == e') ker)
 
 -- happens-before relation; \widehat relation in the paper
-
 hb :: HG -> Set (E,E)
 hb hg = S.fromList [ (e,e') | (es,es') <- S.toList $ relOf hg, e <- S.toList es, e' <- S.toList es' ]
 
@@ -228,34 +204,19 @@ unionsHG [] = Just emptyHG
 unionsHG (hg:hgs) = if (isJust hg) && (isJust hg') then unionHG hg hg' else Nothing
   where hg' = unionsHG hgs
 
--- p-only part of a graph; note this is cmputed on the graph, not on its semantics
-hgAt :: (Map String GG) -> Ptp -> GG -> GG
-hgAt env p gg =
-  case gg of
-    Emp               -> Emp
-    act@(Act (s,r) _) -> if (s==p || r==p) then act else Emp
-    Par ggs           -> Par (L.map (hgAt env p) ggs)
-    Bra ggs           -> Bra (S.map (hgAt env p) ggs)
-    Seq ggs           -> Seq (L.map (hgAt env p) ggs)
-    Rep gg' p'        -> Rep (hgAt env p gg') p'
-    Inv gname         -> hgAt env p (env!gname)
-
-semList :: (Map String GG) -> Mu -> [GG] -> P -> (Mu,[Maybe HG])
-semList env mu ggs ptps =
-  case ggs of
-    []        -> (mu,[])
-    (gg:ggs') -> (mu'', ([Just hg'] ++ rest))
-      where ( mu', hg' )   = sem env mu gg ptps
-            ( mu'', rest ) = semList env mu' ggs' ptps
+semList :: Mu -> [GG] -> P -> (Mu,[Maybe HG])
+semList mu ggs ptps = case ggs of
+                       []        -> (mu,[])
+                       (gg:ggs') -> (mu'', ([Just hg'] ++ rest))
+                           where ( mu', hg' )   = sem mu gg ptps
+                                 ( mu'', rest ) = semList mu' ggs' ptps
 
 --
--- The semantic function {|_|} defined in the equations (3-7) of
--- JLAMP17 plus the treatment of iteration. It is assumed that some
--- syntactic checks are performed before the invocation (eg, in
---       Rep g' p
--- we assume p is one of the participants in g'. The labels of the
--- events correspond to those used in proj (again this is the case for
--- iteration).
+-- The semantic function [[_]] of ICE16; it is assumed that some
+-- syntactic checks are performed. Eg in Rep g' p we assume p is
+-- one of the participants in g'.
+-- The labels of the evens corresponds to those used in proj (again
+-- this is the case for iteration)
 --
 sem :: Mu -> GG -> P -> (Mu, HG)
 sem mu gg ptps =
@@ -298,8 +259,8 @@ sem mu gg ptps =
                            ( mu', pg )   = sem mu gg' ptps
                            ( mu'', pg' ) = sem mu' (Seq (gg'':ggs')) ptps
    Rep gg' p -> ( mu', hgr )
-     where ps                = ggptp env S.empty gg'
-           ( mu', hgb )     = if S.member p ps then sem env mu gg' ptps else error (msgFormat SGG "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
+     where ps                = ggptp S.empty gg'
+           ( mu', hgb )     = if S.member p ps then sem mu gg' ptps else error (msgFormat SGG "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
            ( i, suf )       = ( 1+mu' , show i )
            ( eL, eE )       = (S.singleton (i, Just ( ( p , p ) , LoopSnd , lpref ++ suf )), S.singleton ((-i), Just ( ( p , p ) , LoopRcv , epref ++ suf )))
            rel              = S.fromList ([( S.singleton e , eE ) | e <- S.toList $ maxOf $ hgb] ++
@@ -307,7 +268,6 @@ sem mu gg ptps =
                                           [( eE , eL )]
                                          )
            hgr              = (S.union rel (relOf hgb), eL, eE, (fstOf hgb), (lstOf hgb))
-   Inv gname -> sem env mu (env!gname) ptps
 
 -- DOT format
 

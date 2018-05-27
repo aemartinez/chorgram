@@ -20,10 +20,10 @@ channel2timbuk ( s, r ) = s ++ r
 
 state2timbuk :: State -> String
 state2timbuk s = rmChar '\"' $ aux (show s)
-  where aux = \s' -> case s' of
+  where aux = \s -> case s of
                      []     -> []
-                     '_':s'' -> "UUU" ++ (aux s'')
-                     x:s''   -> x:(aux s'')
+                     '_':s' -> "UUU" ++ (aux s')
+                     x:s'   -> x:(aux s')
 
 action2timbuk :: Action -> String
 action2timbuk ( chan, dir, msg ) = rmChar '\"' $
