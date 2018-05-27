@@ -98,9 +98,9 @@ G : str '->' str ':' str        {
   | G ';' G  	     		{
                                   (Qes ((checkToken TokenqeS $1) ++ (checkToken TokenqeS $3)), S.union (snd $1) (snd $3))
                                 }
-  | 'repeat' str '{' G '}'      {
+  | 'repeat' str '{' G 'unless' guard '}'      {
       				  case ((isPtp $2), (S.member $2 (snd $4))) of
-                                       (True, True)  -> (Per $2 (fst $4) , (snd $4))
+                                       (True, True)  -> (Per $2 (fst $4)  $6, (snd $4))
                                        (False, _)    -> myErr ("Bad name " ++ $2)
                                        (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
                                 }

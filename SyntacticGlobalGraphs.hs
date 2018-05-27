@@ -31,12 +31,13 @@ data GG = Emp
 -- consider just binary parallel and branches
 data RGG = Tca Channel Message
          | Rap [RGG]
-         | Arb Ptp (RGG,String,RGG,String)
+         | Arb Ptp (RGG, RevisionGuard, RGG, RevisionGuard)
          | Qes [RGG]
-         | Per Ptp RGG
+         | Per Ptp RGG RevisionGuard
          deriving (Eq, Ord, Show)
 
 type Endpoint = String
+type RevisionGuard = String
 
 -- Syntactic global graphs can be normalised by flattening nested | and +
 -- the name normGG is misleading. TODO: change normGG to preNormGG or flattenGG 
@@ -341,9 +342,9 @@ rgg2erl ln _rgg =
               (_ , _) -> (t' ++ sep ++ t, l')
           (seq, ln') = L.foldr aux ("", ln) rggs
       in (erlList seq, ln') 
-    Per p rgg ->
+    Per p rgg g ->
       let (body, ln') = rgg2erl ln rgg
-      in (erlTuple [show ln', erlTuple ["rec", erlAtom "ptp_" p, erlList body]], 1 + ln')
+      in (erlTuple [show ln', erlTuple ["rec", erlAtom "ptp_" p, erlTuple [erlList body, "\"" ++ g ++ "\""]]], 1 + ln')
 
 labelOf :: GG -> String
 labelOf gg = case gg of
