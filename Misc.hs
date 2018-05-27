@@ -62,7 +62,7 @@ isAlpha c = c € ([x | x <- ['0'.. 'z'] ++ ['/', '$', '#', '&', '~', '\"'],
 
 -- Names of participants have to begin with a letter
 isPtp :: String -> Bool
-isPtp s = (L.null s) || ( ((head s) € (['a'.. 'z'] ++ ['A'.. 'Z'])) && (L.all isAlpha (tail s)) )
+isPtp s = ((head s) € (['a'.. 'z'] ++ ['A'.. 'Z'])) && (L.all isAlpha (tail s))
 
 -- PRE:  
 -- POST: -1 if e not in l, otherwise first position of e in the list plus the offset o
