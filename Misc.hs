@@ -277,7 +277,7 @@ getFlags cmd args =
 
 --  PRE:
 --  POST: returns the closure of vertexes reachable from v with transitions that satisfy the predicate lpred on labels
-pClosure :: Ord vertex => Agraph vertex label -> (label -> Bool) -> vertex -> Set vertex
+pClosure :: Ord vertex => Ord label => Agraph vertex label -> (label -> Bool) -> vertex -> Set vertex
 pClosure g lpred v =
   let ptrans = S.filter (\(_,l,_) -> (lpred l)) (gtrans g)
       aux res wl ml =
@@ -294,7 +294,7 @@ pClosure g lpred v =
 
 --  PRE:
 --  POST: returns the set of vertexes of g reachable from a given vertex
-reachableVertexes :: Ord vertex => Agraph vertex label -> vertex -> Set vertex
+reachableVertexes :: Ord vertex => Ord label => Agraph vertex label -> vertex -> Set vertex
 reachableVertexes g = pClosure g (\_ -> True)
 
 
