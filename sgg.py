@@ -41,13 +41,17 @@ parser.add_argument("-dir",
                     dest = "dir",
                     default = "experiments/results",
                     help = "Specify the directory for the output files   {default: outputs}")
+parser.add_argument("--sloppy",
+                    dest = "sloppy",
+                    action = "store_true",
+                    help = "Do not raise exception due to non well-formedness")
 parser.add_argument("filename",
                     help = "Specify the path to file containing the CFSMs")
 args = parser.parse_args()
 
 bname = os.path.basename((os.path.splitext(args.filename))[0])
 dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) + bname + os.sep
-mkDir(dir)
+mkdir(dir)
 basename = dir + bname # os.path.basename(args.filename)
 
 ##################################### START HERE ###############################################
@@ -59,6 +63,7 @@ starttime = time.time()
 
 callsgg = ([SGG, "-d", args.dir] +
            (["-l"] if args.leg else []) +
+           (["--sloppy"] if args.sloppy else []) +
            [args.filename])
 
 debugMsg(args.debug, cmd, string.join(callsgg))

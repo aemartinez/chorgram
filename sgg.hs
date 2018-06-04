@@ -42,7 +42,7 @@ main = do putStrLn $ msgFormat SGG "start"
                 sgg2file "norm_sgg.dot" "norm" >>= \_ -> putStrLn $ "\t" ++ dir ++ "norm_sgg.dot:  is the normalised initial gg"
                 sgg2file "fact_sgg.dot" "fact" >>= \_ -> putStrLn $ "\t" ++ dir ++ "fact_sgg.dot:  is the factorised initial gg"
                 let ( _, hg ) =
-                      sem (-1) fact ptps
+                      sem (M.member "--sloppy" flags) (-1) fact ptps
                 writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines) >>=
                   \_ -> putStrLn $ "\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg"
                 let path i ext =

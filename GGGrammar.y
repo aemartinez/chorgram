@@ -62,6 +62,7 @@ import CFSM
   '{'	        { TokenCurlyo }
   '}'	        { TokenCurlyc }
   'repeat'      { TokenSta    }
+  '(o)'         { TokenEmp    }
 
 %right '|'
 %right '+'
@@ -69,8 +70,7 @@ import CFSM
 
 %%
 
-G : '§'				{ myErr "§ not permitted" } -- it used to be (Emps, S.empty) when designers where allowed to use §; 
-  | str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
+G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
 				    (True, True, True)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])
 				    (True, False, True)  -> myErr ("Bad name " ++ $3)
 				    (True, _, False)     -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver")
@@ -103,6 +103,8 @@ G : '§'				{ myErr "§ not permitted" } -- it used to be (Emps, S.empty) when d
                                 }
   | '(' G ')'			{ ( $2 ) }
   | '{' G '}'			{ ( $2 ) }
+  | '(o)'                       { (Emp, S.empty) }
+--  | '§'				{ (Emp, S.empty) }
 
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
   | str ',' ptps                { if (isPtp $1)
@@ -151,6 +153,7 @@ lexer s = case s of
     '+':r                     -> TokenBra : lexer r
     '*':r                     -> TokenSta : lexer r
     'r':'e':'p':'e':'a':'t':r -> TokenSta : (lexer $ tail r)
+    '(':'o':')':r             -> TokenEmp : (lexer r)
     '@':r                     -> TokenUnt : lexer r
     ':':r                     -> TokenSec : lexer r
     ';':r                     -> TokenSeq : lexer r
