@@ -47,7 +47,7 @@ args = parser.parse_args()
 
 bname = os.path.basename((os.path.splitext(args.filename))[0])
 dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) + bname + os.sep
-mkDir(dir)
+mkdir(dir)
 basename = dir + bname # os.path.basename(args.filename)
 
 ##################################### START HERE ###############################################
