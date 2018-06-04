@@ -3,7 +3,7 @@
 module GGparser where
 import SyntacticGlobalGraphs
 import Data.List as L
-import Data.Set
+import Data.Set as S
 import Misc
 import CFSM
 import qualified Data.Array as Happy_Data_Array
@@ -20,43 +20,43 @@ data HappyAbsSyn t4 t5
 	| HappyAbsSyn5 t5
 
 happyExpList :: Happy_Data_Array.Array Int Int
-happyExpList = Happy_Data_Array.listArray (0,74) ([34912,4116,0,0,22528,32768,1,8728,34309,33096,21025,32,0,256,33120,22528,4,54,8,512,32768,21025,34912,6164,1314,256,20480,0,22,4096,0,32,256,32,0,0,0,8576,82,2070,0,512,32768,0,32,0,0,0,0,0,0,0
+happyExpList = Happy_Data_Array.listArray (0,76) ([34848,4148,0,32,49152,2,24,16640,33188,53792,4160,8297,0,0,0,256,704,24577,17,432,128,16384,0,34848,4148,6724,8712,13,2,320,45056,0,256,0,4,64,16,0,0,0,33280,840,16560,0,16384,0,32,4096,0,0,0,0,0,0,0,0
 	])
 
 {-# NOINLINE happyExpListPerState #-}
 happyExpListPerState st =
     token_strs_expected
-  where token_strs = ["error","%dummy","%start_gggrammar","G","ptps","str","'\167'","'->'","'=>'","'|'","'+'","'*'","';'","'@'","':'","'('","')'","','","'{'","'}'","'repeat'","%eof"]
-        bit_start = st * 22
-        bit_end = (st + 1) * 22
+  where token_strs = ["error","%dummy","%start_gggrammar","G","ptps","str","'\167'","'->'","'=>'","'|'","'+'","'*'","';'","'@'","':'","'('","')'","','","'{'","'}'","'repeat'","'(o)'","%eof"]
+        bit_start = st * 23
+        bit_end = (st + 1) * 23
         read_bit = readArrayBit happyExpList
         bits = L.map read_bit [bit_start..bit_end - 1]
-        bits_indexed = zip bits [0..21]
+        bits_indexed = zip bits [0..22]
         token_strs_expected = concatMap f bits_indexed
         f (False, _) = []
         f (True, nr) = [token_strs !! nr]
 
 happyActOffsets :: Happy_Data_Array.Array Int Int
-happyActOffsets = Happy_Data_Array.listArray (0,37) ([1,4,0,-1,36,1,1,1,8,-13,5,17,25,26,31,1,1,1,6,18,30,27,28,32,42,0,0,1,13,0,43,44,45,0,0,0,0,0
+happyActOffsets = Happy_Data_Array.listArray (0,38) ([1,8,11,-2,26,1,1,1,18,0,-13,5,20,28,22,34,1,1,1,19,-1,33,30,29,35,42,0,0,1,16,0,43,45,46,0,0,0,0,0
 	])
 
 happyGotoOffsets :: Happy_Data_Array.Array Int Int
-happyGotoOffsets = Happy_Data_Array.listArray (0,37) ([47,0,0,0,0,48,49,50,0,0,0,0,0,0,51,53,54,55,0,0,0,0,0,0,0,0,0,56,0,0,0,57,0,0,0,0,0,0
+happyGotoOffsets = Happy_Data_Array.listArray (0,38) ([48,0,0,0,0,49,50,51,0,0,0,0,0,0,0,52,54,55,56,0,0,0,0,0,0,0,0,0,57,0,0,0,58,0,0,0,0,0,0
 	])
 
 happyAdjustOffset :: Int -> Int
 happyAdjustOffset = id
 
 happyDefActions :: Happy_Data_Array.Array Int Int
-happyDefActions = Happy_Data_Array.listArray (0,37) ([0,0,-2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-7,-6,-5,0,-12,0,0,-10,-11,0,0,-8,0,0,0,-4,-13,-3,-9
+happyDefActions = Happy_Data_Array.listArray (0,38) ([0,0,0,0,0,0,0,0,0,-11,0,0,0,0,0,0,0,0,0,-6,-5,-4,0,-12,0,0,-9,-10,0,0,-7,0,0,0,-3,-13,-2,-8
 	])
 
 happyCheck :: Happy_Data_Array.Array Int Int
-happyCheck = Happy_Data_Array.listArray (0,74) ([-1,14,1,2,5,6,2,8,7,1,5,6,11,8,8,14,17,16,5,6,15,8,5,6,6,8,8,1,15,12,5,6,1,8,9,5,6,10,8,3,4,13,10,1,1,1,1,0,0,0,0,-1,1,0,0,0,0,-1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+happyCheck = Happy_Data_Array.listArray (0,76) ([-1,14,1,5,6,6,8,8,7,1,5,6,11,8,3,14,18,16,17,1,15,5,6,1,8,5,6,8,8,3,4,15,12,5,6,1,8,9,5,6,10,8,13,1,1,10,1,1,0,0,0,0,-1,1,0,0,0,0,-1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
 	])
 
 happyTable :: Happy_Data_Array.Array Int Int
-happyTable = Happy_Data_Array.listArray (0,74) ([0,28,5,3,16,17,3,18,6,10,16,17,7,18,18,8,-1,9,16,17,27,18,16,17,17,18,18,24,37,26,16,17,23,18,25,16,17,33,18,14,15,32,31,30,36,23,34,3,12,11,10,0,21,20,19,18,28,0,34,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+happyTable = Happy_Data_Array.listArray (0,76) ([0,29,5,17,18,18,19,19,6,3,17,18,7,19,15,8,-1,9,10,11,28,17,18,25,19,17,18,19,19,15,16,38,27,17,18,24,19,26,17,18,34,19,33,31,37,32,24,35,3,13,12,11,0,22,21,20,19,29,0,35,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 	])
 
 happyReduceArr = Happy_Data_Array.array (1, 12) [
@@ -74,17 +74,11 @@ happyReduceArr = Happy_Data_Array.array (1, 12) [
 	(12 , happyReduce_12)
 	]
 
-happy_n_terms = 18 :: Int
+happy_n_terms = 19 :: Int
 happy_n_nonterms = 2 :: Int
 
-happyReduce_1 = happySpecReduce_1  0 happyReduction_1
-happyReduction_1 _
-	 =  HappyAbsSyn4
-		 (myErr "\167 not permitted"
-	)
-
-happyReduce_2 = happyReduce 5 0 happyReduction_2
-happyReduction_2 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
+happyReduce_1 = happyReduce 5 0 happyReduction_1
+happyReduction_1 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
 	_ `HappyStk`
 	(HappyTerminal (TokenStr happy_var_3)) `HappyStk`
 	_ `HappyStk`
@@ -92,7 +86,7 @@ happyReduction_2 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
 		 (case ((isPtp happy_var_1), (isPtp happy_var_3), not(happy_var_1 == happy_var_3)) of
-				    (True, True, True)   -> ((Act (happy_var_1 , happy_var_3) happy_var_5), Data.Set.fromList [happy_var_1,happy_var_3])
+				    (True, True, True)   -> ((Act (happy_var_1 , happy_var_3) happy_var_5), S.fromList [happy_var_1,happy_var_3])
 				    (True, False, True)  -> myErr ("Bad name " ++ happy_var_3)
 				    (True, _, False)     -> myErr ("A sender " ++ happy_var_3 ++ " cannot be also the receiver")
 				    (False, True, True)  -> myErr ("Bad name " ++ happy_var_1)
@@ -100,8 +94,8 @@ happyReduction_2 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
 				    (False, _, False)    -> myErr ("Bad name " ++ happy_var_1 ++ " and sender and receiver must be different")
 	) `HappyStk` happyRest
 
-happyReduce_3 = happyReduce 5 0 happyReduction_3
-happyReduction_3 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
+happyReduce_2 = happyReduce 5 0 happyReduction_2
+happyReduction_2 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn5  happy_var_3) `HappyStk`
 	_ `HappyStk`
@@ -111,18 +105,27 @@ happyReduction_3 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
 		 (case ((isPtp happy_var_1), not(L.elem happy_var_1 happy_var_3)) of
                                   (True, True)   -> case happy_var_3 of
                                                     []   -> myErr (happy_var_1 ++ " cannot be empty") -- (happy_var_1 ++ " => " ++ "[]")
-                                                    s:[] -> ((Act (happy_var_1 , s) happy_var_5), Data.Set.fromList([happy_var_1,s]))
-                                                    _    -> (Par (L.map (\s -> (Act (happy_var_1 , s) happy_var_5)) happy_var_3),Data.Set.fromList(happy_var_1:happy_var_3))
+                                                    s:[] -> ((Act (happy_var_1 , s) happy_var_5), S.fromList([happy_var_1,s]))
+                                                    _    -> (Par (L.map (\s -> (Act (happy_var_1 , s) happy_var_5)) happy_var_3),S.fromList(happy_var_1:happy_var_3))
                                   (True, False)  -> myErr (happy_var_1 ++ " must be in " ++ (show happy_var_3))
                                   (False, _)     -> myErr ("Bad name " ++ happy_var_1)
 	) `HappyStk` happyRest
+
+happyReduce_3 = happySpecReduce_3  0 happyReduction_3
+happyReduction_3 (HappyAbsSyn4  happy_var_3)
+	_
+	(HappyAbsSyn4  happy_var_1)
+	 =  HappyAbsSyn4
+		 ((Par ((checkToken TokenPar happy_var_1) ++ (checkToken TokenPar happy_var_3)), S.union (snd happy_var_1) (snd happy_var_3))
+	)
+happyReduction_3 _ _ _  = notHappyAtAll 
 
 happyReduce_4 = happySpecReduce_3  0 happyReduction_4
 happyReduction_4 (HappyAbsSyn4  happy_var_3)
 	_
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 ((Par ((checkToken TokenPar happy_var_1) ++ (checkToken TokenPar happy_var_3)), Data.Set.union (snd happy_var_1) (snd happy_var_3))
+		 ((Bra (S.fromList $ (checkToken TokenBra happy_var_1) ++ (checkToken TokenBra happy_var_3)), S.union (snd happy_var_1) (snd happy_var_3))
 	)
 happyReduction_4 _ _ _  = notHappyAtAll 
 
@@ -131,45 +134,45 @@ happyReduction_5 (HappyAbsSyn4  happy_var_3)
 	_
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 ((Bra (Data.Set.fromList $ (checkToken TokenBra happy_var_1) ++ (checkToken TokenBra happy_var_3)), Data.Set.union (snd happy_var_1) (snd happy_var_3))
+		 ((Seq ((checkToken TokenSeq happy_var_1) ++ (checkToken TokenSeq happy_var_3)), S.union (snd happy_var_1) (snd happy_var_3))
 	)
 happyReduction_5 _ _ _  = notHappyAtAll 
 
-happyReduce_6 = happySpecReduce_3  0 happyReduction_6
-happyReduction_6 (HappyAbsSyn4  happy_var_3)
-	_
-	(HappyAbsSyn4  happy_var_1)
-	 =  HappyAbsSyn4
-		 ((Seq ((checkToken TokenSeq happy_var_1) ++ (checkToken TokenSeq happy_var_3)), Data.Set.union (snd happy_var_1) (snd happy_var_3))
-	)
-happyReduction_6 _ _ _  = notHappyAtAll 
-
-happyReduce_7 = happyReduce 4 0 happyReduction_7
-happyReduction_7 ((HappyTerminal (TokenStr happy_var_4)) `HappyStk`
+happyReduce_6 = happyReduce 4 0 happyReduction_6
+happyReduction_6 ((HappyTerminal (TokenStr happy_var_4)) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn4  happy_var_2) `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (case ((isPtp happy_var_4), (Data.Set.member happy_var_4 (snd happy_var_2))) of
-                                    (True, True)  -> (Rep (fst happy_var_2) happy_var_4 , Data.Set.union (Data.Set.singleton happy_var_4) (snd happy_var_2))
+		 (case ((isPtp happy_var_4), (S.member happy_var_4 (snd happy_var_2))) of
+                                    (True, True)  -> (Rep (fst happy_var_2) happy_var_4 , S.union (S.singleton happy_var_4) (snd happy_var_2))
                                     (False, _)    -> myErr ("Bad name " ++ happy_var_4)
                                     (True, False) -> myErr ("Participant " ++ happy_var_4 ++ " is not in the loop")
 	) `HappyStk` happyRest
 
-happyReduce_8 = happyReduce 5 0 happyReduction_8
-happyReduction_8 (_ `HappyStk`
+happyReduce_7 = happyReduce 5 0 happyReduction_7
+happyReduction_7 (_ `HappyStk`
 	(HappyAbsSyn4  happy_var_4) `HappyStk`
 	_ `HappyStk`
 	(HappyTerminal (TokenStr happy_var_2)) `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (case ((isPtp happy_var_2), (Data.Set.member happy_var_2 (snd happy_var_4))) of
-                                    (True, True)  -> (Rep (fst happy_var_4) happy_var_2 , Data.Set.union (Data.Set.singleton happy_var_2) (snd happy_var_4))
+		 (case ((isPtp happy_var_2), (S.member happy_var_2 (snd happy_var_4))) of
+                                    (True, True)  -> (Rep (fst happy_var_4) happy_var_2 , S.union (S.singleton happy_var_2) (snd happy_var_4))
                                     (False, _)    -> myErr ("Bad name " ++ happy_var_2)
                                     (True, False) -> myErr ("Participant " ++ happy_var_2 ++ " is not in the loop")
 	) `HappyStk` happyRest
+
+happyReduce_8 = happySpecReduce_3  0 happyReduction_8
+happyReduction_8 _
+	(HappyAbsSyn4  happy_var_2)
+	_
+	 =  HappyAbsSyn4
+		 (( happy_var_2 )
+	)
+happyReduction_8 _ _ _  = notHappyAtAll 
 
 happyReduce_9 = happySpecReduce_3  0 happyReduction_9
 happyReduction_9 _
@@ -180,14 +183,11 @@ happyReduction_9 _
 	)
 happyReduction_9 _ _ _  = notHappyAtAll 
 
-happyReduce_10 = happySpecReduce_3  0 happyReduction_10
+happyReduce_10 = happySpecReduce_1  0 happyReduction_10
 happyReduction_10 _
-	(HappyAbsSyn4  happy_var_2)
-	_
 	 =  HappyAbsSyn4
-		 (( happy_var_2 )
+		 ((Emp, S.empty)
 	)
-happyReduction_10 _ _ _  = notHappyAtAll 
 
 happyReduce_11 = happySpecReduce_1  1 happyReduction_11
 happyReduction_11 (HappyTerminal (TokenStr happy_var_1))
@@ -210,7 +210,7 @@ happyReduction_12 (HappyAbsSyn5  happy_var_3)
 happyReduction_12 _ _ _  = notHappyAtAll 
 
 happyNewToken action sts stk [] =
-	happyDoAction 17 notHappyAtAll action sts stk []
+	happyDoAction 18 notHappyAtAll action sts stk []
 
 happyNewToken action sts stk (tk:tks) =
 	let cont i = happyDoAction i tk action sts stk tks in
@@ -231,10 +231,11 @@ happyNewToken action sts stk (tk:tks) =
 	TokenCurlyo -> cont 14;
 	TokenCurlyc -> cont 15;
 	TokenSta -> cont 16;
+	TokenEmp -> cont 17;
 	_ -> happyError' ((tk:tks), [])
 	}
 
-happyError_ explist 17 tk tks = happyError' (tks, explist)
+happyError_ explist 18 tk tks = happyError' (tks, explist)
 happyError_ explist _ tk tks = happyError' ((tk:tks), explist)
 
 newtype HappyIdentity a = HappyIdentity a
@@ -303,6 +304,7 @@ lexer s = case s of
     '+':r                     -> TokenBra : lexer r
     '*':r                     -> TokenSta : lexer r
     'r':'e':'p':'e':'a':'t':r -> TokenSta : (lexer $ tail r)
+    '(':'o':')':r             -> TokenEmp : (lexer $ tail r)
     '@':r                     -> TokenUnt : lexer r
     ':':r                     -> TokenSec : lexer r
     ';':r                     -> TokenSeq : lexer r
@@ -367,7 +369,7 @@ checkToken t (g,_) = case t of
                                    Par l -> l
                                    _ -> [g]
                       TokenBra -> case g of
-                                   Bra l -> Data.Set.toList l
+                                   Bra l -> S.toList l
                                    _ -> [g]
                       TokenSeq -> case g of
                                    Seq l -> l
@@ -378,11 +380,11 @@ checkToken t (g,_) = case t of
 ggsptp :: Set Ptp -> GG -> Set Ptp
 ggsptp ps g = case g of
                Emp         -> ps
-               Act (s,r) _ -> Data.Set.union ps (Data.Set.fromList [s,r])
-               Par gs      -> Data.Set.union ps (Data.Set.unions (L.map (ggsptp Data.Set.empty) gs))
-               Bra gs      -> Data.Set.union ps (Data.Set.unions (L.map (ggsptp Data.Set.empty) (Data.Set.toList gs)))
-               Seq gs      -> Data.Set.union ps (Data.Set.unions (L.map (ggsptp Data.Set.empty) gs))
-               Rep g' p    -> Data.Set.union ps (ggsptp (Data.Set.singleton p) g')
+               Act (s,r) _ -> S.union ps (S.fromList [s,r])
+               Par gs      -> S.union ps (S.unions (L.map (ggsptp S.empty) gs))
+               Bra gs      -> S.union ps (S.unions (L.map (ggsptp S.empty) (S.toList gs)))
+               Seq gs      -> S.union ps (S.unions (L.map (ggsptp S.empty) gs))
+               Rep g' p    -> S.union ps (ggsptp (S.singleton p) g')
 
 myErr :: String -> a
 myErr err = error ("sggparser: ERROR - " ++ err)

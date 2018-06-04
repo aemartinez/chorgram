@@ -253,10 +253,11 @@ getFlags cmd args =
         "-v" -> M.insert "-v" y (getFlags cmd xs)
         _    -> error $ usage(cmd)
     SGG -> case args of
-      []        -> defaultFlags(cmd)
-      "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
-      "-rg":xs  -> M.insert "-rg" "yes" (getFlags cmd xs)
-      _         -> error $ usage(SGG)
+      []            -> defaultFlags(cmd)
+      "-d":y:xs     -> M.insert "-d"  y    (getFlags cmd xs)
+      "-rg":xs      -> M.insert "-rg" "yes" (getFlags cmd xs)
+      "--sloppy":xs -> M.insert "--sloppy" "yes" (getFlags cmd xs)
+      _             -> error $ usage(SGG)
     SYS -> case args of
       []        -> defaultFlags(cmd)
       "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)

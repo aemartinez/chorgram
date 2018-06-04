@@ -204,12 +204,12 @@ unionsHG [] = Just emptyHG
 unionsHG (hg:hgs) = if (isJust hg) && (isJust hg') then unionHG hg hg' else Nothing
   where hg' = unionsHG hgs
 
-semList :: Mu -> [GG] -> P -> (Mu,[Maybe HG])
-semList mu ggs ptps = case ggs of
+semList :: Bool -> Mu -> [GG] -> P -> (Mu,[Maybe HG])
+semList sloppy mu ggs ptps = case ggs of
                        []        -> (mu,[])
                        (gg:ggs') -> (mu'', ([Just hg'] ++ rest))
-                           where ( mu', hg' )   = sem mu gg ptps
-                                 ( mu'', rest ) = semList mu' ggs' ptps
+                           where ( mu', hg' )   = sem sloppy mu gg ptps
+                                 ( mu'', rest ) = semList sloppy mu' ggs' ptps
 
 --
 -- The semantic function [[_]] of ICE16; it is assumed that some
@@ -218,8 +218,8 @@ semList mu ggs ptps = case ggs of
 -- The labels of the evens corresponds to those used in proj (again
 -- this is the case for iteration)
 --
-sem :: Mu -> GG -> P -> (Mu, HG)
-sem mu gg ptps =
+sem :: Bool -> Mu -> GG -> P -> (Mu, HG)
+sem sloppy mu gg ptps =
   case gg of    -- Note: no longer normalisation and factorisation...factorise $ normGG gg
    Emp         -> ( mu, emptyHG )
    Act (s,r) m -> ( i, ( rel, S.singleton e, S.singleton e', rel, rel ) )
@@ -228,7 +228,7 @@ sem mu gg ptps =
              e'  = ( i, Just ( ( s, r ), Receive, m ) )
              rel = S.singleton ( S.singleton e, S.singleton e' )
    Par ggs     -> (i, hgu)
-     where ( mu', l ) = semList mu ggs ptps
+     where ( mu', l ) = semList sloppy mu ggs ptps
            i          = 1 + mu'
            hgu_       = unionsHG l
            (e1,e2)    = ((S.singleton (i,Nothing), minOf $ fromJust hgu_), (maxOf $ fromJust hgu_, S.singleton ((-i), Nothing)))
@@ -241,10 +241,10 @@ sem mu gg ptps =
                              )
                         else error (msgFormat SGG "Something wrong in a fork: " ++ (show (Par ggs)))
    Bra ggs     -> (i, fromJust hg')
-     where ( mu', l )  = semList mu (S.toList ggs) ptps
+     where ( mu', l )  = semList sloppy mu (S.toList ggs) ptps
            i   = 1 + mu'
            hgu = unionsHG l
-           hg' = if (wb ggs && isJust hgu)
+           hg' = if sloppy || (wb ggs && isJust hgu)
                  then unionHG hgu
                       (Just ( S.fromList $ L.concat $ L.map aux l, e, e', fstOf $ fromJust hgu, lstOf $ fromJust hgu ))
                  else error (msgFormat SGG "Violation of well-branchedness: " ++ show (Bra ggs))
@@ -253,14 +253,18 @@ sem mu gg ptps =
            aux = \x -> if isJust x then let x' = fromJust x in [(e, minOf x')] ++ [(maxOf x', e')] else error (msgFormat SGG "ERROR ...")
    Seq ggs     -> case ggs of
                    []            -> ( mu, emptyHG )
-                   [g']          -> sem mu g' ptps
-                   gg':gg'':ggs' -> if (ws pg pg') then hgs else error (msgFormat SGG "Violation of well-sequencedness: " ++ show (Seq ggs))
+                   [g']          -> sem sloppy mu g' ptps
+                   gg':gg'':ggs' -> if sloppy || (ws pg pg')
+                                    then hgs
+                                    else error (msgFormat SGG "Violation of well-sequencedness: " ++ show (Seq ggs))
                      where hgs           = (mu'', (seqHG pg pg'))
-                           ( mu', pg )   = sem mu gg' ptps
-                           ( mu'', pg' ) = sem mu' (Seq (gg'':ggs')) ptps
+                           ( mu', pg )   = sem sloppy mu gg' ptps
+                           ( mu'', pg' ) = sem sloppy mu' (Seq (gg'':ggs')) ptps
    Rep gg' p -> ( mu', hgr )
      where ps                = ggptp S.empty gg'
-           ( mu', hgb )     = if S.member p ps then sem mu gg' ptps else error (msgFormat SGG "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
+           ( mu', hgb )     = if sloppy || S.member p ps
+                              then sem sloppy mu gg' ptps
+                              else error (msgFormat SGG "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
            ( i, suf )       = ( 1+mu' , show i )
            ( eL, eE )       = (S.singleton (i, Just ( ( p , p ) , LoopSnd , lpref ++ suf )), S.singleton ((-i), Just ( ( p , p ) , LoopRcv , epref ++ suf )))
            rel              = S.fromList ([( S.singleton e , eE ) | e <- S.toList $ maxOf $ hgb] ++
