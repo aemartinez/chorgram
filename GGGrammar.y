@@ -70,7 +70,8 @@ import CFSM
 
 %%
 
-G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
+G : '§'                         { (Emp, S.empty) }
+  | str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
 				    (True, True, True)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])
 				    (True, False, True)  -> myErr ("Bad name " ++ $3)
 				    (True, _, False)     -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver")
