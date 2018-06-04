@@ -103,7 +103,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
                                 }
   | '(' G ')'			{ ( $2 ) }
   | '{' G '}'			{ ( $2 ) }
-  | '(o)'                     { (Emp, S.empty) }
+  | '(o)'                       { (Emp, S.empty) }
 --  | '§'				{ (Emp, S.empty) }
 
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
@@ -153,7 +153,7 @@ lexer s = case s of
     '+':r                     -> TokenBra : lexer r
     '*':r                     -> TokenSta : lexer r
     'r':'e':'p':'e':'a':'t':r -> TokenSta : (lexer $ tail r)
-    '(':'o':')':r             -> TokenEmp : (lexer $ tail r)
+    '(':'o':')':r             -> TokenEmp : (lexer r)
     '@':r                     -> TokenUnt : lexer r
     ':':r                     -> TokenSec : lexer r
     ';':r                     -> TokenSeq : lexer r
