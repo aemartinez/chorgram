@@ -6,13 +6,16 @@
 -- The grammar is the one used in the ICE16 paper with the addition
 -- of the repeat-until construct:
 --
---    G ::= P -> P : M | G|G | G+G | G;G | * G @ P | repeat P { G } | ( G ) 
+--    G ::= (o) | P -> P : M | G|G | G+G | G;G | * G @ P | repeat P { G } | ( G ) 
 --
--- the binary operators |, +, and ; are given in ascending order of
--- precedence.  The parser generator is Haskell's 'Happy' and the
--- parser (GGparser.hs) is obtained by typing'make parser'. Note that
--- the empty graph has been removed as not necessary. We have that syntaxes
--- repeat P { G } and  * G @ P are equivalent.
+-- where '(o)' has a special role: it is the empty graph outside
+-- loops, while in loops it marks a point where the selector may exit
+-- the iteration. The binary operators |, +, and ; are given in
+-- ascending order of precedence.  The parser generator is Haskell's
+-- 'Happy' and the parser (GGparser.hs) is obtained by typing'make
+-- parser'. Note that the empty graph has been removed as not
+-- necessary. We have that syntaxes repeat P { G } and * G @ P are
+-- equivalent.
 --
 -- The only syntactic check made (right now) during the parsing are
 -- (i) that sender and receiver of interactions have to be different,
@@ -70,12 +73,12 @@ import CFSM
 
 %%
 
-G : '§'                         { (Emp, S.empty) }
-  | str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
+G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
 				    (True, True, True)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])
 				    (True, False, True)  -> myErr ("Bad name " ++ $3)
-				    (True, _, False)     -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver")
-				    (False, True, True)  -> myErr ("Bad name " ++ $1)
+				    (True, True, False)  -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
+				    (_, False, False)    -> myErr ("Whaaat??? Sender " ++ $1 ++ " and receiver " ++ $3 ++ " are equal AND different!!!")
+				    (_, True, True)      -> myErr ("Whaaat??? Sender " ++ $1 ++ " and receiver " ++ $3 ++ " are equal AND different!!!")
 				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
 				    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
                                 }
