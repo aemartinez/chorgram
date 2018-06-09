@@ -33,6 +33,7 @@ module RGGparser where
 import SyntacticGlobalGraphs
 import Data.List as L
 import Data.Set as S
+import qualified Data.Map as M
 import Misc
 import CFSM
 }
@@ -91,25 +92,29 @@ G : str '->' str ':' str        {
   | G '|' G  	     		{
                                   (Rap ((checkToken TokenraP $1) ++ (checkToken TokenraP $3)), S.union (snd $1) (snd $3))
                                 }
-  | 'sel' str '{' G 'unless' guard '+' G 'unless' guard '}'	{ case (isPtp $2, (S.member $2 (S.union (snd $4) (snd $8)))) of
-                                                            (True, True) -> (Arb $2 (fst $4,$6,fst $8,$10), S.union (snd $4) (snd $8))
-                                                            (False,_)    -> myErr ("Bad name " ++ $2)
-                                                            (True,False) -> myErr ("Participant " ++ $2 ++ " cannot be the selector")
-                                                         }
+  | 'sel' str '{' branch '}'	{ let participants = L.foldr (\(x,y) -> ) [] (snd $1
+case (isPtp $2, S.member $2 (S.union (snd $4) (snd $8))) of
+                                     (True, True) -> (Arb $2 (fst $4,$6,fst $8,$10), S.union (snd $4) (snd $8))
+                                     (False,_)    -> myErr ("Bad name " ++ $2)
+                                     (True,False) -> myErr ("Participant " ++ $2 ++ " cannot be the selector")
+                                }
   | G ';' G  	     		{
                                   (Qes ((checkToken TokenqeS $1) ++ (checkToken TokenqeS $3)), S.union (snd $1) (snd $3))
                                 }
-  | 'repeat' str '{' G 'unless' guard '}'      {
-      				  case ((isPtp $2), (S.member $2 (snd $4))) of
-                                       (True, True)  -> (Per $2 (fst $4)  $6, (snd $4))
-                                       (False, _)    -> myErr ("Bad name " ++ $2)
-                                       (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
-                                }
+  | 'repeat' str '{' G 'unless' guard '}'      { checkToken $2 $4 $6 }
   | '(' G ')'			{ ( $2 ) }
   | '{' G '}'			{ ( $2 ) }
 
-guard : str '§'                 { $1 }
-      | str guard               { $1 ++ " " ++ $2 }
+guard : str '%' str             { M.insert $1 $3 M.empty }
+      | str '%' str ',' guard   { M.insert $1 $3 $5 }
+
+branch : G                      {[($1, L.empty)]}
+       | G 'unless' guard       { let d = S.difference (S.fromList (M.keys $3)) (snd $1)
+                                  in case S.null d of
+                                       true -> myerr ("Bad guard: some participant not in the branch")
+                                       false -> [($1, $3)]
+                                }
+       | branch '+' branch      { [$1] ++ [$3] }
 
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
   | str ',' ptps                { if (isPtp $1)
@@ -209,8 +214,6 @@ catchErr :: Err a -> (String -> Err a) -> Err a
 catchErr m k = case m of
       		Ok a     -> Ok a
 		Failed e -> k e
-
-
 
 -- type LineNumber = Int
 
