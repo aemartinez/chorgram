@@ -45,6 +45,7 @@ import CFSM
 
 %token
   str	        { TokenStr $$ }
+  '(o)'	        { TokenPme    }
   '§'	        { TokenGrd    }
   '->'	     	{ TokenArr    }
   '=>'	        { TokenMAr    }
@@ -105,6 +106,7 @@ G : str '->' str ':' str        {
                                        (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
                                 }
   | '(' G ')'			{ ( $2 ) }
+  | '{' G '}'			{ ( $2 ) }
 
 guard : str '§'                 { $1 }
       | str guard               { $1 ++ " " ++ $2 }
@@ -122,6 +124,7 @@ ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name 
 data Token =
   TokenStr String
   | TokenPtps [Ptp]
+  | TokenPme
   | TokenGrd
   | TokenArr
   | TokenraP
@@ -149,6 +152,7 @@ data Token =
 -- lexer :: (Token -> Err a) -> Err a
 lexer s = case s of
     [] -> []
+    '(':'o':')':r             -> TokenPme : lexer r
     '[':r                     -> lexer $ tail (L.dropWhile (\c->c/=']') r)   -- multi-line comment
     '.':'.':r                 -> lexer $ tail (L.dropWhile (\c->c/='\n') r)  -- single-line comment
     ' ':r                     -> lexer r
@@ -168,6 +172,7 @@ lexer s = case s of
     ',':r                     -> TokenCom : lexer r
     '(':r                     -> TokenBro : lexer r
     ')':r                     -> TokenBrc : lexer r
+    '(':'o':')'               -> 
     '{':r                     -> TokenCurlyo : lexer r
     '}':r                     -> TokenCurlyc : lexer r
     _                         -> TokenStr (fst s') : (lexer $ snd s')

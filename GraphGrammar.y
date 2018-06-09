@@ -76,7 +76,7 @@ import CFSM
 
 %%
 
-G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
+G : str '->' str ':' Msg        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
 				    (True, True, True)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])
 				    (True, False, True)  -> myErr ("Bad name " ++ $3)
 				    (True, True, False)  -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
@@ -85,7 +85,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
 				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
 				    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
                                 }
-  | str '=>' ptps ':' str       { case ((isPtp $1), not(L.elem $1 $3)) of
+  | str '=>' ptps ':' Msg       { case ((isPtp $1), not(L.elem $1 $3)) of
                                   (True, True)   -> case $3 of
                                                     []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
                                                     s:[] -> ((Act ($1 , s) $5), S.fromList([$1,s]))
@@ -113,8 +113,15 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
   | '(o)'                       { (Emp, S.empty) }
 --  | '§'				{ (Emp, S.empty) }
 
+Msg : str                         { $1 }
+    | str'(' ')'                  { $1 + '()' }
+    | str'(' str ')'              { $1 + '(' + $3 + ')' }
+
+guard : str ':' Msg '~'              
+      |                           { M.empty }
+      
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
-  | str ',' ptps                { if (isPtp $1)
+     | str ',' ptps             { if (isPtp $1)
                                   then (case $3 of
                                         [] ->  [$1]
                                         (s:l) -> ($1:s:l))

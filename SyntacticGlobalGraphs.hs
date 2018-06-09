@@ -29,7 +29,8 @@ data GG = Emp
 -- A syntactic reversible global graph is like a syntactic global
 -- graph with guards and selectors on branches; for simplicity we
 -- consider just binary parallel and branches
-data RGG = Tca Channel Message
+data RGG = Pme
+         | Tca Channel Message
          | Rap [RGG]
          | Arb Ptp (RGG, RevisionGuard, RGG, RevisionGuard)
          | Qes [RGG]

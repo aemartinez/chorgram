@@ -153,11 +153,11 @@ lexer s = case s of
     '-':'>':r                 -> TokenArr : (lexer $ tail r)
     '=':'>':r                 -> TokenMAr : (lexer $ tail r)
     '§':r                     -> TokenEmp : lexer r
+    '(':'o':')':r             -> TokenEmp : lexer r
     '|':r                     -> TokenPar : lexer r
     '+':r                     -> TokenBra : lexer r
     '*':r                     -> TokenSta : lexer r
     'r':'e':'p':'e':'a':'t':r -> TokenSta : (lexer $ tail r)
-    '(':'o':')':r             -> TokenEmp : (lexer r)
     '@':r                     -> TokenUnt : lexer r
     ':':r                     -> TokenSec : lexer r
     ';':r                     -> TokenSeq : lexer r

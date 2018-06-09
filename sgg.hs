@@ -63,6 +63,7 @@ main = do putStrLn $ msgFormat SGG "start"
                           where cfsm = fst $ proj gg (ptps!i) "q0" "qe" 0
                 output $ range (S.size names)
                 else do
+                -- TODO: the compilation to erlang should be better integrated with the rest
                 let (rgg, names) =
                       (rgggrammar . RGGparser.lexer) ggtxt
                 writeToFile (dir ++ "in_rgg_parsed.txt") (show rgg)
