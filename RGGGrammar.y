@@ -70,9 +70,9 @@ import CFSM
 
 %%
 
-G : str '->' str ':' str        {
+G : str '->' str ':' str        {let CP = 0 in
                                   case ((isPtp $1), (isPtp $3), not($1 == $3)) of
-				    (True, True, True)   -> ((Tca ($1 , $3) $5), S.fromList [$1,$3])
+				    (True, True, True)   -> ((Tca ($1 , $3) $5), S.fromList [$1,$3], CP)
 				    (True, False, True)  -> myErr ("Bad name " ++ $3)
 				    (True, True, False)  -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
 				    (True, False, False) -> myErr ("Now, this is odd... A sender " ++ $1 ++ " and " ++ $3 ++ " are equal but different")
@@ -80,28 +80,31 @@ G : str '->' str ':' str        {
 				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
 				    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
                                 }
-  | str '=>' ptps ':' str       {
+  | str '=>' ptps ':' str       { let CP = 0 in 
                                   case ((isPtp $1), not(L.elem $1 $3)) of
                                      (True, True)   -> case $3 of
                                                     []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
-                                                    s:[] -> ((Tca ($1 , s) $5), S.fromList([$1,s]))
-                                                    _    -> (Rap (L.map (\s -> (Tca ($1 , s) $5)) $3),S.fromList($1:$3))
+                                                    s:[] -> ((Tca ($1 , s) $5), S.fromList([$1,s]), lineNumber)
+                                                    _    -> (Rap (L.map (\s -> (Tca ($1 , s) $5)) $3),S.fromList($1:$3), 0)
                                      (True, False)  -> myErr ($1 ++ " must be in " ++ (show $3))
                                      (False, _)     -> myErr ("Bad name " ++ $1)
                                 }
-  | G '|' G  	     		{
-                                  (Rap ((checkToken TokenraP $1) ++ (checkToken TokenraP $3)), S.union (snd $1) (snd $3))
+  | G '|' G  	     		{let (_, ptps1, cp1) = $1 in
+                                  (Rap ((checkToken TokenraP $1) ++ (checkToken TokenraP $3)), S.union ptps1 (snd $3), cp1 + 1)
                                 }
-  | 'sel' str '{' branch '}'	{ let participants = L.foldr (\(x,y) -> ) [] (snd $1
-case (isPtp $2, S.member $2 (S.union (snd $4) (snd $8))) of
+  | 'sel' str '{' branch '}'	{ let participants = L.foldr (\(x,y) -> ) [] (snd $1 in
+                                  case (isPtp $2, S.member $2 (snd . fst $4)) of
                                      (True, True) -> (Arb $2 (fst $4,$6,fst $8,$10), S.union (snd $4) (snd $8))
                                      (False,_)    -> myErr ("Bad name " ++ $2)
                                      (True,False) -> myErr ("Participant " ++ $2 ++ " cannot be the selector")
                                 }
-  | G ';' G  	     		{
-                                  (Qes ((checkToken TokenqeS $1) ++ (checkToken TokenqeS $3)), S.union (snd $1) (snd $3))
+  | G ';' G  	     		{let (_, ptps1, cp1) = $1 in
+                                  (Qes ((checkToken TokenqeS $1) ++ (checkToken TokenqeS $3)), S.union ptps1 (snd $3), cp1 + 1)
                                 }
-  | 'repeat' str '{' G 'unless' guard '}'      { checkToken $2 $4 $6 }
+  | 'repeat' str '{' G 'unless' guard '}'      { if isPtp $2
+                                                 then checkGuard $4 $6
+                                                 else myerr("Bad name " ++ $2)
+                                               }
   | '(' G ')'			{ ( $2 ) }
   | '{' G '}'			{ ( $2 ) }
 
@@ -109,7 +112,7 @@ guard : str '%' str             { M.insert $1 $3 M.empty }
       | str '%' str ',' guard   { M.insert $1 $3 $5 }
 
 branch : G                      {[($1, L.empty)]}
-       | G 'unless' guard       { let d = S.difference (S.fromList (M.keys $3)) (snd $1)
+       | G 'unless' guard       { checkGuard $1 $3
                                   in case S.null d of
                                        true -> myerr ("Bad guard: some participant not in the branch")
                                        false -> [($1, $3)]
@@ -214,6 +217,18 @@ catchErr :: Err a -> (String -> Err a) -> Err a
 catchErr m k = case m of
       		Ok a     -> Ok a
 		Failed e -> k e
+
+third (_, _, x) = x
+
+checkGuard g m = let tmp = L.filter (\x -> S.member x (snd g)) M.keys in
+  case ((S.member selector (snd g)), tmp == []) of
+    (True,  True)  -> (Per selector (fst g)  m)
+    (False, True)  -> myErr ("Participant " ++ selector ++ " is not in the loop")
+    (False, True)  -> myErr ("Participant " ++ selector ++ " is not in the loop")
+    (True,  False) -> ("Revision guard(s) for unknown participant(s): " ++ show tmp)
+    (True,  False) -> myErr ("Revision guard(s) for unknown participant(s): " ++ show tmp)
+    (False, False) -> myErr ("Participant " ++ selector ++ " is not in the loop" ++ "\nRevision guard(s) for unknown participant(s): " ++ show tmp)
+    (False, False) -> myErr ("Participant " ++ selector ++ " is not in the loop" ++ "\nRevision guard(s) for unknown participant(s): " ++ show tmp)
 
 -- type LineNumber = Int
 

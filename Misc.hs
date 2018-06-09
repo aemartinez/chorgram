@@ -614,9 +614,3 @@ epref :: String
 newNode :: (Int -> Bool) -> Int -> Int -> Int
 newNode excluded n j = if (excluded n) then n else (if n > 0 then n + j else n - j)
 
-
-checkGuard selector g guardM = case ((isPtp selector), (S.member selector (snd g)), L.and (L.map (\x -> S.member x (snd g)) M.keys)) of
-                                 (True, True, True) -> (Per selector (fst g)  guardM)
-                                 (False, _,   _)    -> myErr ("Bad name " ++ selector)
-                                 (True, False, _)   -> myErr ("Participant " ++ selector ++ " is not in the loop")
-
