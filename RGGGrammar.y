@@ -32,8 +32,8 @@
 module RGGparser where
 import SyntacticGlobalGraphs
 import Data.List as L
-import Data.Set as S
-import qualified Data.Map as M
+import Data.Set as S (empty, null, intersection, union, difference, fromList, member, Set)
+import qualified Data.Map as M (keys, empty, insert, union, Map)
 import Misc
 import CFSM
 }
@@ -47,7 +47,7 @@ import CFSM
 %token
   str	        { TokenStr $$ }
   '(o)'	        { TokenPme    }
-  '§'	        { TokenGrd    }
+  '%'	        { TokenGrd    }
   '->'	     	{ TokenArr    }
   '=>'	        { TokenMAr    }
   '|'	        { TokenraP    }
@@ -61,17 +61,19 @@ import CFSM
   '}'	        { TokenCurlyc }
   'sel'         { TokenarB    }
   'repeat'      { TokenPer    }
-  'end'         { TokenEnd    }
   'unless'      { TokenUnl    }
+
 
 %right '|'
 %right '+'
 %right ';'
+%right '%'
+%right ','
 
 %%
 
 G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
-				    (True, True, True)   -> ((Tca ($1 , $3) $5), S.fromList [$1,$3], [M.empty])
+				    (True, True, True)   -> ((Tca ($1 , $3) $5), S.fromList [$1,$3])
 				    (True, False, True)  -> myErr ("Bad name " ++ $3)
 				    (True, True, False)  -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
 				    (True, False, False) -> myErr ("Now, this is odd... A sender " ++ $1 ++ " and " ++ $3 ++ " are equal but different")
@@ -79,47 +81,79 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
 				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
 				    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
                                 }
+
   | str '=>' ptps ':' str       { case ((isPtp $1), not(L.elem $1 $3)) of
                                      (True, True)   -> case $3 of
-                                                    []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
-                                                    s:[] -> ((Tca ($1 , s) $5), S.fromList([$1,s]), [M.empty])
-                                                    _    -> (Rap (L.map (\s -> (Tca ($1 , s) $5)) $3),S.fromList($1:$3), [M.empty])
+                                                         []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
+                                                         s:[] -> ((Tca ($1 , s) $5), S.fromList([$1,s]))
+                                                         _    -> ((Rap (L.map (\s -> (Tca ($1, s) $5)) $3), S.fromList($1:$3)))
                                      (True, False)  -> myErr ($1 ++ " must be in " ++ (show $3))
                                      (False, _)     -> myErr ("Bad name " ++ $1)
                                 }
-  | G '|' G  	     		{ (Rap ((checkToken TokenraP $1) ++ (checkToken TokenraP $3)), S.union ptps1 (snd $3), (third $1) ++ (third $3)) }
-  | 'sel' str '{' branch '}'	{ let participants = L.foldr (\(x,y) -> ) [] (snd $1) in
-                                  case (isPtp $2, S.member $2 (snd . fst $4)) of
-                                     (True, True) -> (Arb $2 (fst $4,$6,fst $8,$10), S.union (snd $4) (snd $8))
-                                     (False,_)    -> myErr ("Bad name " ++ $2)
-                                     (True,False) -> myErr ("Participant " ++ $2 ++ " cannot be the selector")
+
+  | G '|' G  	     		{ let ptps = (S.intersection (snd $1) (snd $3)) in
+                                  if S.null ptps
+                                  then case (not (emptyG $ fst $1), not (emptyG $ fst $3)) of
+                                         (True,  True)  -> (Rap ((checkToken TokenraP (fst $1)) ++ (checkToken TokenraP (fst $3))),
+                                                            S.union (snd $1) (snd $3))
+                                         (True,  False) -> $1
+                                         (False, True)  -> $3
+                                         (False, False) -> (Pme, S.empty)
+                                  else myErr("Non disjoint threads " ++ (show ptps))
                                 }
-  | G ';' G  	     		{let (_, ptps1, cp1) = $1 in
-                                  (Qes ((checkToken TokenqeS $1) ++ (checkToken TokenqeS $3)), S.union ptps1 (snd $3), cp1 + 1)
+
+  | 'sel' str '{' branch '}'	{ let p = S.fromList $ L.concat (L.map (\(_, guard) -> M.keys guard) $4) in
+                                    case (isPtp $2, S.member $2 p) of
+                                       (True, True) -> let branches = L.map (\((g, _), guard) -> (g, guard)) $4 in ((Arb $2 branches), p)
+                                       (False, _)   -> myErr ("Bad name " ++ $2)
+                                       (True,False) -> myErr ("Participant " ++ $2 ++ " cannot be the selector")
                                 }
-  | 'repeat' str '{' G 'unless' guard '}'      { if isPtp $2
-                                                 then checkGuard $4 $6
-                                                 else myerr("Bad name " ++ $2)
-                                               }
+
+  | G ';' G  	     		{ case (not (emptyG $ fst $1), not (emptyG $ fst $3)) of
+                                    (True, True)   -> (Qes ((checkToken TokenqeS (fst $1)) ++ (checkToken TokenqeS (fst $3))), S.union (snd $1) (snd $3))
+                                    (True, False)  -> $1
+                                    (False, True)  -> $3
+                                    (False, False) -> (Pme, S.empty)
+                                }
+
+  | 'repeat' str '{' G
+                     'unless'
+                     guard
+                 '}'            { case (isPtp $2, S.member $2 (snd $4)) of
+                                    (True,  True)  -> let cg = checkGuard $4 $6 in (Per $2 (fst $ fst cg) (snd cg), snd $4)
+                                    (True,  False) -> myErr("Participant " ++ $2 ++ " must be in the body of the loop")
+                                    (False, True)  -> myErr("Bad name " ++ $2)
+                                    (False, False) -> myErr("Bad name " ++ $2 ++ " (and a selector must be in the body)")
+                                }
+
   | '(' G ')'			{ ( $2 ) }
+
   | '{' G '}'			{ ( $2 ) }
 
-guard : str '%' str             { M.insert $1 $3 M.empty }
+  | '(o)'                       { (Pme, S.empty) }
+
+
+
+guard : str '%' str             { M.empty }
+
       | str '%' str ',' guard   { M.insert $1 $3 $5 }
 
-branch : G                      {[($1, L.empty)]}
-       | G 'unless' guard       { checkGuard $1 $3
-                                  in case S.null d of
-                                       true -> myerr ("Bad guard: some participant not in the branch")
-                                       false -> [($1, $3)]
-                                }
-       | branch '+' branch      { [$1] ++ [$3] }
+
+
+branch : G                      { [ ($1, M.empty) ] }
+
+       | G 'unless' guard       { [ checkGuard $1 $3 ] }
+
+       | branch '+' branch      { $1 ++ $3 }
+
+
 
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
-  | str ',' ptps                { if (isPtp $1)
+
+     | str ',' ptps             { if (isPtp $1)
                                   then (case $3 of
-                                        [] ->  [$1]
-                                        (s:l) -> ($1:s:l))
+                                          [] ->  [$1]
+                                          (s:l) -> ($1:s:l))
                                   else myErr ("Bad name " ++ $1)
                                 }
 
@@ -146,7 +180,6 @@ data Token =
   | TokenCurlyc
   | TokenarB
   | TokenPer
-  | TokenEnd
   | TokenUnl
   | TokenErr String
   deriving Show
@@ -155,7 +188,7 @@ data Token =
 -- lexer :: String -> [Token]
 -- lexer :: (Token -> Err a) -> Err a
 lexer s = case s of
-    [] -> []
+    []                        -> []
     '(':'o':')':r             -> TokenPme : lexer r
     '[':r                     -> lexer $ tail (L.dropWhile (\c->c/=']') r)   -- multi-line comment
     '.':'.':r                 -> lexer $ tail (L.dropWhile (\c->c/='\n') r)  -- single-line comment
@@ -164,11 +197,10 @@ lexer s = case s of
     '\t':r                    -> lexer r
     '-':'>':r                 -> TokenArr : (lexer $ tail r)
     '=':'>':r                 -> TokenMAr : (lexer $ tail r)
-    'e':'n':'d':r             -> TokenEnd : (lexer $ tail r)
     's':'e':'l':r             -> TokenarB : (lexer $ tail r)
     'u':'n':'l':'e':'s':'s':r -> TokenUnl : (lexer $ tail r)
     'r':'e':'p':'e':'a':'t':r -> TokenPer : (lexer $ tail r)
-    '§':r                     -> TokenGrd : lexer r
+    '%':r                     -> TokenGrd : lexer r
     '|':r                     -> TokenraP : lexer r
     '+':r                     -> TokenBra : lexer r
     ':':r                     -> TokenSec : lexer r
@@ -176,7 +208,7 @@ lexer s = case s of
     ',':r                     -> TokenCom : lexer r
     '(':r                     -> TokenBro : lexer r
     ')':r                     -> TokenBrc : lexer r
-    '(':'o':')'               -> 
+    '(':'o':')':r             -> TokenPme : lexer r
     '{':r                     -> TokenCurlyo : lexer r
     '}':r                     -> TokenCurlyc : lexer r
     _                         -> TokenStr (fst s') : (lexer $ snd s')
@@ -214,17 +246,11 @@ catchErr m k = case m of
       		Ok a     -> Ok a
 		Failed e -> k e
 
-third (_, _, x) = x
-
-checkGuard g m = let tmp = L.filter (\x -> S.member x (snd g)) M.keys in
-  case ((S.member selector (snd g)), tmp == []) of
-    (True,  True)  -> (Per selector (fst g)  m)
-    (False, True)  -> myErr ("Participant " ++ selector ++ " is not in the loop")
-    (False, True)  -> myErr ("Participant " ++ selector ++ " is not in the loop")
-    (True,  False) -> ("Revision guard(s) for unknown participant(s): " ++ show tmp)
-    (True,  False) -> myErr ("Revision guard(s) for unknown participant(s): " ++ show tmp)
-    (False, False) -> myErr ("Participant " ++ selector ++ " is not in the loop" ++ "\nRevision guard(s) for unknown participant(s): " ++ show tmp)
-    (False, False) -> myErr ("Participant " ++ selector ++ " is not in the loop" ++ "\nRevision guard(s) for unknown participant(s): " ++ show tmp)
+checkGuard :: (RGG, Set Ptp) -> ReversionGuard -> ((RGG, Set Ptp), ReversionGuard)
+checkGuard g m = let tmp = [ x | x <- M.keys m, not (S.member x (snd g)) ] in
+                 if L.null tmp
+                 then (g, m)
+                 else myErr ("Unknown participant(s): " ++ (show tmp))
 
 -- type LineNumber = Int
 
@@ -239,17 +265,21 @@ checkGuard g m = let tmp = L.filter (\x -> S.member x (snd g)) M.keys in
 -- Plagiarism done
 --
 -- checkToken 'flattens', parallel and sequential composition
-checkToken :: Token -> (RGG, Set Ptp) -> [RGG]
-checkToken t (g,_) = case t of
-                      TokenraP -> case g of
-                                   Rap l -> l
-                                   _ -> [g]
-                      TokenqeS -> case g of
-                                   Qes l -> l
-                                   _ -> [g]
-                      _        -> [g]
+checkToken :: Token -> RGG -> [RGG]
+checkToken t g = case t of
+                   TokenraP -> case g of
+                                 Rap l -> l
+                                 _ -> [g]
+                   TokenqeS -> case g of
+                                 Qes l -> l
+                                 _ -> [g]
+                   _        -> [g]
 
-
+emptyG :: RGG -> Bool
+emptyG g = case g of
+             Pme -> True
+             _   -> False
+  
 myErr :: String -> a
 myErr err = error ("sggparser: ERROR - " ++ err)
 }

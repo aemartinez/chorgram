@@ -32,13 +32,14 @@ data GG = Emp
 data RGG = Pme
          | Tca Channel Message
          | Rap [RGG]
-         | Arb Ptp (RGG, RevisionGuard, RGG, RevisionGuard)
+         | Arb Ptp [(RGG, ReversionGuard)]
          | Qes [RGG]
-         | Per Ptp RGG RevisionGuard
+         | Per Ptp RGG ReversionGuard
          deriving (Eq, Ord, Show)
 
 type Endpoint = String
-type RevisionGuard = String
+type Guard = String
+type ReversionGuard = Map Ptp Guard
 
 -- Syntactic global graphs can be normalised by flattening nested | and +
 -- the name normGG is misleading. TODO: change normGG to preNormGG or flattenGG 
@@ -308,7 +309,9 @@ erlAtom :: String -> String -> String
 erlAtom pre s = case s of
   "" -> ""
   _  -> if isLower(head s) then s else pre ++ s
-      
+
+guard2erl :: ReversionGuard -> String
+guard2erl g = if M.null g then "" else "\"" ++ show g ++ "\""
 --
 -- gg2erl gg generates a string encoding gg in Erlang's format
 --        for the reversible computation syntax
@@ -322,18 +325,23 @@ rgg2erl ln _rgg =
   in case _rgg of
     Tca (s,r) m -> (erlTuple [show ln, erlTuple ["com", erlAtom "ptp_" s, erlAtom "ptp_" r, erlAtom "msg_" m] ], 1 + ln)
     Rap rggs ->
-      let aux = \rg -> \(t,l) ->
-            let (t',l') = rgg2erl l rg in
-            case (t,t') of
+      let aux = \rg -> \(t, l) ->
+            let (t', l') = rgg2erl l rg in
+            case (t, t') of
               ("","") -> ("", l')
               ("", _) -> (erlList t', l')
               (_ , _) -> (erlList t' ++ sep ++ t, l')
           (threads, ln') = L.foldr aux ("", ln) rggs
-      in (erlTuple [show ln', erlTuple ["par", "[ " ++ threads ++ " ]" ]], 1 + ln')
-    Arb p (rgg, g, rgg', g') ->
-      let (t1, ln1) = rgg2erl ln rgg
-          (t2, ln') = rgg2erl ln1 rgg'
-      in (erlTuple [show ln', erlTuple ["cho", erlAtom "ptp_" p, erlTuple [erlList t1,  "\"" ++ g ++ "\""], erlTuple [erlList t2, "\"" ++ g' ++ "\""]]], 1 + ln')
+      in (erlTuple [show ln', erlTuple ["par", erlList threads]], 1 + ln')
+    Arb p branch ->
+      let aux = \(rg, g) -> \(t, l) ->
+            let (t', l') = rgg2erl l rg in
+              case (t, t') of
+                ("","") -> ("", l')
+                ("", _) -> (erlTuple [erlList t', guard2erl g], l')
+                (_ , _) -> (t' ++ sep ++ erlTuple [erlList t, guard2erl g], l')
+          (branches, ln') = L.foldr aux ("", ln) branch
+      in (erlTuple [show ln', erlTuple ["cho", erlAtom "ptp_" p, erlList branches]], 1 + ln')
     Qes rggs ->
       let aux = \rg -> \(t,l) ->
             let (t',l') = rgg2erl l rg in
@@ -345,7 +353,7 @@ rgg2erl ln _rgg =
       in (erlList seq, ln') 
     Per p rgg g ->
       let (body, ln') = rgg2erl ln rgg
-      in (erlTuple [show ln', erlTuple ["rec", erlAtom "ptp_" p, erlTuple [erlList body, "\"" ++ g ++ "\""]]], 1 + ln')
+      in (erlTuple [show ln', erlTuple ["rec", erlAtom "ptp_" p, erlTuple [erlList body, guard2erl g]]], 1 + ln')
 
 labelOf :: GG -> String
 labelOf gg = case gg of
