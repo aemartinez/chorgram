@@ -36,8 +36,8 @@
 {
 module GGparser where
 import SyntacticGlobalGraphs
+import Data.Set as S (empty, singleton, intersection, union, unions, difference, fromList, difference, toList, member, Set)
 import Data.List as L
-import Data.Set as S
 import Misc
 import CFSM
 }
