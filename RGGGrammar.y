@@ -75,29 +75,28 @@ import CFSM
 %%
 
 G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
-				    (True, True, True)   -> ((Tca ($1 , $3) $5), S.fromList [$1,$3])
-				    (True, False, True)  -> myErr ("Bad name " ++ $3)
-				    (True, True, False)  -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
-				    (True, False, False) -> myErr ("Now, this is odd... A sender " ++ $1 ++ " and " ++ $3 ++ " are equal but different")
-				    (False, True, True)  -> myErr ("Now, this is odd... A sender " ++ $1 ++ " and " ++ $3 ++ " are equal but different")
-				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
-				    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
+				    (True,  True,  True)  -> ((Tca ($1 , $3) $5), S.fromList [$1,$3])
+				    (True,  False, True)  -> myErr ("Bad name " ++ $3)
+				    (True,  True,  False) -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
+				    (True,  False, False) -> myErr ("Now, this is odd... A sender " ++ $1 ++ " and " ++ $3 ++ " are equal but different")
+				    (False, True,  True)  -> myErr ("Now, this is odd... A sender " ++ $1 ++ " and " ++ $3 ++ " are equal but different")
+				    (False, False, True)  -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
+				    (False, _,     False) -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
                                 }
 
   | str '=>' ptps ':' str       { case ((isPtp $1), not(L.elem $1 $3)) of
-                                     (True, True)   -> case $3 of
+                                     (True,  True)   -> case $3 of
                                                          []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
                                                          s:[] -> ((Tca ($1 , s) $5), S.fromList([$1,s]))
                                                          _    -> ((Rap (L.map (\s -> (Tca ($1, s) $5)) $3), S.fromList($1:$3)))
-                                     (True, False)  -> myErr ($1 ++ " must be in " ++ (show $3))
-                                     (False, _)     -> myErr ("Bad name " ++ $1)
+                                     (True,  False)  -> myErr ($1 ++ " must be in " ++ (show $3))
+                                     (False, _)      -> myErr ("Bad name " ++ $1)
                                 }
 
   | G '|' G  	     		{ let ptps = (S.intersection (snd $1) (snd $3)) in
                                   if S.null ptps
                                   then case (not (emptyG $ fst $1), not (emptyG $ fst $3)) of
-                                         (True,  True)  -> (Rap ((checkToken TokenraP (fst $1)) ++ (checkToken TokenraP (fst $3))),
-                                                            S.union (snd $1) (snd $3))
+                                         (True,  True)  -> (Rap ((checkToken TokenraP (fst $1)) ++ (checkToken TokenraP (fst $3))), S.union (snd $1) (snd $3))
                                          (True,  False) -> $1
                                          (False, True)  -> $3
                                          (False, False) -> (Pme, S.empty)
@@ -111,8 +110,8 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
                                 }
 
   | G ';' G  	     		{ case (not (emptyG $ fst $1), not (emptyG $ fst $3)) of
-                                    (True, True)   -> (Qes ((checkToken TokenqeS (fst $1)) ++ (checkToken TokenqeS (fst $3))), S.union (snd $1) (snd $3))
-                                    (True, False)  -> $1
+                                    (True,  True)  -> (Qes ((checkToken TokenqeS (fst $1)) ++ (checkToken TokenqeS (fst $3))), S.union (snd $1) (snd $3))
+                                    (True,  False) -> $1
                                     (False, True)  -> $3
                                     (False, False) -> (Pme, S.empty)
                                 }
@@ -226,9 +225,8 @@ parseError err = case err of
 -- parseError tokens = failErr "Parse error"
 
 --
--- Starting to plagiarise from Happy's user manual
--- (E has been renamed with Err beause it clashed with
--- the type of events)
+-- Starting to plagiarise from Happy's user manual (E has been renamed
+-- with Err beause it clashed with the type of events)
 --
 data Err a = Ok a | Failed String
 
@@ -266,6 +264,8 @@ checkGuard g m = let tmp = [ x | x <- M.keys m, not (S.member x (snd g)) ] in
 --
 -- Plagiarism done
 --
+
+
 -- checkToken 'flattens', parallel and sequential composition
 checkToken :: Token -> RGG -> [RGG]
 checkToken t g = case t of
