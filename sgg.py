@@ -37,7 +37,7 @@ parser.add_argument("-l",
                     dest = "leg",
                     action = "store_true",
                     help = "Suppress legend from dot files")
-parser.add_argument("-dir",
+parser.add_argument("--dir",
                     dest = "dir",
                     default = "experiments/results",
                     help = "Specify the directory for the output files   {default: outputs}")
@@ -45,6 +45,10 @@ parser.add_argument("--sloppy",
                     dest = "sloppy",
                     action = "store_true",
                     help = "Do not raise exception due to non well-formedness")
+parser.add_argument("-rg",
+                    dest = "rg",
+                    action = "store_true",
+                    help = "Uses the parser for REGs")
 parser.add_argument("filename",
                     help = "Specify the path to file containing the CFSMs")
 args = parser.parse_args()
@@ -64,6 +68,7 @@ starttime = time.time()
 callsgg = ([SGG, "-d", args.dir] +
            (["-l"] if args.leg else []) +
            (["--sloppy"] if args.sloppy else []) +
+           (["-rg"] if args.rg else []) +
            [args.filename])
 
 debugMsg(args.debug, cmd, string.join(callsgg))

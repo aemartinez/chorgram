@@ -53,14 +53,16 @@ import CFSM
   '|'	        { TokenraP    }
   '+'	        { TokenBra    }
   ';'	        { TokenqeS    }
+  '@'   	{ TokenUnt    }
   ':'	        { TokenSec    }
+  ','	        { TokenCom    }
   '('	        { TokenBro    }
   ')'	        { TokenBrc    }
-  ','	        { TokenCom    }
   '{'	        { TokenCurlyo }
   '}'	        { TokenCurlyc }
   'sel'         { TokenarB    }
   'repeat'      { TokenPer    }
+  '*'	        { TokenPer    }
   'unless'      { TokenUnl    }
 
 
@@ -200,6 +202,7 @@ lexer s = case s of
     's':'e':'l':r             -> TokenarB : (lexer $ tail r)
     'u':'n':'l':'e':'s':'s':r -> TokenUnl : (lexer $ tail r)
     'r':'e':'p':'e':'a':'t':r -> TokenPer : (lexer $ tail r)
+    '@':r                     -> TokenUnt : lexer r
     '%':r                     -> TokenGrd : lexer r
     '|':r                     -> TokenraP : lexer r
     '+':r                     -> TokenBra : lexer r

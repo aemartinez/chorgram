@@ -49,23 +49,22 @@ import CFSM
 -- %monad { Err } { thenErr } { returnErr }
 
 %token
-  str	        { TokenStr $$ }
-  '§'	        { TokenEmp    }
-  '->'	     	{ TokenArr    }
-  '=>'	        { TokenMAr    }
-  '|'	        { TokenPar    }
-  '+'	        { TokenBra    }
-  '*'	        { TokenSta    }
-  ';'	        { TokenSeq    }
-  '@'   	{ TokenUnt    }
-  ':'	        { TokenSec    }
-  '('	        { TokenBro    }
-  ')'	        { TokenBrc    }
-  ','	        { TokenCom    }
-  '{'	        { TokenCurlyo }
-  '}'	        { TokenCurlyc }
-  'repeat'      { TokenSta    }
-  '(o)'         { TokenEmp    }
+  str	        { TokenStr $$   }
+  '(o)'         { TokenEmp      }
+  '->'	     	{ TokenArr      }
+  '=>'	        { TokenMAr      }
+  '|'	        { TokenPar      }
+  '+'	        { TokenBra      }
+  '*'	        { TokenSta      }
+  ';'	        { TokenSeq      }
+  '@'   	{ TokenUnt      }
+  ':'	        { TokenSec      }
+  '('	        { TokenBro      }
+  ')'	        { TokenBrc      }
+  ','	        { TokenCom      }
+  '{'	        { TokenCurlyo   }
+  '}'	        { TokenCurlyc   }
+  'repeat'      { TokenSta      }
 
 %right '|'
 %right '+'
@@ -105,10 +104,9 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
                                     (False, _)    -> myErr ("Bad name " ++ $2)
                                     (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
                                 }
-  | '(' G ')'			{ ( $2 ) }
-  | '{' G '}'			{ ( $2 ) }
+  | '(' G ')'			{ $2 }
+  | '{' G '}'			{ $2 }
   | '(o)'                       { (Emp, S.empty) }
---  | '§'				{ (Emp, S.empty) }
 
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
   | str ',' ptps                { if (isPtp $1)
@@ -138,22 +136,41 @@ data Token =
   | TokenErr String
   | TokenCurlyo
   | TokenCurlyc
-  deriving Show
 
+instance Show Token where
+   show t = showToken t
 
+showToken t = case t of
+                TokenStr s -> s
+                TokenPtps p -> show p
+                TokenEmp -> "(o)"
+                TokenArr -> "->"
+                TokenPar -> "|"
+                TokenBra -> "+"
+                TokenSeq -> ";"
+                TokenSta -> "*"
+                TokenUnt -> "@"
+                TokenSec -> ":"
+                TokenBro -> "("
+                TokenBrc -> ")"
+                TokenCom -> ","
+                TokenMAr -> "=>"
+                TokenErr err -> err
+                TokenCurlyo -> "{"
+                TokenCurlyc -> "}"
+  
 -- lexer :: String -> [Token]
 -- lexer :: (Token -> Err a) -> Err a
 lexer s = case s of
     []                        -> []
+    '(':'o':')':r             -> TokenEmp : lexer r
     '[':r                     -> lexer $ tail (L.dropWhile (\c->c/=']') r)
     '.':'.':r                 -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
-    ' '  :r                   -> lexer r
-    '\n' :r                   -> lexer r
-    '\t' :r                   -> lexer r
+    ' ':r                     -> lexer r
+    '\n':r                    -> lexer r
+    '\t':r                    -> lexer r
     '-':'>':r                 -> TokenArr : (lexer $ tail r)
     '=':'>':r                 -> TokenMAr : (lexer $ tail r)
-    '§':r                     -> TokenEmp : lexer r
-    '(':'o':')':r             -> TokenEmp : lexer r
     '|':r                     -> TokenPar : lexer r
     '+':r                     -> TokenBra : lexer r
     '*':r                     -> TokenSta : lexer r
@@ -171,7 +188,7 @@ lexer s = case s of
     
 parseError :: [Token] -> a
 parseError err = case err of
-                    TokenErr s:_ -> myErr s
+                    TokenErr s:_ -> myErr $ show s
                     _            -> myErr (show err)
 
 
