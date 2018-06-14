@@ -163,7 +163,9 @@ mkSep :: [String] -> String -> String
 mkSep l sep =
   case l of
     [] -> ""
-    s:l' -> s ++ (if (l' == []) then "" else (", " ++ (mkSep l' sep)))
+    s:[] -> s
+    "": l' -> mkSep l' sep
+    s:l' -> s ++ sep ++ (mkSep l' sep)
 
 setFileNames :: String -> Map String String -> (String, String, String, String)
 setFileNames f flags = (dir, dir ++ baseFile, baseFile , takeExtension f)

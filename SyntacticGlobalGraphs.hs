@@ -311,10 +311,10 @@ erlAtom pre s = case s of
   _  -> if isLower(head s) then s else pre ++ s
 
 guard2erl :: ReversionGuard -> String
-guard2erl g = if M.null g then "" else "\"" ++ show g ++ "\""
+guard2erl g = if M.null g then "\" \"" else "\"" ++ show g ++ "\""
 --
--- gg2erl gg generates a string encoding gg in Erlang's format
---        for the reversible computation syntax
+-- gg2erl _rgg generates a string encoding _rgg in Erlang's format
+--        for the REGs' syntax
 -- Pre: Branches must me decorated with the selector and guards
 --      must be Erlang expressions
 -- Post: a string in the format expected by encoding.erl
@@ -337,11 +337,11 @@ rgg2erl ln _rgg =
       let aux = \(rg, g) -> \(t, l) ->
             let (t', l') = rgg2erl l rg in
               case (t, t') of
-                ("","") -> ("", l')
-                ("", _) -> (erlTuple [erlList t', guard2erl g], l')
-                (_ , _) -> (t' ++ sep ++ erlTuple [erlList t, guard2erl g], l')
+                ("", "") -> ("", l')
+                ("", _)  -> (erlList $ erlTuple [erlList t', guard2erl g], l')
+                (_ , _)  -> (t' ++ " + " ++ (erlList t), l')
           (branches, ln') = L.foldr aux ("", ln) branch
-      in (erlTuple [show ln', erlTuple ["cho", erlAtom "ptp_" p, erlList branches]], 1 + ln')
+      in (erlTuple [show ln', erlTuple ["bra", erlAtom "ptp_" p, erlList branches]], 1 + ln')
     Qes rggs ->
       let aux = \rg -> \(t,l) ->
             let (t',l') = rgg2erl l rg in
