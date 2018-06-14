@@ -336,10 +336,10 @@ rgg2erl ln _rgg =
     Arb p branch ->
       let aux = \(rg, g) -> \(t, l) ->
             let (t', l') = rgg2erl l rg in
-              case (t, t') of
-                ("", "") -> ("", l')
-                ("", _)  -> (erlList $ erlTuple [erlList t', guard2erl g], l')
-                (_ , _)  -> (t' ++ " + " ++ (erlList t), l')
+              case (t', t) of
+                ("", _)  -> (t, l)
+                (_, "")  -> (erlList $ erlTuple [erlList t', guard2erl g], l')
+                (_ , _)  -> ((erlList $ erlTuple [erlList t', guard2erl g]) ++ " + " ++ t, l')
           (branches, ln') = L.foldr aux ("", ln) branch
       in (erlTuple [show ln', erlTuple ["bra", erlAtom "ptp_" p, erlList branches]], 1 + ln')
     Qes rggs ->
