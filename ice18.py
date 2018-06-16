@@ -38,7 +38,7 @@ parser.add_argument("-l",
 parser.add_argument("--dir",
                     dest = "dir",
                     default = "~/emtalks/behAPI_ice18/demo/",
-                    help = "Specify the directory for the output files   {default: outputs}")
+                    help = "Specify the directory for the output files   {default: ~/emtalks/behAPI_ice18/demo/}")
 parser.add_argument("--sloppy",
                     dest = "sloppy",
                     action = "store_true",
@@ -56,14 +56,15 @@ rgg, sgg = "atm.rgg", "old_syntax_atm.sgg"
 bname = os.path.basename((os.path.splitext(rgg))[0])
 dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) + bname + os.sep
 mkdir(dir)
-basename = dir + bname
+basename = dir
+
 
 # get the erlang data structure of the global graph
 debugMsg(args.debug, cmdPref, "\n   Generating " + bname + "\n\tResult in " + dir + "\n")
 callsgg = ([SGG, "-d", args.dir] +
            (["--sloppy"] if args.sloppy else []) +
            (["-rg"]) +
-           [args.dir + rgg])
+           [args.dir + sgg])
 debugMsg(args.debug, cmdPref, string.join(callsgg))
 subprocess.check_call(callsgg)
 
