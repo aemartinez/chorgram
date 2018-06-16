@@ -14,7 +14,7 @@ import argparse
 
 from utils import *
 
-SGG, dotCFG, cmdPref, ERL = "./sgg", ".dot.cfg", "demo", "ice18.erl"
+SGG, dotCFG, cmdPref, test = "./sgg", ".dot.cfg", "demo", "test"
 
 # Setting flags
 parser = argparse.ArgumentParser(description="demo: script for demoing gg to erlang")
@@ -68,12 +68,12 @@ debugMsg(args.debug, cmdPref, string.join(callsgg))
 subprocess.check_call(callsgg)
 
 # prepare the erlang file from the template
-with open(dir + "_" + ERL) as f:
+with open(dir + "_" + test + ".erl") as f:
     codeTemplate = string.join(f.readlines())
 with open(dir + bname + "/rgg.txt") as f:
     erlGG = f.readlines()
 code = codeTemplate % (string.join(erlGG))
-with open("../../Dropbox/reversibleActors/code/" + ERL, "w") as ice:
+with open("../../Dropbox/mypapers/reversibleActors/code/" + test + "_ice18" + ".erl", "w") as ice:
     ice.write(code)
 
 
