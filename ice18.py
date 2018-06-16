@@ -14,7 +14,7 @@ import argparse
 
 from utils import *
 
-SGG, dotCFG, cmdPref, ERL = "./sgg", ".dot.cfg", "demo", "./demo/ice18.erl"
+SGG, dotCFG, cmdPref, ERL = "./sgg", ".dot.cfg", "demo", "ice18.erl"
 
 # Setting flags
 parser = argparse.ArgumentParser(description="demo: script for demoing gg to erlang")
@@ -37,7 +37,7 @@ parser.add_argument("-l",
                     help = "Suppress legend from dot files")
 parser.add_argument("--dir",
                     dest = "dir",
-                    default = "~/emtalks/behAPI_ice18/demo/",
+                    default = "../../emtalks/behAPI_ice18/demo/",
                     help = "Specify the directory for the output files   {default: ~/emtalks/behAPI_ice18/demo/}")
 parser.add_argument("--sloppy",
                     dest = "sloppy",
@@ -52,16 +52,15 @@ args = parser.parse_args()
 ##################################### START HERE ###############################################
 
 # set files
-rgg, sgg = "atm.rgg", "old_syntax_atm.sgg"
-bname = os.path.basename((os.path.splitext(rgg))[0])
-dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) + bname + os.sep
-mkdir(dir)
-basename = dir
-
+sgg = "atm.sgg"
+bname = os.path.basename((os.path.splitext(sgg))[0])
+dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) # + bname + os.sep
+print(os.path.expanduser(dir) + bname)
+mkdir(os.path.expanduser(dir) + bname)
 
 # get the erlang data structure of the global graph
 debugMsg(args.debug, cmdPref, "\n   Generating " + bname + "\n\tResult in " + dir + "\n")
-callsgg = ([SGG, "-d", args.dir] +
+callsgg = ([SGG, "-d", dir] +
            (["--sloppy"] if args.sloppy else []) +
            (["-rg"]) +
            [args.dir + sgg])
@@ -69,11 +68,13 @@ debugMsg(args.debug, cmdPref, string.join(callsgg))
 subprocess.check_call(callsgg)
 
 # prepare the erlang file from the template
-with open(ERL) as f:
-    codeTemplate = f.readlines()
-print codeTemplate
-with open(dir + "") as f:
+with open(dir + "_" + ERL) as f:
+    codeTemplate = string.join(f.readlines())
+with open(dir + bname + "/rgg.txt") as f:
     erlGG = f.readlines()
+code = codeTemplate % (string.join(erlGG))
+with open("../../Dropbox/reversibleActors/code/" + ERL, "w") as ice:
+    ice.write(code)
 
 
 ########################################## DOT #################################################
