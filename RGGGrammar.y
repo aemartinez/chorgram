@@ -6,7 +6,7 @@
 -- The grammar is the one used in the ICE16 paper with the addition
 -- of the repeat-until construct:
 --
---    G ::= P -> P : M | G|G | sel A { G unless phi § + G unless phi § } | G;G | repeat  P { G } | ( G )
+--    G ::= P -> P : M | G|G | sel A { G unless phi § + G unless phi } | G;G | repeat  P { G } | ( G )
 --
 -- the binary operators | and ; are given in ascending order of
 -- precedence.  The parser generator is Haskell's 'Happy' and the
@@ -121,6 +121,13 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
                      guard
                  '}'            { case (isPtp $2, S.member $2 (snd $4)) of
                                     (True,  True)  -> let cg = checkGuard $4 $6 in (Per $2 (fst $ fst cg) (snd cg), snd $4)
+                                    (True,  False) -> myErr("Participant " ++ $2 ++ " must be in the body of the loop")
+                                    (False, True)  -> myErr("Bad name " ++ $2)
+                                    (False, False) -> myErr("Bad name " ++ $2 ++ " (and a selector must be in the body)")
+                                }
+
+  | 'repeat' str '{' G '}'      { case (isPtp $2, S.member $2 (snd $4)) of
+                                    (True,  True)  -> let cg = M.empty in (Per $2 (fst $4) cg, snd $4)
                                     (True,  False) -> myErr("Participant " ++ $2 ++ " must be in the body of the loop")
                                     (False, True)  -> myErr("Bad name " ++ $2)
                                     (False, False) -> myErr("Bad name " ++ $2 ++ " (and a selector must be in the body)")

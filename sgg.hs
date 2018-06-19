@@ -12,8 +12,7 @@ import BCGBridge
 import System.Environment
 
 main :: IO ()
-main = do putStrLn $ msgFormat SGG "start"
-          progargs <- getArgs
+main = do progargs <- getArgs
           flines   <- getDotConf
           if L.null progargs
             then error $ usage(SGG)
@@ -25,6 +24,7 @@ main = do putStrLn $ msgFormat SGG "start"
                     setFileNames sourcefile flags
               if (M.notMember "-rg" flags)
                 then do
+                putStrLn $ msgFormat SGG "start"
                 let ( gg, names ) =
                       (gggrammar . GGparser.lexer) ggtxt
                 let ptps =
@@ -68,6 +68,4 @@ main = do putStrLn $ msgFormat SGG "start"
                       (rgggrammar . RGGparser.lexer) ggtxt
                 writeToFile (dir ++ "in_rgg_parsed.txt") (show rgg)
                   >>=
-                  (\_ -> putStrLn $ "\t" ++ dir ++ "in_rgg_parsed.txt: is the initial reversible gg")
-                  >>=
-                  (\_ -> writeToFile (dir ++ "rgg.txt") (if (head $ fst (rgg2erl 1 rgg)) == '[' then fst (rgg2erl 1 rgg) else erlList $ fst (rgg2erl 1 rgg)))
+                  (\_ -> writeToFile (dir ++ "reg.txt") (if (head $ fst (rgg2erl 1 rgg)) == '[' then fst (rgg2erl 1 rgg) else erlList $ fst (rgg2erl 1 rgg)))

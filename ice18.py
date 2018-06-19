@@ -18,10 +18,6 @@ SGG, dotCFG, cmdPref, test = "./sgg", ".dot.cfg", "demo", "test"
 
 # Setting flags
 parser = argparse.ArgumentParser(description="demo: script for demoing gg to erlang")
-parser.add_argument("-v", "--verbose",
-                    dest = "debug",
-                    action = "store_true",
-                    help = "Run in verbose mode")
 parser.add_argument("-df",
                     dest = "df",
                     default = "svg",
@@ -42,39 +38,48 @@ parser.add_argument("--dir",
 parser.add_argument("--sloppy",
                     dest = "sloppy",
                     action = "store_true",
-                    help = "Do not raise exception due to non well-formedness")
-parser.add_argument("-rg",
-                    dest = "rg",
-                    action = "store_true",
-                    help = "Uses the parser for REGs")
+                    help = "Do not raise exception due to non well-formedness   {default: true}")
+# parser.add_argument("-rg",
+#                     dest = "rg",
+#                     action = "store_true",
+#                     help = "Uses the parser for REGs")
 args = parser.parse_args()
+
+def saySomething(msg):
+    """Prints messages"""
+    print "demo@ice18:\t" + msg
+
+
+_ = os.system('clear')
+saySomething("Let's start!")
 
 ##################################### START HERE ###############################################
 
 # set files
-sgg = "atm.sgg"
+sgg, suff = "cab_ice18.sgg", "_ice18.erl"
 bname = os.path.basename((os.path.splitext(sgg))[0])
 dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) # + bname + os.sep
-print(os.path.expanduser(dir) + bname)
 mkdir(os.path.expanduser(dir) + bname)
 
 # get the erlang data structure of the global graph
-debugMsg(args.debug, cmdPref, "\n   Generating " + bname + "\n\tResult in " + dir + "\n")
+saySomething("Generating " + bname)
 callsgg = ([SGG, "-d", dir] +
            (["--sloppy"] if args.sloppy else []) +
            (["-rg"]) +
            [args.dir + sgg])
-debugMsg(args.debug, cmdPref, string.join(callsgg))
 subprocess.check_call(callsgg)
 
 # prepare the erlang file from the template
 with open(dir + "_" + test + ".erl") as f:
     codeTemplate = string.join(f.readlines())
-with open(dir + bname + "/rgg.txt") as f:
+with open(dir + bname + "/reg.txt") as f:
     erlGG = f.readlines()
 code = codeTemplate % (string.join(erlGG))
-with open("../../Dropbox/mypapers/reversibleActors/code/" + test + "_ice18" + ".erl", "w") as ice:
+with open("../../Dropbox/mypapers/reversibleActors/code/" + test + suff, "w") as ice:
     ice.write(code)
+
+saySomething("Erlang file to compile the demo in " + test + suff)
+saySomething("Have fun now :)")
 
 
 ########################################## DOT #################################################

@@ -11,7 +11,7 @@ def debugMsg(debug, cmd, msg, force = False):
         s1 = (": {---" if not(force) else ": ")
         s2 = ("---}" if not(force) else "")
         print cmd + s1 + msg + s2
-        
+
 def mkdir(dir):
     """Creates a directory, if needed"""
     try:
