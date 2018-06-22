@@ -62,7 +62,7 @@ dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) # + bname + os.sep
 mkdir(os.path.expanduser(dir) + bname)
 
 # get the erlang data structure of the global graph
-saySomething("Generating " + bname)
+saySomething("Generating " + bname + "in ~/emtalks/behAPI_ice18/demo/")
 callsgg = ([SGG, "-d", dir] +
            (["--sloppy"] if args.sloppy else []) +
            (["-rg"]) +
