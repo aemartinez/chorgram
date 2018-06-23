@@ -6,9 +6,21 @@
 -- graphs.  The grammar is the one used in the ICE16 paper with the
 -- extensions for reversibility-enabled graphs of DAIS 18
 --
---    G ::= (o) | P -> P : M | G|G | G+G | sel P { Brc } | G;G | * G @ P | repeat P { LBody } | ( G ) | { G }
+--    G ::= (o)
+--       |  P -> P : M
+--	 |  G|G
+--       |  G+G
+--       |  sel P { Brc }
+--       |  G;G
+--       |  * G @ P
+--       |  repeat P { LBody }
+--       |  ( G )
+--       |  { G }
+--
 --    Brc   ::= G | G unless guard | B + B
+--
 --    LBody ::= G unless guard
+--
 --    guard ::= P % str | P % str, guard
 --
 -- where '(o)' has a special role: it is the empty graph outside
@@ -115,7 +127,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
 
   | G '|' G  	     		{ (Par ((checkToken TokenPar $1) ++ (checkToken TokenPar $3)), S.union (snd $1) (snd $3)) }
 
---  | G '+' G       		{ (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
+  | G '+' G       		{ (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
 
   | 'sel' str '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
 
@@ -156,6 +168,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
 
 guard : str '%' str             { M.empty }
       | str '%' str ',' guard   { M.insert $1 $3 $5 }
+
 
 branch : G                      { [ ($1, M.empty) ] }
        | G 'unless' guard       { [ checkGuard $1 $3 ] }
