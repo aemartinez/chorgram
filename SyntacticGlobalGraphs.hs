@@ -10,7 +10,7 @@ module SyntacticGlobalGraphs where
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
-import Data.Char
+--import Data.Char
 import Misc
 import CFSM
 import DotStuff
@@ -28,9 +28,11 @@ data GG = Emp
 
 -- type Endpoint = String
 
+normGG :: GG -> GG
+--
 -- Syntactic global graphs can be normalised by flattening nested | and +
 -- the name normGG is misleading. TODO: change normGG to preNormGG or flattenGG 
-normGG :: GG -> GG
+--
 normGG gg = case gg of
              Emp       -> Emp -- note that this case should never happen for parsed graphs
              Act _ _   -> gg
@@ -50,21 +52,23 @@ normGG gg = case gg of
                                Bra ggs' -> normBra ((S.toList ggs') ++ l')
                                _        -> S.union (S.singleton $ normGG g) (normBra l')
 
--- start g g' checks if g is a prefix of g'
 startGG :: GG -> GG -> Bool
+--
+-- start g g' checks if g is a prefix of g'
+--
 startGG g g' = g == g' || case g' of
                             Seq ggs -> not (L.null ggs) && startGG g (head ggs)
                             Bra ggs -> not (L.null l) && L.all (startGG g) l
                                 where l = S.toList ggs
                             _       -> False
 
+factorise :: GG -> GG
 --
 -- factorise gg rewrites a GG in normal form by factorising the common
 -- parts of branches
 -- PRE: gg in normal form
 -- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
 --
-factorise :: GG -> GG
 factorise gg = case gg of
                 Emp         -> Emp
                 Act (_,_) _ -> gg
@@ -90,15 +94,15 @@ factorise gg = case gg of
                 Seq ggs     -> Seq (L.map factorise ggs)
                 Rep gg' p   -> Rep (factorise gg') p
 
+wb :: Set GG -> Bool
 --
 -- PRE: the input ggs are factorised
 -- POST: returns True iff th list is well-branched
 --        
-wb :: Set GG -> Bool
 wb ggs =
   let ps             = S.toList $ ggptp S.empty (Bra ggs)
       disjoint (x, y)= S.null $ S.intersection x y
-      same (x, y)    = x == y
+--      same (x, y)    = x == y
       firstActs p gg = case sevAt p gg of
                         Emp               -> (S.empty, S.empty)
                         act@(Act (s,_) _) -> if s == p
@@ -141,8 +145,10 @@ sevAt p gg = case gg of
                Seq ggs           -> Seq (L.map (sevAt p) ggs)
                Rep gg' p'        -> Rep (sevAt p gg') p'
                       
--- ggptp computes the set of participants of a global graph
 ggptp :: Set Ptp -> GG -> Set Ptp
+--
+-- ggptp computes the set of participants of a global graph
+--
 ggptp ptps g = case g of
                 Emp         -> ptps
                 Act (s,r) _ -> S.union ptps (S.fromList [s,r])
@@ -151,18 +157,18 @@ ggptp ptps g = case g of
                 Seq gs      -> S.union ptps (S.unions (L.map (ggptp S.empty) gs))
                 Rep g' p    -> S.union ptps (ggptp (S.singleton p) g')
 
+proj :: GG -> Ptp -> State -> State -> Int -> (CFSM, State)
 --
 -- PRE:  actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
 -- POST: the non-minimised projection of GG wrt p and a unique exiting state (it must always exist!)
 -- n is a counter for fresh state generation
 -- q0 and qe correspond to the entry and exit state, respectively
 --
-proj :: GG -> Ptp -> State -> State -> Int -> (CFSM, State)
 proj gg p q0 qe n =
-  let suf = show n
-      tau = ((p,p), Tau, "")
-      dm  = ( (S.fromList [q0,qe], q0, S.singleton tau, tautrx q0 qe) , qe )
-      tautrx q1 q2 = if q1==q2 then S.empty else S.singleton (q1, tau, q2)
+  let suf  = show n
+      taul = ((p,p), Tau, "")
+      dm   = ( (S.fromList [q0,qe], q0, S.singleton taul, tautrx q0 qe) , qe )
+      tautrx q1 q2 = if q1==q2 then S.empty else S.singleton (q1, taul, q2)
   in case gg of
       Emp         -> dm
       Act (s,r) m -> if (p/=s && p/=r)
@@ -171,7 +177,7 @@ proj gg p q0 qe n =
         where c = if (p == s) then ((p,r),Send,m) else ((s,p),Receive,m)
       Par ggs     -> ( replaceState (initialOf m) q0 ( S.union (S.singleton qe) (statesOf m ) ,
                                                        initialOf m ,
-                                                       S.union (actionsOf m) (S.singleton tau) ,
+                                                       S.union (actionsOf m) (S.singleton taul) ,
                                                        (transitionsOf m)
                                                      )
                       , qe )
@@ -184,7 +190,7 @@ proj gg p q0 qe n =
                                                         S.union y (actionsOf m) ,
                                                         S.union z (transitionsOf m) )
                                        )
-                                       (S.singleton qe, S.singleton tau, S.empty)
+                                       (S.singleton qe, S.singleton taul, S.empty)
                                        ms
               ggs'                 = L.zip (S.toList ggs) [1..S.size ggs]
               mps                  = L.map (\(g,i) -> proj g p (q0 ++ (show i)) qe n) ggs'
@@ -194,18 +200,15 @@ proj gg p q0 qe n =
                 L.foldl
                   (\( i , qi , x , y , z ) g ->
                     let ( m , qf' ) = proj g p qi (qe ++ (show i)) n in
-                     ( i+1 ,
-                       qf' ,
-                       S.union x (statesOf m) ,
-                       S.union y (actionsOf m) ,
-                       S.union z (transitionsOf m) )
+                     (i + 1 ,
+                      qf' ,
+                      S.union x (statesOf m) ,
+                      S.union y (actionsOf m) ,
+                      S.union z (transitionsOf m)
+                     )
                   )
-                  ( 0 , q0 , S.empty , S.empty , S.empty )
+                  (0, q0, S.empty, S.empty, S.empty)
                   ggs
-              chain                    = [q0] ++ [q0 ++ "_" ++ (show i) | i <- [1 .. (length ggs)-1]] ++ [qe]
-              aux z gs                 = case gs of
-                                          [] -> []
-                                          g:gs' -> (fst $ proj g p (head z) (head (tail z)) n) : (aux (tail z) gs')
       Rep g p'    -> if (S.member p repptps) then ( ggrep , qe' ) else dm
         where repptps        = ggptp S.empty g
               ggrep          = ( S.unions [statesOf body, statesOf loop, statesOf exit] ,
@@ -256,15 +259,15 @@ gg2dot gg name nodeSize =
                                                 [(idx', fst sink)]
                               notgate         = \v -> v /= i && v /= (-i)
                           in case gg_ of
-                               Emp      -> (vs,as)
+                               Emp      -> (vs, as)
                                Act _ _  -> ((init vs) ++ [(i, labelOf gg_ )] ++ [sink], attach i i)
                                Par ggs  -> ((init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
                                    where (vs', as') = unionsPD forkV joinV notgate i (rename (\v -> not (notgate v)) i graphs)
                                          graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) ggs)
                                Bra ggs  -> ((init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
                                    where (vs', as') = unionsPD branchV mergeV notgate i (rename (\v -> not (notgate v)) i graphs)
-                                         emptyGG    = dummyGG i
-                                         graphs     = S.toList (S.map (helper (fst emptyGG) (snd emptyGG)) ggs)
+                                         (evs, eas) = dummyGG i
+                                         graphs     = S.toList (S.map (helper evs  eas) ggs)
                                Seq ggs -> graphy ggs vs as
                                    where graphy ggs_ vs_ as_ = case ggs_ of
                                                                 []       -> (vs_,as_)
@@ -276,19 +279,19 @@ gg2dot gg name nodeSize =
                                                                           idx         = 1 + maxIdx vs_
                                Rep gg' _ -> ((init vs) ++ vs' ++ [sink], (attach i (-i)) ++ ((-i,i):as'))
                                    where
-                                     emptyGG = dummyGG i
-                                     (vs', as') = helper (fst emptyGG) (snd emptyGG) gg'
+                                     (evs, eas) = dummyGG i
+                                     (vs', as') = helper evs eas gg'
         where rename excluded offset pds       = case pds of
-                                                   (vs1,as1):pds' -> ([(newNode excluded v offset,l) | (v,l) <- vs1],
+                                                   (vs1, as1):pds' -> ([(newNode excluded v offset,l) | (v,l) <- vs1],
                                                                       [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as1]) :
                                                                      (rename excluded (1 + offset + maxIdx vs1) pds')
                                                    []             -> []
               unionsPD gl gl' included idx pds = ( [(idx,gl)] ++ [(v,l) | (v,l) <- L.concat  $ L.map fst pds, (included v)] ++ [((-idx),gl')],
                                                    L.concat $ L.map snd pds)                                
-      dotnodes vs = L.concat $ L.map (\(s, l) -> "\tnode" ++ (node2dot s) ++ l) vs
-      dotedges as = L.concat $ L.map (\(s, t) -> "\tnode" ++ (node2dot s) ++ " -> node" ++ (node2dot t) ++ "\n") as
-      emptyGG = dummyGG 1
-      (vertexes, edges) = helper (fst emptyGG) (snd emptyGG) gg
+      dotnodes vs  = L.concat $ L.map (\(s, l) -> "\tnode" ++ (node2dot s) ++ l) vs
+      dotedges as  = L.concat $ L.map (\(s, t) -> "\tnode" ++ (node2dot s) ++ " -> node" ++ (node2dot t) ++ "\n") as
+      (evs_, eas_) = dummyGG 1
+      (vertexes, edges) = helper evs_ eas_ gg
       (header,  footer) = ("digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n", "\n}\n")
   in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
 
@@ -301,17 +304,18 @@ labelOf gg = case gg of
               Seq _       -> ""
               Rep _ _     -> ""
 
+catPD :: ((DotNode, DotString) -> Bool) -> PD -> PD -> PD
+--
 -- catPD (vs,as) (vs',as') appends (vs', as') attaching its
 -- source to the nodes of (vs,as) entering the sink of (vs,as)
 --
 -- Pre: vs and vs' start and end with the source and target vertex of
--- the corresponding graph
+--      the corresponding graph
 --
--- Post: the result is the sequential composition of the graphs embedding
--- the second just before  the sink of (vs,as); the source of the resulting
--- graph is the source of (vs,as)
+-- Post: the result is the sequential composition of the graphs
+--       embedding the second just before the sink of (vs,as); the
+--       source of the resulting graph is the source of (vs,as)
 --
-catPD :: ((DotNode, DotString) -> Bool) -> PD -> PD -> PD
 catPD included ( vs, as ) ( vs' , as' ) = ( vs'' , as'' )
   where vs'' = (init vs) ++ (L.filter included vs') ++ [last vs]        
         as'' = [ ( n , m ) | ( n , m ) <- as, not(( n , m ) € maxs) ] ++
@@ -323,6 +327,6 @@ catPD included ( vs, as ) ( vs' , as' ) = ( vs'' , as'' )
         max_ = maxR as'
 
 renameVertex :: (DotNode -> Bool) -> PD -> DotNode -> PD
-renameVertex excluded ( vs , as ) offset = ([(newNode excluded s offset, l) | (s,l) <- vs],
-                                            [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as])
+renameVertex excluded (vs, as) offset = ([(newNode excluded s offset, l) | (s,l) <- vs],
+                                         [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as])
 
