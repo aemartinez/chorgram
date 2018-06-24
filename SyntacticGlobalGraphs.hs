@@ -260,6 +260,7 @@ gg2dot gg name nodeSize =
   let maxIdx vs = aux vs 0
         where aux [] v = v + 1
               aux ((v', _):vs') v = aux vs' (max v v')
+      dummyGG n = ([(n, branchV), (-n, mergeV)], [(n, -n)])
       helper vs as gg_  = let (sink, i)       = (last vs, 1 + (maxIdx vs))
                               attach idx idx' = [(s, t)   | (s, t) <- as, t /= fst sink] ++
                                                 [(s, idx) | (s, t) <- as, t == fst sink] ++
@@ -273,7 +274,8 @@ gg2dot gg name nodeSize =
                                          graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) ggs)
                                Bra ggs  -> ((init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
                                    where (vs', as') = unionsPD branchV mergeV notgate i (rename (\v -> not (notgate v)) i graphs)
-                                         graphs     = S.toList (S.map (helper [(i,branchV),(-i,mergeV)] [(i,-i)]) ggs)
+                                         emptyGG    = dummyGG i
+                                         graphs     = S.toList (S.map (helper (fst emptyGG) (snd emptyGG)) ggs)
                                Seq ggs -> graphy ggs vs as
                                    where graphy ggs_ vs_ as_ = case ggs_ of
                                                                 []       -> (vs_,as_)
@@ -284,7 +286,9 @@ gg2dot gg name nodeSize =
                                                                           (vs'',as'') = catPD (\(_,l) -> l /= "") (vs_,as_) (vs',as')
                                                                           idx         = 1 + maxIdx vs_
                                Rep gg' _ -> ((init vs) ++ vs' ++ [sink], (attach i (-i)) ++ ((-i,i):as'))
-                                   where (vs', as') = helper [(i,mergeV),(-i,branchV)] [(i,-i)] gg'
+                                   where
+                                     emptyGG = dummyGG i
+                                     (vs', as') = helper (fst emptyGG) (snd emptyGG) gg'
         where rename excluded offset pds       = case pds of
                                                    (vs1,as1):pds' -> ([(newNode excluded v offset,l) | (v,l) <- vs1],
                                                                       [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as1]) :
@@ -294,7 +298,8 @@ gg2dot gg name nodeSize =
                                                    L.concat $ L.map snd pds)                                
       dotnodes vs = L.concat $ L.map (\(s, l) -> "\tnode" ++ (node2dot s) ++ l) vs
       dotedges as = L.concat $ L.map (\(s, t) -> "\tnode" ++ (node2dot s) ++ " -> node" ++ (node2dot t) ++ "\n") as
-      (vertexes, edges) = helper [(0, sourceV), (-1, sinkV)] [(0, -1)] gg
+      emptyGG = dummyGG 1
+      (vertexes, edges) = helper (fst emptyGG) (snd emptyGG) gg
       (header,  footer) = ("digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n", "\n}\n")
   in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
 
