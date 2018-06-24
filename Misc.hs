@@ -49,24 +49,27 @@ flatten ls =
     []    -> []
     l:lls -> [e | e <-l] ++ (flatten lls)
 
+isAlpha :: Char -> Bool
 -- For parsing: strings are made of the following characters
 --
---   0123456789<=>ABCDEFGHIJKLMNOPQRSTUVWXYZ\\^_`abcdefghijklmnopqrstuvwxyz/$#&~()\"
+--   0123456789
+--   <=>()\\^_`\167/$#&~,.
+--   ABCDEFGHIJKLMNOPQRSTUVWXYZ
+--   abcdefghijklmnopqrstuvwxyz
 --
 -- and must start with a letter when specifying the identity of a
 -- machine (non-terminal Ptp) or of system.
-isAlpha :: Char -> Bool
 isAlpha c = c € ([x | x <- ['0'.. 'z'] ++ ['/', '$', '#', '&', '~', '\"'],
                   not (x € ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '*', '!', '?', '-', '%', '§'])
                  ])
 
--- Names of participants have to begin with a letter
 isPtp :: String -> Bool
+-- Names of participants have to begin with a letter
 isPtp s = (L.null s) || ( ((head s) € (['a'.. 'z'] ++ ['A'.. 'Z'])) && (L.all isAlpha (tail s)) )
 
+idxOffset :: (Num a, Eq b) => b -> [b] -> a -> a
 -- PRE:  
 -- POST: -1 if e not in l, otherwise first position of e in the list plus the offset o
-idxOffset :: (Num a, Eq b) => b -> [b] -> a -> a
 idxOffset e l o
   | l == []   = -1
   | otherwise = if e == (head l) then o else (idxOffset e (tail l) (o+1))
@@ -112,8 +115,8 @@ maxR :: (Eq a) => [(a,a)] -> [(a,a)]
 maxR as = [ (n,m) | (n,m) <- as, L.all (\(t,_) -> m/=t) as ]
 
 
--- Assuming that (x,x) in ys for all x
 equivalenceRelation :: (Eq a) => [(a,a)] -> [(a,a)]
+-- Assume that (x,x) in ys for all x
 equivalenceRelation ys = transitiveClosure (L.nub $ addPairs ys)
     where addPairs ((x,y):xs) =  if x/=y
                                  then (x,y):((y,x):(addPairs xs))
@@ -125,8 +128,8 @@ equivalenceClass :: (Eq a, Ord a) => Set (a,a) ->  a -> Set a
 equivalenceClass rel z = S.fold (S.union) S.empty $ 
                          S.map (\(x,y) -> S.insert x (S.singleton y)) (S.filter (\(x,y) -> x == z || y ==z) rel)
           
--- http://stackoverflow.com/questions/19212558/transitive-closure-from-a-list-using-haskell
 transitiveClosure :: (Eq a) =>  [(a, a)] -> [(a, a)]
+-- http://stackoverflow.com/questions/19212558/transitive-closure-from-a-list-using-haskell
 transitiveClosure closure
     | closure == closureUntilNow = closure
     | otherwise                  = transitiveClosure closureUntilNow
@@ -182,8 +185,8 @@ rmExtension ext s = if (drop i s == ext) then fst $ splitAt i s else s
 writeToFile :: FilePath -> String -> IO()
 writeToFile file content = writeFile file content
 
--- Message on how to use a command
 usage :: Command -> String
+-- Message on how to use a command
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
                GMC  -> "gmc [-b | --bound number] [-l] [-m | --multiplicity number] [--minimise] [-sn] [--determinise] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] [-l] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n"
@@ -208,8 +211,8 @@ msgFormat cmd msg =
 myPrint :: Map String String -> Command -> String -> IO ()
 myPrint flags cmd msg = if (flags!"-v" == "v") then putStrLn $ msgFormat cmd msg else return ()
 
--- The default argument of each command
 defaultFlags :: Command -> Map String String
+-- The default argument of each command
 defaultFlags cmd = case cmd of
                      GMC  -> M.fromList [("-d",dirpath),
                                          ("-v",""),
@@ -278,9 +281,9 @@ getFlags cmd args =
 --
 
 
+pClosure :: Ord vertex => Ord label => Agraph vertex label -> (label -> Bool) -> vertex -> Set vertex
 --  PRE:
 --  POST: returns the closure of vertexes reachable from v with transitions that satisfy the predicate lpred on labels
-pClosure :: Ord vertex => Ord label => Agraph vertex label -> (label -> Bool) -> vertex -> Set vertex
 pClosure g lpred v =
   let ptrans = S.filter (\(_,l,_) -> (lpred l)) (gtrans g)
       aux res wl ml =
@@ -295,9 +298,9 @@ pClosure g lpred v =
   in aux S.empty [v] []
 
 
+reachableVertexes :: Ord vertex => Ord label => Agraph vertex label -> vertex -> Set vertex
 --  PRE:
 --  POST: returns the set of vertexes of g reachable from a given vertex
-reachableVertexes :: Ord vertex => Ord label => Agraph vertex label -> vertex -> Set vertex
 reachableVertexes g = pClosure g (\_ -> True)
 
 
@@ -337,24 +340,24 @@ isTerminal ::  Eq vertex => vertex -> Agraph vertex label -> Bool
 isTerminal q (_,_,_,trxs) =
   let l = S.toList trxs in q € [q_ | (_,_,q_) <- l, L.all (\(q',_,_) -> q' /= q) l]
 
+goutgoing :: Eq vertex => Agraph vertex label -> vertex -> Set (Atrans vertex label)
 -- goutgoing gr v
 --  PRE:  v is a vertex of gr
 --  POST: returns the outgoing edges of v in gr
-goutgoing :: Eq vertex => Agraph vertex label -> vertex -> Set (Atrans vertex label)
 goutgoing (_, _, _,trans) v = S.filter (\t -> v == (gsource t)) trans
 
+gincoming :: Eq vertex => Ord vertex => Agraph vertex label -> Map vertex (Set (Atrans vertex label))
 -- gincoming gr
 --  PRE:  
 --  POST: builds a map associating to each vertex of gr its incoming edges
-gincoming :: Eq vertex => Ord vertex => Agraph vertex label -> Map vertex (Set (Atrans vertex label))
 gincoming (vertexes, _, _,trans) = M.fromList $ i
     where i = L.map (\v -> (v, S.filter (\t -> v == (gtarget t)) trans)) (S.toList vertexes)
 
 
+gpath :: Eq vertex => (Show label) => (Show vertex) => Agraph vertex label -> vertex -> vertex -> [vertex] -> [[Atrans vertex label]]
 -- gpath gr s t l
 --   PRE:  s, t veterexes in gr, l list of veterexes of gr
 --   POST: returns the list of (elementary) paths in gr from s to t not passing trough veterexes in l
-gpath :: Eq vertex => (Show label) => (Show vertex) => Agraph vertex label -> vertex -> vertex -> [vertex] -> [[Atrans vertex label]]
 gpath gr s t l
     | s == t    = if (s € l)
                   then []
@@ -363,7 +366,6 @@ gpath gr s t l
     where s_outgoing = [(s0, e, s') | (s0, e, s') <- (S.toList $ goutgoing gr s), not(s' € l)]
           paths v = gpath gr v t ([s] ++ l)
 
--- cp current paths
 gpath_ :: Eq vertex => Ord vertex => Eq label => (Show label) => (Show vertex) =>
           Agraph vertex label ->
               Map vertex (Set (Atrans vertex label)) ->
@@ -372,6 +374,7 @@ gpath_ :: Eq vertex => Ord vertex => Eq label => (Show label) => (Show vertex) =
                           vertex ->
                               [Atrans vertex label] ->
                                   Map vertex [[Atrans vertex label]]
+-- cp current paths
 gpath_ gr incoming cp s t l
     | s == t    = cp
     | otherwise = addtr (S.toList $ incoming!t) l cp

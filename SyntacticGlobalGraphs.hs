@@ -242,30 +242,32 @@ proj gg p q0 qe n =
 -- projAll gg ps q0 qe n = (L.map (\p -> fst $ proj gg (idxOffset p ps 0) mps (p++q0) (p++qe) n) ps, mps)
 --     where mps = M.fromList [(p,ps!!p) | p <- [0 .. (L.length ps) - 1 ]]
 
--- DOT format
+-- Representing GGs in DOT format
 
--- A representation for GG in dot
-type PD = ([(Int,String)],[(Int,Int)])
+-- The dot graph is a pair made of a list of nodes and a list of edges
+type PD = ([(Int, String)], [(Int, Int)])
 
+node2dot :: Int -> String
+-- DOT representation of GG nodes
+node2dot n  = (if n < 0 then "_" else "") ++ (show $ abs n)
+      
+gg2dot :: GG -> String -> String -> String
 --
 -- gg2dot gg name transforms a GG in dot format
 -- TODO: improve on fresh node generation
 --
-gg2dot :: GG -> String -> String -> String
 gg2dot gg name nodeSize =
-  let myshow n          = (if n < 0 then "_" else "") ++ (show $ abs n)
-      header            = "digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n"
-      maxIdx vs         = aux vs 0
-        where aux [] v = v+1
-              aux ((v',_):vs') v = aux vs' (max v v')
+  let maxIdx vs = aux vs 0
+        where aux [] v = v + 1
+              aux ((v', _):vs') v = aux vs' (max v v')
       helper vs as gg_  = let (sink, i)       = (last vs, 1 + (maxIdx vs))
-                              attach idx idx' = [(s,t) | (s,t) <- as, t /= fst sink] ++
-                                                [(s,idx) | (s,t) <- as, t == (fst sink)] ++
-                                                [(idx',fst sink)]
-                              notgate         = \v -> v/=i && v/=(-i)
+                              attach idx idx' = [(s, t)   | (s, t) <- as, t /= fst sink] ++
+                                                [(s, idx) | (s, t) <- as, t == fst sink] ++
+                                                [(idx', fst sink)]
+                              notgate         = \v -> v /= i && v /= (-i)
                           in case gg_ of
                                Emp      -> (vs,as)
-                               Act _ _  -> ((init vs) ++ [( i , labelOf gg_ )] ++ [sink], attach i i)
+                               Act _ _  -> ((init vs) ++ [(i, labelOf gg_ )] ++ [sink], attach i i)
                                Par ggs  -> ((init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
                                    where (vs', as') = unionsPD forkV joinV notgate i (rename (\v -> not (notgate v)) i graphs)
                                          graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) ggs)
@@ -275,6 +277,7 @@ gg2dot gg name nodeSize =
                                Seq ggs -> graphy ggs vs as
                                    where graphy ggs_ vs_ as_ = case ggs_ of
                                                                 []       -> (vs_,as_)
+                                                                Emp:ggs' -> graphy ggs' vs_ as_
                                                                 gg':ggs' -> graphy ggs' vs'' as''
                                                                     where (vs0,as0)   = helper [(idx,""),(-idx,"")] [(idx,-idx)] gg'
                                                                           (vs',as')   = renameVertex notgate (vs0,as0) (1 + maxIdx vs0)
@@ -288,12 +291,11 @@ gg2dot gg name nodeSize =
                                                                      (rename excluded (1 + offset + maxIdx vs1) pds')
                                                    []             -> []
               unionsPD gl gl' included idx pds = ( [(idx,gl)] ++ [(v,l) | (v,l) <- L.concat  $ L.map fst pds, (included v)] ++ [((-idx),gl')],
-                                                   L.concat $ L.map snd pds)
-                                
-      footer = "\n}\n"
-      dotnodes vs = L.concat $ L.map (\(s,l) -> "\tnode" ++ (myshow s) ++ l) vs
-      dotedges as = L.concat $ L.map (\(s,t) -> "\tnode" ++ (myshow s) ++ " -> node" ++ (myshow t) ++ "\n") as
-      (vertexes, edges) = helper [(0,sourceV),(-1,sinkV)] [(0,-1)] gg
+                                                   L.concat $ L.map snd pds)                                
+      dotnodes vs = L.concat $ L.map (\(s, l) -> "\tnode" ++ (node2dot s) ++ l) vs
+      dotedges as = L.concat $ L.map (\(s, t) -> "\tnode" ++ (node2dot s) ++ " -> node" ++ (node2dot t) ++ "\n") as
+      (vertexes, edges) = helper [(0, sourceV), (-1, sinkV)] [(0, -1)] gg
+      (header,  footer) = ("digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n", "\n}\n")
   in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
 
 erlTuple :: [String] -> String

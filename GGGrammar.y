@@ -1,6 +1,6 @@
 --
---
 -- Author: Emilio Tuosto <emilio@le.ac.uk>
+--
 
 -- A very basic grammar and parser for the textual editing of global
 -- graphs.  The grammar is the one used in the ICE16 paper with the
@@ -43,9 +43,17 @@
 --
 -- Note: strings are made of the following characters
 --
---   0123456789<=>ABCDEFGHIJKLMNOPQRSTUVWXYZ()\\^_`abcdefghijklmnopqrstuvwxyz\167/$#&~,.
+--   0123456789
+--   <=>\\^_`\167/$#&~,.
+--   ABCDEFGHIJKLMNOPQRSTUVWXYZ
+--   abcdefghijklmnopqrstuvwxyz
 --
--- and must start with a letter when specifying the identity of a participant.
+-- and must start with a letter when specifying the identity of a
+-- participant.
+--
+-- Reserved characters not usable in strings are:
+--
+--   @.,;:()[]{}|+*!?-%§
 --
 -- Text enclosd by '[' and ']' is treated as comment
 --
@@ -127,7 +135,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
 
   | G '|' G  	     		{ (Par ((checkToken TokenPar $1) ++ (checkToken TokenPar $3)), S.union (snd $1) (snd $3)) }
 
-  | G '+' G       		{ (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
+--G '+' G       		{ (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
 
   | 'sel' str '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
 
@@ -161,7 +169,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
 
   | '(' G ')'			{ $2 }
 
-  | '{' G '}'			{ $2 }
+--  | '{' G '}'			{ $2 }
 
   | '(o)'                       { (Emp, S.empty) }
 
