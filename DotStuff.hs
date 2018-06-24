@@ -10,45 +10,48 @@ import Data.List as L
 import Data.Map.Strict as M
 import qualified Data.Text as T
 
+type DotNode = Int
+type DotString = String
+
 dotCFG :: String
 dotCFG = "aux/dot.cfg"
 
-setDOT :: String -> Map String String
+setDOT :: String -> Map String DotString
 setDOT conf = M.fromList $ L.concat $ L.map (\l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l]) (T.lines $ T.pack conf)
 
 
-getDotConf :: IO(Map String String)
+getDotConf :: IO(Map String DotString)
 getDotConf = do
              conf <- readFile dotCFG
              let lines = T.lines $ T.pack conf
              let aux   = \l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l | ((L.length $ T.unpack l) > 2) && (L.take 2 (T.unpack l) /= "--")]
              return (M.fromList $ L.concat $ L.map aux lines)
 
-cpV :: String
+cpV :: DotString
 cpV = " [label=\"\", shape=point, width=0.15, height=0.15, color=darkorange, fillcolor=darkorange, style=filled]\n"
 
-heV :: String
+heV :: DotString
 heV = " [label=\"\", shape=square, width=0.05, height=0.05, color=blue, fillcolor=whitesmoke, style=filled]\n"
 
-forkV :: String
+forkV :: DotString
 forkV = " [label=\"|\", shape=square, fixedsize=true,fillcolor=papayawhip,style=filled,fontcolor=sienna]\n"
 
-joinV :: String
+joinV :: DotString
 joinV = " [label=\"|\", shape=square, fixedsize=true,fillcolor=sienna,style=filled,fontcolor=papayawhip]\n"
 
-branchV :: String
+branchV :: DotString
 branchV = " [label=\"+\", shape=diamond, fixedsize=true,fillcolor=papayawhip,style=filled,fontcolor=sienna]\n"
 
-mergeV :: String
+mergeV :: DotString
 mergeV = " [label=\"+\", shape=diamond, fixedsize=true,fillcolor=sienna,style=filled,fontcolor=papayawhip]\n"
 
-sourceV :: String
+sourceV :: DotString
 sourceV = " [label=\"\", shape=circle, fixedsize=true]\n"
 
-sinkV :: String
+sinkV :: DotString
 sinkV = " [label=\"\", shape=circle, width=0.15, height=0.15, fixedsize=true, peripheries=2]\n"
 
-sizeNode :: String
+sizeNode :: DotString
 sizeNode = "0.2"
 
 qsep :: String

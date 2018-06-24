@@ -185,18 +185,19 @@ proj gg p q0 qe n =
               qe' = L.foldr stateProd "" (L.map snd mps)
               mps = L.map (\g -> proj g p q0 qe n) ggs
       Bra ggs     -> ( replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs) , qe )
-        where (states, acts, trxs) = L.foldl
-                                       (\(x,y,z) m -> ( S.union x (statesOf m) ,
-                                                        S.union y (actionsOf m) ,
-                                                        S.union z (transitionsOf m) )
-                                       )
-                                       (S.singleton qe, S.singleton taul, S.empty)
-                                       ms
-              ggs'                 = L.zip (S.toList ggs) [1..S.size ggs]
-              mps                  = L.map (\(g,i) -> proj g p (q0 ++ (show i)) qe n) ggs'
-              (ms, _)              = (L.map fst mps, L.map snd mps)
+        where (states, acts, trxs) =
+                L.foldl
+                  (\(x,y,z) m -> ( S.union x (statesOf m) ,
+                                   S.union y (actionsOf m) ,
+                                   S.union z (transitionsOf m) )
+                  )
+                  (S.singleton qe, S.singleton taul, S.empty)
+                  ms
+                ggs'    = L.zip (S.toList ggs) [1..S.size ggs]
+                mps     = L.map (\(g,i) -> proj g p (q0 ++ (show i)) qe n) ggs'
+                (ms, _) = (L.map fst mps, L.map snd mps)
       Seq ggs     -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
-        where ( _ ,  qe' , states , acts , trxs ) =
+        where (_, qe', states, acts, trxs) =
                 L.foldl
                   (\( i , qi , x , y , z ) g ->
                     let ( m , qf' ) = proj g p qi (qe ++ (show i)) n in
@@ -235,8 +236,6 @@ proj gg p q0 qe n =
 -- Representing GGs in DOT format
 
 -- The dot graph is a pair made of a list of nodes and a list of edges
-type DotNode = Int
-type DotString = String
 type PD = ([(DotNode, DotString)], [(DotNode, DotNode)])
 
 node2dot :: DotNode -> DotString
@@ -295,7 +294,7 @@ gg2dot gg name nodeSize =
       (header,  footer) = ("digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n", "\n}\n")
   in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
 
-labelOf :: GG -> String
+labelOf :: GG -> DotString
 labelOf gg = case gg of
               Emp         -> sourceV
               Act (s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]"
