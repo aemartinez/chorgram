@@ -26,20 +26,7 @@ data GG = Emp
         | Rep GG Ptp
         deriving (Eq, Ord, Show)
 
--- A syntactic reversible global graph is like a syntactic global
--- graph with guards and selectors on branches; for simplicity we
--- consider just binary parallel and branches
-data RGG = Pme
-         | Tca Channel Message
-         | Rap [RGG]
-         | Arb Ptp [(RGG, ReversionGuard)]
-         | Qes [RGG]
-         | Per Ptp RGG ReversionGuard
-         deriving (Eq, Ord, Show)
-
-type Endpoint = String
-type Guard = String
-type ReversionGuard = Map Ptp Guard
+-- type Endpoint = String
 
 -- Syntactic global graphs can be normalised by flattening nested | and +
 -- the name normGG is misleading. TODO: change normGG to preNormGG or flattenGG 
@@ -245,13 +232,15 @@ proj gg p q0 qe n =
 -- Representing GGs in DOT format
 
 -- The dot graph is a pair made of a list of nodes and a list of edges
-type PD = ([(Int, String)], [(Int, Int)])
+type DotNode = Int
+type DotString = String
+type PD = ([(DotNode, DotString)], [(DotNode, DotNode)])
 
-node2dot :: Int -> String
+node2dot :: DotNode -> DotString
 -- DOT representation of GG nodes
 node2dot n  = (if n < 0 then "_" else "") ++ (show $ abs n)
       
-gg2dot :: GG -> String -> String -> String
+gg2dot :: GG -> String -> DotString -> DotString
 --
 -- gg2dot gg name transforms a GG in dot format
 -- TODO: improve on fresh node generation
@@ -303,65 +292,6 @@ gg2dot gg name nodeSize =
       (header,  footer) = ("digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n", "\n}\n")
   in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
 
-erlTuple :: [String] -> String
-erlTuple tuple = case tuple of
-  [] -> ""
-  _  -> "{ " ++ (mkSep tuple ", ") ++ " }"
-
-erlList :: String -> String
-erlList els = if (head els) == '[' then els else "[ " ++ els ++ " ]"
--- erlList els = "[ " ++ els ++ " ]"
-
-erlAtom :: String -> String -> String
-erlAtom pre s = case s of
-  "" -> ""
-  _  -> if isLower(head s) then s else pre ++ s
-
-guard2erl :: ReversionGuard -> String
-guard2erl g = if M.null g then "\" \"" else "\"" ++ show g ++ "\""
---
--- gg2erl _rgg generates a string encoding _rgg in Erlang's format
---        for the REGs' syntax
--- Pre: Branches must me decorated with the selector and guards
---      must be Erlang expressions
--- Post: a string in the format expected by encoding.erl
---
-rgg2erl :: Int -> RGG -> (String, Int)
-rgg2erl ln _rgg =
-  let sep = ", "
-  in case _rgg of
-    Tca (s,r) m -> (erlTuple [show ln, erlTuple ["com", erlAtom "ptp_" s, erlAtom "ptp_" r, erlAtom "msg_" m] ], 1 + ln)
-    Rap rggs ->
-      let aux = \rg -> \(t, l) ->
-            let (t', l') = rgg2erl l rg in
-            case (t, t') of
-              ("","") -> ("", l')
-              ("", _) -> (erlList t', l')
-              (_ , _) -> (erlList t' ++ sep ++ t, l')
-          (threads, ln') = L.foldr aux ("", ln) rggs
-      in (erlTuple [show ln', erlTuple ["par", erlList threads]], 1 + ln')
-    Arb p branch ->
-      let aux = \(rg, g) -> \(t, l) ->
-            let (t', l') = rgg2erl l rg in
-              case (t', t) of
-                ("", _)  -> (t, l)
-                (_, "")  -> (erlList $ erlTuple [erlList t', guard2erl g], l')
-                (_ , _)  -> ((erlList $ erlTuple [erlList t', guard2erl g]) ++ " ++ " ++ t, l')
-          (branches, ln') = L.foldr aux ("", ln) branch
-      in (erlTuple [show ln', erlTuple ["bra", erlAtom "ptp_" p, erlList branches]], 1 + ln')
-    Qes rggs ->
-      let aux = \rg -> \(t,l) ->
-            let (t',l') = rgg2erl l rg in
-            case (t,t') of
-              ("","") -> ("", l')
-              ("", _) -> (t', l')
-              (_ , _) -> (t' ++ sep ++ t, l')
-          (seq, ln') = L.foldr aux ("", ln) rggs
-      in (erlList seq, ln') 
-    Per p rgg g ->
-      let (body, ln') = rgg2erl ln rgg
-      in (erlTuple [show ln', erlTuple ["rec", erlAtom "ptp_" p, erlTuple [erlList body, guard2erl g]]], 1 + ln')
-
 labelOf :: GG -> String
 labelOf gg = case gg of
               Emp         -> sourceV
@@ -381,7 +311,7 @@ labelOf gg = case gg of
 -- the second just before  the sink of (vs,as); the source of the resulting
 -- graph is the source of (vs,as)
 --
-catPD :: ((Int,String) -> Bool) -> PD -> PD -> PD
+catPD :: ((DotNode, DotString) -> Bool) -> PD -> PD -> PD
 catPD included ( vs, as ) ( vs' , as' ) = ( vs'' , as'' )
   where vs'' = (init vs) ++ (L.filter included vs') ++ [last vs]        
         as'' = [ ( n , m ) | ( n , m ) <- as, not(( n , m ) € maxs) ] ++
@@ -392,7 +322,7 @@ catPD included ( vs, as ) ( vs' , as' ) = ( vs'' , as'' )
         min_ = minR as'
         max_ = maxR as'
 
-renameVertex :: (Int -> Bool) -> PD -> Int -> PD
+renameVertex :: (DotNode -> Bool) -> PD -> DotNode -> PD
 renameVertex excluded ( vs , as ) offset = ([(newNode excluded s offset, l) | (s,l) <- vs],
                                             [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as])
 
