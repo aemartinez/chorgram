@@ -185,17 +185,16 @@ proj gg p q0 qe n =
               qe' = L.foldr stateProd "" (L.map snd mps)
               mps = L.map (\g -> proj g p q0 qe n) ggs
       Bra ggs     -> ( replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs) , qe )
-        where (states, acts, trxs) =
-                L.foldl
-                  (\(x,y,z) m -> ( S.union x (statesOf m) ,
-                                   S.union y (actionsOf m) ,
-                                   S.union z (transitionsOf m) )
-                  )
-                  (S.singleton qe, S.singleton taul, S.empty)
-                  ms
-                ggs'    = L.zip (S.toList ggs) [1..S.size ggs]
-                mps     = L.map (\(g,i) -> proj g p (q0 ++ (show i)) qe n) ggs'
-                (ms, _) = (L.map fst mps, L.map snd mps)
+        where (states, acts, trxs) = L.foldl
+                (\(x,y,z) m -> ( S.union x (statesOf m) ,
+                                 S.union y (actionsOf m) ,
+                                 S.union z (transitionsOf m) )
+                )
+                (S.singleton qe, S.singleton taul, S.empty)
+                ms
+              ggs'    = L.zip (S.toList ggs) [1..S.size ggs]
+              mps     = L.map (\(g,i) -> proj g p (q0 ++ (show i)) qe n) ggs'
+              (ms, _) = (L.map fst mps, L.map snd mps)
       Seq ggs     -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
         where (_, qe', states, acts, trxs) =
                 L.foldl
@@ -289,7 +288,7 @@ gg2dot gg name nodeSize =
                                                    L.concat $ L.map snd pds)                                
       dotnodes vs  = L.concat $ L.map (\(s, l) -> "\tnode" ++ (node2dot s) ++ l) vs
       dotedges as  = L.concat $ L.map (\(s, t) -> "\tnode" ++ (node2dot s) ++ " -> node" ++ (node2dot t) ++ "\n") as
-      (evs_, eas_) = dummyGG 1
+      (evs_, eas_) = ([(1, sourceV), (-1, sinkV)], [(1, -1)])
       (vertexes, edges) = helper evs_ eas_ gg
       (header,  footer) = ("digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n", "\n}\n")
   in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer

@@ -109,8 +109,8 @@ import CFSM
 
 %right '|'
 %right '+'
-%right ';'
 %right '%'
+%right ';'
 %right ','
 
 %%

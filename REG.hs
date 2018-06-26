@@ -65,7 +65,7 @@ rgg2erl ln _rgg =
               ("", _) -> (erlList t', l')
               (_ , _) -> (erlList t' ++ sep ++ t, l')
           (threads, ln') = L.foldr aux ("", ln) rggs
-      in (erlTuple [show ln', erlTuple ["par", erlList threads]], 1 + ln')
+      in (erlTuple [show ln', erlTuple ["par", "[" ++ threads ++ "]"]], 1 + ln')
     Arb p branch ->
       let aux = \(rg, g) -> \(t, l) ->
             let (t', l') = rgg2erl l rg in
