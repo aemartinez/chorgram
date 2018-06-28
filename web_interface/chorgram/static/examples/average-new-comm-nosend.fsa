@@ -1,0 +1,58 @@
+.outputs Thermometer1
+.state graph
+q16 1 ? <temp,m7> q17
+q16 1 ? <temp,m7> q26
+q16 2 ! <continuing,m1> q22
+q16 2 ! <quit,m4> q24
+q17 1 ? <temp,m7> q17
+q17 1 ? <temp,m7> q27
+q17 2 ! <continuing,m1> q23
+q17 2 ! <quit,m4> q25
+q18 1 ? <temp,m7> q19
+q18 1 ? <temp,m7> q26
+q18 2 ! <quit,m4> q24
+q19 1 ? <temp,m7> q19
+q19 1 ? <temp,m7> q27
+q19 2 ! <quit,m4> q25
+q20 1 ? <temp,m7> q21
+q20 1 ? <temp,m7> q26
+q20 2 ! <quit,m4> q24
+q21 1 ? <temp,m7> q21
+q21 1 ? <temp,m7> q27
+q21 2 ! <quit,m4> q25
+q22 1 ? <temp,m7> q23
+q22 2 ? <ack,m8> q18
+q22 2 ? <ack,m9> q18
+q23 1 ? <temp,m7> q23
+q23 2 ? <ack,m8> q19
+q23 2 ? <ack,m9> q19
+q24 1 ? <temp,m7> q25
+q25 1 ? <temp,m7> q25
+q26 1 ! <temp,m2> q16
+q26 1 ? <temp,m7> q27
+q27 1 ! <temp,m2> q17
+q27 1 ? <temp,m7> q27
+.marking q20
+.end
+
+.outputs Thermometer2
+.state graph
+q6 0 ! <temp,m7> q8
+q7 0 ! <temp,m7> q8
+q8 0 ? <temp,m2> q7
+.marking q6
+.end
+
+.outputs Thermostat
+.state graph
+q10 0 ? <continuing,m1> q13
+q10 0 ? <quit,m4> q14
+q11 0 ? <continuing,m1> q13
+q11 0 ? <quit,m4> q14
+q12 0 ? <continuing,m1> q13
+q12 0 ? <quit,m4> q14
+q13 0 ! <ack,m8> q11
+q13 0 ! <ack,m9> q10
+.marking q12
+.end
+

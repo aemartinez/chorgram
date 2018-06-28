@@ -1,0 +1,22 @@
+digraph CFSMs {
+ graph [color=white ratio=compress margin=0];
+   subgraph cluster_A{
+   label = A;
+	Aq0	[style=filled, color=cornflowerblue]
+	Aq0		[label = "q0"];
+	Aq1		[label = "q1"];
+	Aq0 -> Aq1	[label = "A&middot;M1 ! hello"];
+	Aq0 -> Aq1	[label = "A&middot;M1 ! world"];
+   }
+
+   subgraph cluster_M1{
+   label = M1;
+	M1q0	[style=filled, color=cornflowerblue]
+	M1q0		[label = "q0"];
+	M1q1		[label = "q1"];
+	M1q0 -> M1q1	[label = "A&middot;M1 ? hello"];
+	M1q0 -> M1q1	[label = "A&middot;M1 ? world"];
+   }
+
+}
+

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<link rel="apple-touch-icon" sizes="76x76" href="{% static 'lib/img/apple-icon.png' %}" />
+	<link rel="icon" type="image/png" href="{% static 'lib/img/favicon.png' %}" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+	<title>An Web Tool for Chorgram!</title>
+
+	<meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+    <meta name="viewport" content="width=device-width" />
+
+
+    <!-- Bootstrap core CSS     -->
+    <link href="{% static 'lib/css/bootstrap.min.css' %}" rel="stylesheet" />
+
+    <!--  Material Dashboard CSS    -->
+    <link href="{% static 'lib/css/material-dashboard.css' %}" rel="stylesheet"/>
+
+
+
+    <!--     Fonts and icons     -->
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,700,300|Material+Icons' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+
+	<div class="wrapper">
+	    <div class="sidebar" data-color="purple" data-image="{% static 'lib/img/sidebar-1.jpg' %}">
+
+			<!--
+		        Tip 1: You can change the color of the sidebar using: data-color="purple | blue | green | orange | red"
+
+		        Tip 2: you can also add an image using data-image tag
+		    -->
+
+			<div class="logo">
+				<a href="#" class="simple-text">
+					Web Chorgram
+				</a>
+			</div>
+
+	    	<div class="sidebar-wrapper">
+	            <ul class="nav">
+	                <li class="active">
+	                    <a href="/">
+	                        <i class="material-icons">dashboard</i>
+	                        <p>Home</p>
+	                    </a>
+	                </li>
+	                 <li>
+	                    <a href="/example">
+	                        <i class="material-icons">store</i>
+	                        <p>Examples</p>
+	                    </a>
+	                </li>
+	                 <li>
+	                    <a href="/upload">
+	                        <i class="material-icons">tab</i>
+	                        <p>Upload file</p>
+	                    </a>
+	                </li>
+	                 <li>
+	                    <a href="/input">
+	                        <i class="material-icons">webasset</i>
+	                        <p>Input commands</p>
+	                    </a>
+	                </li>
+
+	            </ul>
+	    	</div>
+		</div>
+
+	    <div class="main-panel">
+			<nav class="navbar navbar-transparent navbar-absolute">
+				<div class="container-fluid">
+					<div class="navbar-header">
+						<button type="button" class="navbar-toggle" data-toggle="collapse">
+							<span class="sr-only">Toggle navigation</span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button>
+						<a class="navbar-brand" href="#">Welcome</a>
+					</div>
+
+				</div>
+			</nav>
+
+	        <div class="content">
+	            <div class="card">
+				<div class="card-header" data-background-color="purple">
+					<h4 class="title">chorgram / Home</h4>
+					<p class="category">The details about Chorgram linked by <a href="https://bitbucket.org/emlio_tuosto/chorgram/wiki/Home">chorgram</a></p>
+				</div>
+				<h3>&nbsp&nbspWelcome</h3>
+                    <p>&nbsp&nbspChorgram is a tool implementing the theory introduced in <strong>&nbsp&nbspFrom Communicating Machines to Graphical Choreographies</strong>  (J. Lange, E. Tuosto, and N. Yoshida, POPL 2015). This branch is also based on <strong>An abstract semantics of the global view of choreographies</strong> (R. Guanciale and E. Tuosto, ICE 2016).</p>
+<h1 >&nbsp&nbspForewords</h1>
+<p>&nbsp&nbspThis branch has been started in order to</p>
+<ul>
+<li>&nbsp&nbspimprove the feedback to the user when generalised multiparty compatibility is violated, </li>
+<li>&nbsp&nbspadd new features to</li>
+<li>&nbsp&nbspmanipuate the TS (eg highlighting of configurations with some properties; click <a href="http://www.doc.ic.ac.uk/~jlange/demo.tar.gz">here</a> for examples of graphical outputs.)</li>
+<li>&nbsp&nbspimprove usability</li>
+<li>&nbsp&nbspuse asserted CFSMs</li>
+<li>&nbsp&nbsptrack paths from global graphs to the corresponding TS</li>
+</ul>
+<p>&nbsp&nbsp(all this is still work in progress).</p>
+<p>&nbsp&nbspThe main commands provided by the implementation are</p>
+<ul>
+<li>&nbsp&nbspgmc: takes in input a CFSM system, checks it for generalised multiparty compatibility, and builds the corresponding global graph</li>
+<li>&nbsp&nbspchorgram.py: a python script that executes gmc, transforms the .dot files it generates in graphical formats, and displays some performance information</li>
+<li>&nbsp&nbspsgg: takes in input a description of a global graph in the syntax of the ICE 2016 paper and projects the graph in a set of (non-minimal) CFSM provided that the graph is well-branched and well-sequentiased.</li>
+</ul>
+<p>&nbsp&nbspChorgram is a polished and extended version of <a href="https://bitbucket.org/julien-lange/gmc-synthesis">gmc-synthesis</a> and of <a href="https://bitbucket.org/emlio_tuosto/gmc-synthesis-v0.2">gmc-synthesis-v0.2</a>; those old versions are deprecated.</p>
+<h1 id="markdown-header-syntax-of-the-input-files">&nbsp&nbspSyntax of the input files</h1>
+<p>&nbsp&nbspStrings are made of the following characters</p>
+<p>&nbsp&nbsp<a href="/emlio_tuosto/chorgram/commits/0123456789" rel="nofollow">0123456789</a>&lt;=&gt;ABCDEFGHIJKLMNOPQRSTUVWXYZ\^_`abcdefghijklmnopqrstuvwxyz/$#&amp;~()\"</p>
+<p>&nbsp&nbspand must start with a letter when specifying the name of a machine (non-terminal Ptp) or of a system.</p>
+<h2 id="markdown-header-gmc">&nbsp&nbspGMC</h2>
+<p>&nbsp&nbspThe syntax of the input files of gmc can be either in the 'fsa' (after finite state automata) or 'cms' format, the latter being the simple process-algebraic syntax described in the following. Which format is used depends on the extesion to the file name ('.fsa' or '.cms' respectively).</p>
+<p>&nbsp&nbspThe 'fsa' format is a text where each line describes (some element of) a CFSM: for instance,</p>
+<div class="codehilite language-abnf"><pre><span></span>.<span class="nc">outputs</span> A
+.<span class="nc">state</span> <span class="nc">graph</span>
+<span class="nc">q0</span> <span class="o">1</span> ! <span class="nc">hello</span> <span class="nc">q1</span>
+<span class="nc">q0</span> <span class="o">1</span> ! <span class="nc">world</span> <span class="nc">q1</span>
+.<span class="nc">marking</span> <span class="nc">q0</span>
+.<span class="nc">end</span>
+
+.<span class="nc">outputs</span>
+.<span class="nc">state</span> <span class="nc">graph</span>
+<span class="nc">q0</span> <span class="o">0</span> ? <span class="nc">hello</span> <span class="nc">q1</span>
+<span class="nc">q0</span> <span class="o">0</span> ? <span class="nc">world</span> <span class="nc">q1</span>
+.<span class="nc">marking</span> <span class="nc">q0</span>
+.<span class="nc">end</span>
+</pre></div>
+
+
+<p>&nbsp&nbspspecifies a system of two machines.
+- machine 0 is named A (line '.outputs A'), has q0 as initial state (line .marking q0) from which it may send either a message 'hello' or a message 'world' to machine 1 and move to state q1 (lines 'q0 1 ! hello q1' and 'q0 1 ! world q1', respectively). Messages can be any sort for string; the current implementation does not interpret them, but in the future we plan to fix a syntax and a semantics in order to deal with e.g., variables, binderds, values, etc.
+- machine 1 is ready to receive either message sent by machine 0.</p>
+<p>&nbsp&nbspMachine names are optional (e.g., machine 1 is anonymous in the example above); if present in the input file, they are used to denote the channels in the files generated by the tool (for instance, the first transition of A is displayed as "AB ! hello" rather than "01!hello". Lines '.outputs ...', '.state graph', '.marking ...', and '.end' are mandatory. Lines starting with '--' are ignored.</p>
+<p>&nbsp&nbspThe 'cms' format is probably more appropriate for systems consisting of many machines. The idea is that each CFSM of a system is described by a simple process in the following syntax:</p>
+<p>&nbsp&nbspComments can any text surrounded by square brackets or following '..' up to the new line.</p>
+<div class="codehilite language-abnf"><pre><span></span>    S     ::<span class="o">=</span> &#39;<span class="nc">system</span>&#39; <span class="nc">str</span> &#39;<span class="nc">of</span>&#39; <span class="nc">Ptp</span>, ..., <span class="nc">Ptp</span> &#39;:&#39; <span class="nc">Ptp</span> &#39;<span class="o">=</span>&#39; M || ... || <span class="nc">Ptp</span> &#39;<span class="o">=</span>&#39; M
+    M     ::<span class="o">=</span> <span class="nc">end</span>
+           |  p &#39;<span class="c1">;&#39; M</span>
+           |  p &#39;<span class="nc">do</span>&#39; <span class="nc">Ptp</span>
+           |  M &#39;+&#39; M
+           |  &#39;<span class="o">*</span>&#39; M
+    p     ::<span class="o">=</span> <span class="nc">Ptp</span> &#39;!&#39; <span class="nc">str</span> | <span class="nc">Ptp</span> &#39;?&#39; <span class="nc">str</span> | &#39;<span class="nc">tau</span>&#39; <span class="nc">str</span> | &#39;<span class="nc">tau</span>&#39;
+</pre></div>
+
+
+<p>&nbsp&nbspA system S is given a name, specifies the (comma-separated list of the) names Ptps of its machines, and has a declaration Mdec for each machine. Each name in Ptps must have a unique defining equation Ptp = M where the syntax of M is straightforward. Transition are similar those of the 'fsa' format, but they use explicit names rather than positions to address machines. Moreover, it is possible to specify internal transitions 'tau' which also carry an uninterpred annotating string. Note that branches and forks have to be surrounded by round brackets (this constraint will be relaxed in the future). </p>
+<p>&nbsp&nbspThe only syntactic check made (right now) during the parsing are (i) that sender and receiver of interactions have to be different, (ii) that defining equations are unique, (iii) that communication actions name existing machines, and (iv) a machine cannot be defined as its own dual. Error messages give some information, but should be improved. Text enclosed in '[' and ']' is ignored.</p>
+<h2 id="markdown-header-syntax-of-global-graphs">&nbsp&nbspSyntax of Global Graphs</h2>
+<p>&nbsp&nbspThe syntax of syntactic global graph is defined by the grammar:</p>
+<div class="codehilite language-abnf"><pre><span></span>    G ::<span class="o">=</span> <span class="nc">Ptp</span> &#39;-&gt;&#39; <span class="nc">Ptp</span> &#39;:&#39; <span class="nc">str</span> | G&#39;|&#39;G | G&#39;+&#39;G | G&#39;<span class="c1">;&#39;G | &#39;*&#39; G &#39;@&#39; Ptp | &#39;(&#39; G &#39;)&#39;</span>
+</pre></div>
+
+
+<p>&nbsp&nbspand it is essentially the one in the ICE 2016 paper where the iteration construct * G @ Ptp has been added; intuitively, such constructs repeats G until participant Ptp decides to stop the iteration.</p>
+<p>&nbsp&nbspA global graph representing the ping-pong protocol in this syntax could be</p>
+<div class="codehilite language-python"><pre><span></span><span class="n">Ping</span> <span class="o">-&gt;</span> <span class="n">Pong</span> <span class="p">:</span> <span class="n">finished</span>
+<span class="o">+</span>
+<span class="o">*</span><span class="p">{</span>
+   <span class="n">Ping</span> <span class="o">-&gt;</span> <span class="n">Pong</span> <span class="p">:</span> <span class="n">ping</span> <span class="p">;</span> <span class="n">Pong</span> <span class="o">-&gt;</span> <span class="n">Ping</span> <span class="p">:</span> <span class="n">pong</span>
+<span class="p">}</span> <span class="err">@</span> <span class="n">Ping</span> <span class="p">;</span> <span class="n">Ping</span> <span class="o">-&gt;</span> <span class="n">Pong</span> <span class="p">:</span> <span class="n">finished</span>
+</pre></div>
+
+
+<p>&nbsp&nbsp(recall that ';' has priority over '+').</p>
+				</div>
+	        </div>
+			<footer class="footer">
+	            <div class="container-fluid">
+	                <nav class="pull-left">
+	                    <ul>
+	                        <li>
+	                            <a href="/">
+	                                Home
+	                            </a>
+	                        </li>
+
+	                    </ul>
+	                </nav>
+	                <p class="copyright pull-right">
+	                    &copy; 2017 made by Zhao
+	                </p>
+	            </div>
+	        </footer>
+	    </div>
+	</div>
+
+</body>
+
+	<!--   Core JS Files   -->
+	<script src="{% static 'lib/js/jquery-3.1.1.min.js' %}" type="text/javascript"></script>
+	<script src="{% static 'lib/js/bootstrap.min.js' %}" type="text/javascript"></script>
+	<script src="{% static 'lib/js/material.min.js' %}" type="text/javascript"></script>
+
+	<!--  Charts Plugin -->
+	<script src="{% static 'lib/js/chartist.min.js' %}"></script>
+
+	<!--  Notifications Plugin    -->
+	<script src="{% static 'lib/js/bootstrap-notify.js' %}"></script>
+
+	<!--  Google Maps Plugin    -->
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js"></script>
+
+	<!-- Material Dashboard javascript methods -->
+	<script src="{% static 'lib/js/material-dashboard.js' %}"></script>
+
+
+
+
+</html>

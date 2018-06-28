@@ -1,0 +1,45 @@
+This library is an implementation of the algorithm proposed by Filippo
+Bonchi and Damien Pous to check Non-deterministic Finite Automata
+(NFA) for language equivalence. It is distributed under the terms of
+the GNU Lesser General Public License.
+
+Type [make] to compile; you need ocamlbuild.
+The generated progam is called "hkc", it can be run as follows: 
+
+./hkc [options] -equiv file1 file2
+   to check language equivalence of two word automata encoded in the 
+   timbuk format in files file1 and file2
+
+./hkc [options] -incl file1 file2
+   to check language inclusion of file1 into file2
+
+options are:
+ -fwd / -bwd    process the automata forward (default) or backward
+ -bfs / -dfs    use the breadth-first (default) of depth-first exploration strategy
+ -sim / -nosim  use similarity or not (default)
+
+
+For the internal API, here is a short description of each OCaml module:
+
+- sets:	  	several implementations of finite integer sets
+- common: 	OCaml types for NFA, signatures for up-to techniques and strategies
+- misc:   	simple operations on NFA
+- queues: 	implementation of queues, yielding several exploration strategies
+- simulation:	computing the similarity on NFA, and various operations exploiting similarity
+- timbuk:	printing/parsing of NFA using the timbuk format
+
+- ID:	  	identity up-to technique (i.e. for the naive algorithm)
+- UF:	  	up to equivalence technique using Union-Find (i.e. for Hopcroft&Karp's algorithm)
+- ACI:	  	up to congruence technique using ACI-rewriting (i.e. for a simplified version of HKC)
+- gen:		generic code for performing the equivalence check (to be used with one the above three modules)
+
+- HKC:		implementation of HKC, using more efficient rewriting techniques for the congruence check
+
+- bridge:	bridge for the livata C++ implementation of AC and AC'
+
+- main:		entry point (to be adapted to your needs)
+
+
+
+See http://perso.ens-lyon.fr/damien.pous/hknt/ for more details.
+

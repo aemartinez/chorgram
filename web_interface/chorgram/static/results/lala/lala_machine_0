@@ -1,0 +1,9 @@
+Ops xxxx:0 AM1SENDhello:1 AM1SENDworld:1 
+ 
+Automaton A
+States q0 q1 
+Final States q0 q1 
+Transitions 
+xxxx() -> q0
+AM1SENDhello(q0) -> q1
+AM1SENDworld(q0) -> q1

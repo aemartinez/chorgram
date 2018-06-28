@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<link rel="apple-touch-icon" sizes="76x76" href="{% static 'lib/img/apple-icon.png' %}" />
+	<link rel="icon" type="image/png" href="{% static 'lib/img/favicon.png' %}" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+	<title>An Web Tool for Chorgram!</title>
+
+	<meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+    <meta name="viewport" content="width=device-width" />
+
+
+    <!-- Bootstrap core CSS     -->
+    <link href="{% static 'lib/css/bootstrap.min.css' %}" rel="stylesheet" />
+
+    <!--  Material Dashboard CSS    -->
+    <link href="{% static 'lib/css/material-dashboard.css' %}" rel="stylesheet"/>
+
+    <!--  CSS for Demo Purpose, don't include it in your project
+    <link href="../assets/css/demo.css" rel="stylesheet" />-->
+
+    <!--     Fonts and icons     -->
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,700,300|Material+Icons' rel='stylesheet' type='text/css'>
+
+
+	<!--   Core JS Files   -->
+	<script src="{% static 'lib/js/jquery-3.1.1.min.js' %}" type="text/javascript"></script>
+	<script src="{% static 'lib/js/bootstrap.min.js' %}" type="text/javascript"></script>
+	<script src="{% static 'lib/js/material.min.js' %}" type="text/javascript"></script>
+
+	<!--  Charts Plugin -->
+	<script src="{% static 'lib/js/chartist.min.js' %}"></script>
+
+	<!--  Notifications Plugin    -->
+	<script src="{% static 'lib/js/bootstrap-notify.js' %}"></script>
+
+	<!-- Material Dashboard javascript methods -->
+	<script src="{% static 'lib/js/material-dashboard.js' %}"></script>
+
+    <!-- Viz.js  Graphviz javascript-->
+    <script src="{% static 'lib/js/viz.js' %}"></script>
+
+    <script src="{% static 'lib/js/SVGMagic.js' %}"></script>
+
+    <script src="{% static 'lib/layer/layer.js' %}"></script>
+
+    <script src="{% static 'lib/js/svg-pan-zoom.js' %}"></script>
+
+    <script src="{% static 'lib/js/main.js' %}"></script>
+
+</head>
+
+   <style type="text/css">
+		object{
+			width: 100%;
+		}
+       embed{
+           width:100%;
+       }
+       svg{
+
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+       }
+	</style>
+
+<body>
+
+	<div class="wrapper">
+	    <div class="sidebar" data-color="purple" data-image="{% static 'lib/img/sidebar-1.jpg' %}">
+
+			<!--
+		        Tip 1: You can change the color of the sidebar using: data-color="purple | blue | green | orange | red"
+
+		        Tip 2: you can also add an image using data-image tag
+		    -->
+
+			<div class="logo">
+				<a href="/" class="simple-text">
+					Web Chorgram
+				</a>
+			</div>
+
+	    	<div class="sidebar-wrapper">
+	            <ul class="nav">
+	                <li >
+	                    <a href="/">
+	                        <i class="material-icons">dashboard</i>
+	                        <p>Home</p>
+	                    </a>
+	                </li>
+	                 <li>
+	                    <a href="/example">
+	                        <i class="material-icons">store</i>
+	                        <p>Examples</p>
+	                    </a>
+	                </li>
+	                 <li >
+	                    <a href="/upload">
+	                        <i class="material-icons">tab</i>
+	                        <p>Upload file</p>
+	                    </a>
+	                </li>
+	                 <li class="active">
+	                    <a href="#">
+	                        <i class="material-icons">webasset</i>
+	                        <p>Input commands</p>
+	                    </a>
+	                </li>
+	                 <li>
+	                    <a href="#">
+	                        <i class="material-icons">widgets</i>
+	                        <p>Setting Style</p>
+	                    </a>
+	                </li>
+	            </ul>
+	    	</div>
+		</div>
+
+	    <div class="main-panel">
+			<nav class="navbar navbar-transparent navbar-absolute">
+				<div class="container-fluid">
+					<div class="navbar-header">
+						<button type="button" class="navbar-toggle" data-toggle="collapse">
+							<span class="sr-only">Toggle navigation</span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button>
+						<a class="navbar-brand" href="#">Welcome</a>
+					</div>
+					<div class="collapse navbar-collapse">
+						<ul class="nav navbar-nav navbar-right">
+							<li>
+								<a href="#pablo" class="dropdown-toggle" data-toggle="dropdown">
+									<i class="material-icons">dashboard</i>
+									<p class="hidden-lg hidden-md">Dashboard</p>
+								</a>
+							</li>
+							<li class="dropdown">
+								  <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+										<i class="material-icons">notifications</i>
+										<span class="notification">0</span>
+										<p class="hidden-lg hidden-md">Notifications</p>
+								  </a>
+								  <ul class="dropdown-menu">
+									<li><a href="#">Mike John responded to your email</a></li>
+									<li><a href="#">You have 5 new tasks</a></li>
+									<li><a href="#">You're now friend with Andrew</a></li>
+									<li><a href="#">Another Notification</a></li>
+									<li><a href="#">Another One</a></li>
+								  </ul>
+							</li>
+							<li>
+								<a href="#pablo" class="dropdown-toggle" data-toggle="dropdown">
+	 							   <i class="material-icons">person</i>
+	 							   <p class="hidden-lg hidden-md">Profile</p>
+	 						   </a>
+							</li>
+						</ul>
+
+						<form class="navbar-form navbar-right" role="search">
+							<div class="form-group  is-empty">
+	                        	<input type="text" class="form-control" placeholder="Search">
+	                        	<span class="material-input"></span>
+							</div>
+							<button type="submit" class="btn btn-white btn-round btn-just-icon">
+								<i class="material-icons">search</i><div class="ripple-container"></div>
+							</button>
+	                    </form>
+					</div>
+				</div>
+			</nav>
+
+	        <div class="content">
+                <div class="row">
+
+	        	        <div class="col-xs-6" >
+	                        <div class="card">
+				                <div class="card-header" data-background-color="purple">
+					                <h4 class="title">Input Commands</h4>
+					                <p class="category">choose format to generate graphs, default is fsa.</p>
+				                </div>
+				                <div class="card-content">
+				<form>
+					<div class="dropdown">
+						<a id="selectfile" href="#" class="btn dropdown-toggle" data-toggle="dropdown" >
+					    	Default
+					    	<b class="caret"></b>
+						</a>
+						<ul class="dropdown-menu">
+							<li><a href="#">FSA Format</a></li>
+							<li class="divider"></li>
+							<li><a href="#">SSG Format</a></li>
+						</ul>
+					</div>
+
+					<textarea id="textarea" class="form-control" placeholder="Here will show commands..." rows="10" onselect="getText()" ></textarea>
+                    <div class="alert alert-danger" id="error" hidden="hidden">
+                    <div class="container-fluid" >
+                      <div class="alert-icon">
+                        <i class="material-icons">error_outline</i>
+                      </div>
+                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true"><i class="material-icons">clear</i></span>
+                      </button>
+                      <b>Error Alert:</b> Damn man! Commands has syntax error !!!
+                    </div>
+                    </div>
+					<button type="button" class="btn btn-info" id="sum" onclick="inputCommands()">Generate</button>
+					<button type="reset" class="btn btn-default" onclick="init()">Clear All</button>
+					</form>
+				</div>
+				            </div>
+				        </div>
+
+
+                        <div class="col-xs-6" id="global" hidden="hidden">
+                            <div class="card">
+				                <div class="card-header" data-background-color="purple">
+					            <h4 class="title">Global graphs</h4>
+
+				                </div>
+                                <div class="card-content">
+                                      <span id='result_global'></span>
+                                 </div>
+                            </div>
+	                    </div>
+                    </div>
+                <div class="row">
+                    <div class="col-xs-6"  id="machines" hidden="hidden">
+                        <div class="card">
+				                <div class="card-header" data-background-color="purple">
+					            <h4 class="title">Machines graphs</h4>
+
+				                </div>
+                                <div class="card-content" id="card-machines">
+
+                                    <span id='result_machines' ></span>
+
+                                 </div>
+                            </div>
+                    </div>
+                    <div class="col-xs-6" id="ts" hidden="hidden">
+                        <div class="card">
+				                <div class="card-header" data-background-color="purple">
+					            <h4 class="title">Ts graphs</h4>
+
+				                </div>
+                                <div class="card-content">
+                                     <span id='result_ts'></span>
+                                 </div>
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+			<footer class="footer">
+	            <div class="container-fluid">
+	                <nav class="pull-left">
+	                    <ul>
+	                        <li>
+	                            <a href="/">
+	                                Home
+	                            </a>
+	                        </li>
+
+	                    </ul>
+	                </nav>
+	                <p class="copyright pull-right">
+	                    &copy; 2017 made by Zhao
+	                </p>
+	            </div>
+	        </footer>
+	    </div>
+	</div>
+
+</body>
+
+
+	<!-- Material Dashboard DEMO methods, don't include it in your project!
+	<script src="../assets/js/demo.js"></script>-->
+
+{#    	<script type="text/javascript">#}
+{#                    window.onload = function(){#}
+{#                            $('#machines').hide();#}
+{#                            $('#global').hide();#}
+{#                            $('#ts').hide();#}
+{#                            $('#textarea').val('');#}
+{#                        }#}
+{##}
+{##}
+{#                        var file=null;#}
+{#                        var machinesDot=[];#}
+{#                        var globalDot = [];#}
+{#                        var tsDot = [];#}
+{#                        //init#}
+{#                        function init()#}
+{#                        {#}
+{#                            $('#textarea').val('');#}
+{#                            $('#result_global').attr("value",'');#}
+{#                            $('#result_machines').attr("value",'');#}
+{#                            $('#result_ts').attr("value",'');#}
+{#                            $('#global').hide();#}
+{#                            $('#machines').hide();#}
+{#                            $('#ts').hide();#}
+{#                            $('#selectfile').text('Default');#}
+{#                            $('#error').hide();#}
+{#                             $('#result_machines').children().remove();#}
+{#                                if($('#result_ts').children().length>1){#}
+{#                                $('#result_ts').children().remove();#}
+{#                            }#}
+{#                                $('#result_global').children().remove();#}
+{#                            if(file !=null){#}
+{#                                file=null;#}
+{#                                 machinesDot=[];#}
+{#                                 globalDot = [];#}
+{#                                 tsDot = [];#}
+{#                                //alert(file + "all clear");#}
+{#                            }#}
+{##}
+{##}
+{##}
+{#                        }#}
+{##}
+{#                        //get the text from textarea and send to view.py#}
+{#                        function inputCommands()#}
+{#                        {#}
+{#                            var textarea = $('#textarea').val();#}
+{#                            $.get("/textarea_ajax/", {'textarea':textarea}, function(ret){#}
+{##}
+{#                                        }).done(function(res) {#}
+{#                                //alert(filename);#}
+{#                                file = res.toString();#}
+{#                                if(file !=null){#}
+{#                                     getGraph();#}
+{#                                }#}
+{##}
+{#                            });#}
+{#                        }#}
+{#						 //generate graph js#}
+{#                          function getGraph()#}
+{#                        {#}
+{##}
+{#                            if(file==null)#}
+{#                            {#}
+{#                                alert("Please choose a file!");#}
+{#                                return ;#}
+{#                            }#}
+{#                            if($("#global").is(":visible"))#}
+{#                            {#}
+{#                                $('#global').hide();#}
+{#                                $('#machines').hide();#}
+{#                                $('#ts').hide();#}
+{#                                $('#error').hide();#}
+{#                                $('#result_machines').children().remove();#}
+{##}
+{#                                 if($('#result_ts').children().length>1){#}
+{#                                $('#result_ts').children().remove();#}
+{#                            }#}
+{#                                $('#result_global').children().remove();#}
+{#                            }#}
+{#                            $.ajax({#}
+{#                                url:"{% url 'webContext:get_file_return_dot' %}",#}
+{#                                data:{'filename':file},#}
+{#                                success: function (ret) {#}
+{#                                     if(ret == 1)#}
+{#                                        {#}
+{#                                            $('#error').show();#}
+{#                                        }#}
+{#                                    var splitname=file.split('.');#}
+{#                                    name = splitname[0];#}
+{#                                    $.each(ret, function(index, item){#}
+{#                                        //Testing read dot file#}
+{#                                        //alert(item);#}
+{#                                        if(item.toString().indexOf("dot")!=-1)#}
+{#                                        {#}
+{#                                            if(item.toString().indexOf("machines")!=-1)#}
+{#                                            {#}
+{#                                                var filename = item.toString();#}
+{#                                                var dirName = name;#}
+{#                                                 $.get("{% url 'webContext:get_dot' %}", {'filename':filename,'dirName':dirName}, function(ret){#}
+{##}
+{#                                                 }).done(function(data) {#}
+{#                                                        //push dot data for highlight#}
+{#                                                        machinesDot.push(data);#}
+{#                                                        //display svg#}
+{#                                                        var parser = new DOMParser();#}
+{#                                                         var img = Viz(data,"svg");#}
+{#                                                         var svg = parser.parseFromString(img,"image/svg+xml");#}
+{#                                                         addZoomforSvg(svg,"#result_machines");#}
+{#                                                         $('#machines').show();#}
+{#                                                        });#}
+{#                                            }#}
+{##}
+{##}
+{#                                         if(item.toString().indexOf("ts")!=-1)#}
+{#                                            {#}
+{##}
+{#                                                var filename = item.toString();#}
+{#                                                var dirName = name;#}
+{#                                                 $.get("{% url 'webContext:get_dot' %}", {'filename':filename,'dirName':dirName}, function(ret){#}
+{##}
+{#                                                 }).done(function(data) {#}
+{#                                                     //push dot data for highlight#}
+{#                                                        tsDot.push(data);#}
+{#                                                        var parser = new DOMParser();#}
+{#                                                         var img = Viz(data,"svg");#}
+{#                                                         var svg = parser.parseFromString(img,"image/svg+xml")#}
+{#                                                         addZoomforSvg(svg,"#result_ts");#}
+{##}
+{#                                                         $('#ts').show();#}
+{#                                                        });#}
+{#                                            }#}
+{##}
+{##}
+{##}
+{#                                            if(item.toString().indexOf("global")!=-1)#}
+{#                                            {#}
+{#                                                var filename = item.toString();#}
+{#                                                var dirName = name;#}
+{#                                                 $.get("{% url 'webContext:get_dot' %}", {'filename':filename,'dirName':dirName}, function(ret){#}
+{##}
+{#                                                 }).done(function(data) {#}
+{#                                                     //push dot data for highlight#}
+{#                                                        globalDot.push(data);#}
+{#                                                        var parser = new DOMParser();#}
+{#                                                         var img = Viz(data,"svg");#}
+{#                                                         var svg = parser.parseFromString(img,"image/svg+xml")#}
+{#                                                         addZoomforSvg(svg,"#result_global");#}
+{##}
+{#                                                         $('#global').show();#}
+{#                                                        });#}
+{#                                            }#}
+{##}
+{#                                        }#}
+{##}
+{#                                        });#}
+{#                                }#}
+{#                            });#}
+{##}
+{##}
+{##}
+{#                        }#}
+{##}
+{#                        function addZoomforSvg(svg,container)#}
+{#                        {#}
+{##}
+{#                            svg.documentElement.setAttribute("onload","addZoom(this)");#}
+{#                            $(container).append(svg.documentElement);#}
+{##}
+{#                        }#}
+{#                     function addZoom(com)#}
+{#                        {#}
+{#                            window.panZoomTiger = svgPanZoom(com,{#}
+{#                                zoomEnabled: true,#}
+{#                              controlIconsEnabled: true,#}
+{#                              fit: true,#}
+{#                              center: true#}
+{#                            });#}
+{##}
+{#                        }#}
+{##}
+{##}
+{##}
+{#                        //get commands by line from textarea#}
+{#                        function getText()#}
+{#                        {#}
+{#                          var pos = getCursorPosition($('#textarea'));#}
+{##}
+{#                          var array = $('#textarea').val();#}
+{#                          var col = 0;#}
+{#                          for (var i=0; i<= pos;i++)#}
+{#                          {#}
+{#                            if(array[i] == '\n')#}
+{#                            {#}
+{#                              col ++;#}
+{#                            }#}
+{#                          }#}
+{#                          //alert(col);#}
+{#                          if(col !=0){#}
+{#                            var codeArray = $('#textarea').val().split('\n');#}
+{#                            var command = codeArray[col-1];#}
+{#                            //alert (code);#}
+{#                            highlightDot(command,machinesDot,"machines");#}
+{#                            highlightDot(command,globalDot,"global");#}
+{#                            highlightDot(command,tsDot,"ts");#}
+{#                          }#}
+{#                        }#}
+{#                        //get cursor position#}
+{#                        function getCursorPosition (ctrl) {#}
+{#                            var CaretPos = 0;    // IE Support#}
+{#                            if (document.selection) {#}
+{#                            ctrl.focus ();#}
+{#                                var Sel = document.selection.createRange ();#}
+{#                                Sel.moveStart ('character', -ctrl.value.length);#}
+{#                                CaretPos = Sel.text.length;#}
+{#                            }#}
+{#                            // Firefox support#}
+{#                            else if (ctrl.prop("selectionStart") || ctrl.prop("selectionEnd") == '0')#}
+{#                                CaretPos = ctrl.prop("selectionEnd");#}
+{#                            return (CaretPos);#}
+{#                        }#}
+{#                        //according type to change dot file and display new svgs#}
+{#                        function highlightDot(command,dotArray,type)#}
+{#                        {#}
+{#                            var dot=null;#}
+{#                            for(var i=0;i<dotArray.length;i++)#}
+{#                            {#}
+{#                                dot = dotArray[i];#}
+{#                                if(type == "machines")#}
+{#                                {#}
+{#                                 changeMachine(dot,command);#}
+{#                                }#}
+{##}
+{#                                if(type == "global")#}
+{#                                {#}
+{#                                 changeGlobal(dot,command);#}
+{#                                }#}
+{#                                if(type == "ts")#}
+{#                                {#}
+{#                                    changeTs(dot,command);#}
+{#                                }#}
+{#                            }#}
+{##}
+{#                        }#}
+{#                        //change machine dot file and display#}
+{#                          //find mapping line in dot file#}
+{#                            //the fsa file format should is determinate#}
+{#                            //.outputs A should get all nodes name include A#}
+{#                            //.marking q0 should get node q0#}
+{#                            //commandArra[0] is first machine#}
+{#                            //commandArra[2] is send or receive ; ! or ?#}
+{#                            //commandarra[3] is message#}
+{#                            //commandArra[4] is last machine#}
+{#                        function changeMachine(dot,command)#}
+{#                        {#}
+{#                            var dotSliptArra = dot.split('\n');#}
+{#                            var commandArra = command.split(" ");#}
+{#                            if(commandArra.length!=5)#}
+{#                            {#}
+{#                                return null;#}
+{#                            }#}
+{##}
+{#                            for (var i = 0; i< dotSliptArra.length;i++) {#}
+{#                                var tempDot = dotSliptArra[i];#}
+{#                                if(tempDot.indexOf(commandArra[0])!=-1 && tempDot.indexOf(commandArra[4])!=-1 && tempDot.indexOf(commandArra[2]) !=-1&&tempDot.indexOf(commandArra[3])!=-1){#}
+{#                                    tempDot = tempDot.substring(0,tempDot.length-2);#}
+{#                                    dotSliptArra[i] = tempDot+',color=red];';#}
+{#                                }#}
+{##}
+{#                            }#}
+{#                            var newdot = dotSliptArra.join('\n');#}
+{#                            machinesDot = newdot;#}
+{#                            var parser = new DOMParser();#}
+{#                            var img = Viz(newdot,"svg");#}
+{#                            var svg = parser.parseFromString(img,"image/svg+xml")#}
+{##}
+{#                            $('#result_machines').children().remove();#}
+{#                            addZoomforSvg(svg,"#result_machines");#}
+{##}
+{#                        }#}
+{#                        //change global dot file#}
+{#                        // for global: {q0 1 ! hello q1} and {q0 0 ? hello q1 }#}
+{#                        // both point to Tq0q0AM1hello [label="A &rarr; M1:hello", shape=box];#}
+{#                        //So, the common parts is including q0 hello and shape = box#}
+{#                        function changeGlobal(dot,command)#}
+{#                        {#}
+{#                            var dotSliptArra = dot.split('\n');#}
+{#                            var commandArra = command.split(" ");#}
+{#                             if(commandArra.length!=5)#}
+{#                            {#}
+{#                                return null;#}
+{#                            }#}
+{#                             for (var i = 0; i< dotSliptArra.length;i++) {#}
+{#                                var tempDot = dotSliptArra[i];#}
+{#                                if(tempDot.indexOf(commandArra[0])!=-1 && tempDot.indexOf(commandArra[3])!=-1 && tempDot.indexOf("shape=box") !=-1){#}
+{#                                    tempDot = tempDot.substring(0,tempDot.length-2);#}
+{#                                    dotSliptArra[i] = tempDot+',color=red];';#}
+{#                                }#}
+{##}
+{#                            }#}
+{#                            var newdot = dotSliptArra.join('\n');#}
+{#                            var parser = new DOMParser();#}
+{#                            var img = Viz(newdot,"svg");#}
+{#                            var svg = parser.parseFromString(img,"image/svg+xml")#}
+{#                            $('#result_global').children().remove();#}
+{#                            addZoomforSvg(svg,"#result_global");#}
+{##}
+{#                        }#}
+{#                        //change ts dot file#}
+{#                        //two kinds of graph ts0 ts#}
+{#                        //q0 1 ! hello q1 in ts0 is "q0_q0" -> "q1_q1"			[label="A&rarr;M1:hello"];#}
+{#                        //     in ts is "q0_q0" -> "q1_q0____AM1hello"			[label="A&middot;M1 ! hello"];#}
+{#                        //In ts the message will display more than 1#}
+{#                        function changeTs(dot,command)#}
+{#                        {#}
+{#                            var dotSliptArra = dot.split('\n');#}
+{#                            var commandArra = command.split(" ");#}
+{#                             if(commandArra.length!=5)#}
+{#                            {#}
+{#                                return null;#}
+{#                            }#}
+{#                             for (var i = 0; i< dotSliptArra.length;i++) {#}
+{#                                var tempDot = dotSliptArra[i];#}
+{##}
+{#                                if(tempDot.indexOf(commandArra[0])!=-1 && tempDot.indexOf(commandArra[2])!=-1 && tempDot.indexOf(commandArra[3])!=-1 && tempDot.indexOf(commandArra[4]) !=-1 &&tempDot.indexOf("->") !=-1)#}
+{#                                {#}
+{#                                     tempDot = tempDot.substring(0,tempDot.length-2);#}
+{#                                    dotSliptArra[i] = tempDot+',color=red];';#}
+{#                                    continue;#}
+{#                                }#}
+{#                                if(tempDot.indexOf(commandArra[0])!=-1 && tempDot.indexOf(commandArra[3])!=-1 && tempDot.indexOf(commandArra[4]) !=-1 && tempDot.indexOf("->") !=-1 )#}
+{#                                {#}
+{#                                    var times=compare(tempDot,commandArra[3]);#}
+{#                                    if(times>2){#}
+{##}
+{##}
+{#                                         if(tempDot.indexOf(commandArra[2])!=-1)#}
+{#                                        {#}
+{#                                         tempDot = tempDot.substring(0,tempDot.length-2);#}
+{#                                         dotSliptArra[i] = tempDot+',color=red];';#}
+{#                                        }#}
+{#                                    }#}
+{#                                    else#}
+{#                                    {#}
+{#                                         tempDot = tempDot.substring(0,tempDot.length-2);#}
+{#                                         dotSliptArra[i] = tempDot+',color=red];';#}
+{#                                    }#}
+{#                                }#}
+{##}
+{#                            }#}
+{#                            var newdot = dotSliptArra.join('\n');#}
+{#                            var parser = new DOMParser();#}
+{#                            var img = Viz(newdot,"svg");#}
+{#                            var svg = parser.parseFromString(img,"image/svg+xml")#}
+{#                            if($('#result_ts').children().length>1){#}
+{#                                $('#result_ts').children().remove();#}
+{#                            }#}
+{#                            addZoomforSvg(svg,"#result_ts");#}
+{##}
+{#                        }#}
+{#                        //compare st1 between st2#}
+{#                        //return st2 times#}
+{#                        function compare(str1,str2)#}
+{#                        {#}
+{#                            str1 = str1.replace(/\s/ig, "");#}
+{#                            var str1array = str1.split("");#}
+{#                            var str2array = str2.split("");#}
+{#                            var times=0;#}
+{#                            var count=0;#}
+{#                            for(var i=0;i<str1array.length;i++)#}
+{#                                for(var j=0;j<str2array.length;j++)#}
+{#                                {#}
+{#                                    if(str1array[i]==str2array[j])#}
+{#                                    {#}
+{#                                        count++;#}
+{#                                        if(count == str2array.length)#}
+{#                                        {#}
+{#                                            times++;#}
+{#                                            count=0;#}
+{#                                        }#}
+{#                                    }#}
+{#                                }#}
+{#                            return times;#}
+{#                        }#}
+{##}
+{#					</script>#}
+</html>

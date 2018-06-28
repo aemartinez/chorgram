@@ -1,0 +1,32 @@
+digraph GG {
+node [width=0.25,height=0.25];
+
+	Gsource [label="", shape=circle, fixedsize=true];
+	Pp0 [label="Pp0", ];
+	Pp_init [label="Pp_init", ];
+	Tq0q0AM1hello [label="A &rarr; M1:hello", shape=box];
+	Tq0q0AM1world [label="A &rarr; M1:world", shape=box];
+	Tt_init [label="s", ];
+	orPp0flow_Pp0_Tq0q0AM1helloflow_Pp0_Tq0q0AM1world [label="+", shape=diamond, fixedsize=true];
+	sink_Tq0q0AM1hello [label="", shape=circle, width=0.2, height=0.2, fixedsize=true, peripheries=2];
+	sink_Tq0q0AM1world [label="", shape=circle, width=0.2, height=0.2, fixedsize=true, peripheries=2];
+
+	{rank = source; Gsource;}
+	{rank = same; Pp_init }
+	{rank = same; Tt_init }
+	{rank = same; Pp0 }
+	{rank = same; orPp0flow_Pp0_Tq0q0AM1helloflow_Pp0_Tq0q0AM1world }
+	{rank = same; Tq0q0AM1hello Tq0q0AM1world }
+
+	{rank = sink; sink_Tq0q0AM1hello; sink_Tq0q0AM1world; }
+
+	Gsource -> Pp_init; 
+	Pp0 -> orPp0flow_Pp0_Tq0q0AM1helloflow_Pp0_Tq0q0AM1world; 
+	Pp_init -> Tt_init; 
+	Tq0q0AM1hello -> sink_Tq0q0AM1hello; 
+	Tq0q0AM1world -> sink_Tq0q0AM1world; 
+	Tt_init -> Pp0; 
+	orPp0flow_Pp0_Tq0q0AM1helloflow_Pp0_Tq0q0AM1world -> Tq0q0AM1hello; 
+	orPp0flow_Pp0_Tq0q0AM1helloflow_Pp0_Tq0q0AM1world -> Tq0q0AM1world; 
+
+}

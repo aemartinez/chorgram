@@ -1,0 +1,5 @@
+python cfsm2gg.py -nc -dw 0 -df pdf -dir experiments/results/ experiments/pingpong.fsa
+
+
+python cfsm2gg.py -df png -b 1 --dot "Nshape=parallelogram" --dot "Gnodesep=.5" -dir out \
+> -p "w *" -tp "Ping Pong * *" -cp "* * Ping Pong" experiments/pingpong.fsa
