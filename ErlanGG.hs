@@ -1,10 +1,10 @@
 --
 -- Author: Emilio Tuosto <emilio@le.ac.uk>
 --
--- This module contains function to project a REG to Erlang
+-- This module contains function to project a GG & REG to Erlang
 --
 
-module REG where
+module ErlanGG where
 
 import SyntacticGlobalGraphs
 import Misc
@@ -46,10 +46,10 @@ erlAtom pre s = case s of
 guard2erl :: ReversionGuard -> String
 guard2erl g = if M.null g then "\" \"" else "\"" ++ show g ++ "\""
 --
--- rgg2erl _rgg generates a string encoding _rgg in Erlang's format
+-- rgg2erl ln _rgg generates a string encoding _rgg in Erlang's format
 --         for the REGs' syntax
 -- Pre: Branches must me decorated with the selector and guards
---      must be Erlang expressions
+--      must be Erlang expressions and ln is a strictly positive integer
 -- Post: a string in the format expected by encoding.erl
 --
 rgg2erl :: Int -> RGG -> (String, Int)
@@ -87,3 +87,4 @@ rgg2erl ln _rgg =
     Per p rgg g ->
       let (body, ln') = rgg2erl ln rgg
       in (erlTuple [show ln', erlTuple ["rec", erlAtom "ptp_" p, erlTuple [erlList body, guard2erl g]]], 1 + ln')
+
