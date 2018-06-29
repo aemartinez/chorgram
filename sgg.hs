@@ -35,13 +35,14 @@ main = do progargs <- getArgs
                 --                    normGG gg
                 --              let fact =
                 --                    factorise $ norm
-                let fact =
-                      factorise $ normGG gg --norm
-                let sgg2file s s' =
-                      writeToFile (dir ++ s) (gg2dot gg (baseName ++ s') (flines!ggsizenode))
-                sgg2file "graph_sgg.dot" ""    >>= \_ -> putStrLn $ "\t" ++ dir ++ "graph_sgg.dot: is the input gg"
-                sgg2file "norm_sgg.dot" "norm" >>= \_ -> putStrLn $ "\t" ++ dir ++ "norm_sgg.dot:  is the normalised initial gg"
-                sgg2file "fact_sgg.dot" "fact" >>= \_ -> putStrLn $ "\t" ++ dir ++ "fact_sgg.dot:  is the factorised initial gg"
+                let norm =
+                      normGG gg --norm
+                let fact = factorise norm
+                let sgg2file s s' graph =
+                      writeToFile (dir ++ s) (gg2dot graph (baseName ++ s') (flines!ggsizenode))
+                sgg2file "graph_sgg.dot" ""    gg   >>= \_ -> putStrLn $ "\t" ++ dir ++ "graph_sgg.dot: is the input gg"
+                sgg2file "norm_sgg.dot" "norm" norm >>= \_ -> putStrLn $ "\t" ++ dir ++ "norm_sgg.dot:  is the normalised initial gg"
+                sgg2file "fact_sgg.dot" "fact" fact >>= \_ -> putStrLn $ "\t" ++ dir ++ "fact_sgg.dot:  is the factorised initial gg"
                 let ( _, hg ) =
                       sem (M.member "--sloppy" flags) (-1) fact ptps
                 writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines) >>=

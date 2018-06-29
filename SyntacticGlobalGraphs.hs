@@ -31,26 +31,43 @@ data GG = Emp
 normGG :: GG -> GG
 --
 -- Syntactic global graphs can be normalised by flattening nested | and +
--- the name normGG is misleading. TODO: change normGG to preNormGG or flattenGG 
+-- the name normGG is misleading. TODO: change normGG to preNormGG or normGG 
 --
-normGG gg = case gg of
-             Emp       -> Emp -- note that this case should never happen for parsed graphs
-             Act _ _   -> gg
-             Par ggs   -> Par $ L.sort (normPar ggs)
-             Bra ggs   -> let nb = normBra $ S.toList ggs in
-                           (if (S.size nb==1) then (head $ S.toList nb) else (Bra nb))
-             Seq ggs   -> Seq (L.map normGG ggs)
-             Rep gg' p -> Rep (normGG gg') p
+normGG gg =
+  case gg of
+    Seq ggs   -> let ngs = [g | g <- (L.map normGG ggs), g /= Emp]
+                 in (if ngs ==[] then Emp else Seq ngs)
+    Rep gg' p -> Rep (normGG gg') p
+    Par ggs   -> let ngs = [g | g <- (normPar ggs), g /= Emp]
+                 in (case ngs of
+                        [] -> Emp
+                        [g] -> g
+                        _   -> Par $ L.sort ngs
+                    )
+    Bra ggs   -> let nb = S.filter (\g -> g /= Emp) (normBra $ S.toList ggs)
+                 in (case S.size nb of
+                        0 -> Emp
+                        1 -> head $ S.toList nb
+                        _ -> Bra nb
+                    )
+    _         -> gg
   where normPar gs = case gs of
-                      []   -> []
-                      g:l' -> case normGG g of
-                               Par ggs' -> normPar (ggs' ++ l')
-                               _        -> [normGG g] ++ (normPar l')
+                       []   -> []
+                       [_]  -> gs
+                       g:l' -> let ng = normGG g
+                               in (case ng of
+                                      Par ggs' -> normPar (ggs' ++ l')
+                                      _        -> [ng] ++ (normPar l')
+                                  )
         normBra gs = case gs of
-                      []   -> S.empty
-                      g:l' -> case (normGG g) of
-                               Bra ggs' -> normBra ((S.toList ggs') ++ l')
-                               _        -> S.union (S.singleton $ normGG g) (normBra l')
+                       []   -> S.empty
+                       [g]  -> let ng = normGG g
+                               in (if ng == Emp then S.empty else S.singleton ng)
+                       g:l' -> let ng = normGG g
+                               in (case ng of
+                                      Bra ggs' -> normBra ((S.toList ggs') ++ l')
+                                      _        -> S.union (S.singleton ng) (normBra l')
+                                  )
 
 startGG :: GG -> GG -> Bool
 --
@@ -70,17 +87,15 @@ factorise :: GG -> GG
 -- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
 --
 factorise gg = case gg of
-                Emp         -> Emp
-                Act (_,_) _ -> gg
-                Par ggs     -> Par (L.map factorise ggs)
-                Bra ggs     -> if S.null ggs
-                               then Emp
-                               else let prefix     = prefOf (S.elemAt 0 ggs)
-                                        part       = S.partition (startGG prefix) ggs
-                                        prefOf gg' = case gg' of
+                Par ggs   -> Par (L.map factorise ggs)
+                Bra ggs   -> if S.null ggs
+                             then Emp
+                             else let prefix     = prefOf (S.elemAt 0 ggs)
+                                      part       = S.partition (startGG prefix) ggs
+                                      prefOf gg' = case gg' of
                                                       Seq ggs' -> if L.null ggs' then error $ show (S.elemAt 0 ggs) else head ggs'
                                                       _        -> gg'
-                                        ggSet      = fst part
+                                      ggSet      = fst part
                                     in normGG (Bra (S.union (fact prefix ggSet) (rest $ snd part)))
                                        where fact prefix ggSet = if S.size ggSet == 1
                                                                  then ggSet
@@ -91,8 +106,9 @@ factorise gg = case gg of
                                              rest ggSet'       = if S.size ggSet' == 1
                                                                  then ggSet'
                                                                  else S.singleton $ factorise (Bra ggSet')
-                Seq ggs     -> Seq (L.map factorise ggs)
-                Rep gg' p   -> Rep (factorise gg') p
+                Seq ggs   -> Seq (L.map factorise ggs)
+                Rep gg' p -> Rep (factorise gg') p
+                _         -> gg
 
 wb :: Set GG -> Bool
 --
