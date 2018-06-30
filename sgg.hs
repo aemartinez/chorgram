@@ -31,12 +31,7 @@ main = do progargs <- getArgs
                 let ptps =
                       list2map $ S.toList names
                 writeToFile (dir ++ "in_sgg_parsed.txt") (show gg) >>= (\_ -> putStrLn $ "\t"++dir++"in.sgg: is the initial gg")
-                --              let norm   =
-                --                    normGG gg
-                --              let fact =
-                --                    factorise $ norm
-                let norm =
-                      normGG gg --norm
+                let norm = normGG gg
                 let fact = factorise norm
                 let sgg2file s s' graph =
                       writeToFile (dir ++ s) (gg2dot graph (baseName ++ s') (flines!ggsizenode))
@@ -47,6 +42,7 @@ main = do progargs <- getArgs
                       sem (M.member "--sloppy" flags) (-1) fact ptps
                 writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines) >>=
                   \_ -> putStrLn $ "\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg"
+                putStrLn "----------------------"
                 let path i ext =
                       mkFileName (ptps!i) dir "cfsm" ext
                 let legend m i =

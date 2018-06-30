@@ -30,8 +30,18 @@ data GG = Emp
 
 normGG :: GG -> GG
 --
--- Syntactic global graphs can be normalised by flattening nested | and +
--- the name normGG is misleading. TODO: change normGG to preNormGG or normGG 
+-- Syntactic global graphs can be normalised by flattening nested |
+-- and + the name normGG is misleading.
+--
+-- The function is based on the following structural rules:
+-- (o) + (o) = (o)
+-- ( GG, |, (o) ) abelian monoid
+-- ( GG, ;, (o) ) monoid
+-- G + G' = G' + G
+-- G;(G1 + G2) = G;G1 + G;G2
+-- (G1 | G2) ; (G1' | G2') = G1;G1' | G2;G2'   if ptps(G2) \cap ptps(G1') = ptps(G1) \cap ptps(G2') = {}
+--
+-- the last equation is not applied yet
 --
 normGG gg =
   case gg of
@@ -73,11 +83,15 @@ startGG :: GG -> GG -> Bool
 --
 -- start g g' checks if g is a prefix of g'
 --
-startGG g g' = g == g' || case g' of
-                            Seq ggs -> not (L.null ggs) && startGG g (head ggs)
-                            Bra ggs -> not (L.null l) && L.all (startGG g) l
-                                where l = S.toList ggs
-                            _       -> False
+startGG g g' = let ng = normGG g
+                   ng' = normGG g'
+               in (case ng' of
+                      Seq ggs -> startGG ng (head ggs)
+                      Bra ggs -> L.all (startGG ng) l
+                        where l = S.toList ggs
+                      _       -> False
+                  )
+
 
 factorise :: GG -> GG
 --
@@ -87,6 +101,8 @@ factorise :: GG -> GG
 -- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
 --
 factorise gg = case gg of
+                Emp       -> Emp
+                Act _ _   -> gg
                 Par ggs   -> Par (L.map factorise ggs)
                 Bra ggs   -> if S.null ggs
                              then Emp
@@ -96,7 +112,7 @@ factorise gg = case gg of
                                                       Seq ggs' -> if L.null ggs' then error $ show (S.elemAt 0 ggs) else head ggs'
                                                       _        -> gg'
                                       ggSet      = fst part
-                                    in normGG (Bra (S.union (fact prefix ggSet) (rest $ snd part)))
+                                  in normGG (Bra (S.union (fact prefix ggSet) (rest $ snd part)))
                                        where fact prefix ggSet = if S.size ggSet == 1
                                                                  then ggSet
                                                                  else S.singleton (Seq [prefix, factorise (Bra (S.map suffOf ggSet))])
@@ -108,7 +124,38 @@ factorise gg = case gg of
                                                                  else S.singleton $ factorise (Bra ggSet')
                 Seq ggs   -> Seq (L.map factorise ggs)
                 Rep gg' p -> Rep (factorise gg') p
-                _         -> gg
+
+
+factoriseNew :: GG -> GG
+--
+-- factoriseNew gg rewrites a GG in normal form by factorising the common
+-- parts of branches
+-- PRE: gg in normal form
+-- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
+--
+factoriseNew gg = let ngg = normGG gg
+               in (case ngg of
+                      Par ggs   -> Par (L.map factoriseNew ggs)
+                      Seq ggs   -> Seq (L.map factoriseNew ggs)
+                      Rep gg' p -> Rep (factoriseNew gg') p
+                      Bra ggs   -> let prefix     = prefOf (S.elemAt 0 ggs)
+                                       (ggSet, o) = S.partition (startGG prefix) ggs
+                                       prefOf gg' =
+                                         case gg' of
+                                           Seq ggs' -> if L.null ggs' then error $ show (S.elemAt 0 ggs) else head ggs'
+                                           _        -> gg'
+                                   in normGG (Bra (S.union (fact prefix ggSet) (rest o)))
+                        where fact prefix ggSet = if S.size ggSet == 1
+                                                  then ggSet
+                                                  else S.singleton (Seq [prefix, factoriseNew (Bra (S.map suffOf ggSet))])
+                              suffOf gg'        = case gg' of
+                                                     Seq ggs' -> if L.length ggs' == 1 then Emp else Seq (tail ggs')
+                                                     _        -> Emp
+                              rest ggSet'       = if S.size ggSet' == 1
+                                                  then ggSet'
+                                                  else S.singleton $ factoriseNew (Bra ggSet')
+                      _         -> ngg
+                  )
 
 wb :: Set GG -> Bool
 --
