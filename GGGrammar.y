@@ -11,6 +11,7 @@
 --	 |  G|G
 --       |  G+G
 --       |  sel P { Brc }
+--       |  branch P { Brc }
 --       |  G;G
 --       |  * G @ P
 --       |  repeat P { LBody }
@@ -28,10 +29,11 @@
 -- the iteration. Guards are used only for the reversible semantics
 -- and the string in them is supposed to be some valid erlang code.
 -- Likewise for the sel construct, which generalises the choice for
--- the reversible semantics.  Notice that the sel construct requires
--- to specify the selector of the branch (to make it simple the
--- realisation of projections on Erlang; the selector is mandatory for
--- REGs and omitted otherwise.
+-- the reversible semantics.  Notice that the sel and the branch
+-- constructs have the same semantics and require to specify the
+-- selector of the branch (to make it simple the realisation of
+-- projections on Erlang; the selector is mandatory for REGs and
+-- optional otherwise.
 --
 -- In the forward version of the parser
 --
@@ -104,6 +106,7 @@ import CFSM
   '{'	        { TokenCurlyo   }
   '}'	        { TokenCurlyc   }
   'sel'         { TokenSel      }
+  'branch'      { TokenSel      }
   'repeat'      { TokenRep      }
   'unless'      { TokenUnl      }
 
@@ -141,6 +144,10 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
   | 'sel' str '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
 
   | 'sel' '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
+
+  | 'branch' str '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
+
+  | 'branch' '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
 
   | G ';' G  	     		{ (Seq ((checkToken TokenSeq $1) ++ (checkToken TokenSeq $3)), S.union (snd $1) (snd $3)) }
 
@@ -257,6 +264,7 @@ lexer s = case s of
     '|':r                     -> TokenPar : lexer r
     '+':r                     -> TokenBra : lexer r
     's':'e':'l':r             -> TokenSel : (lexer $ tail r)
+    'b':'r':'a':'n':'c':'h':r -> TokenSel : (lexer $ tail r)
     '*':r                     -> TokenSta : lexer r
     'r':'e':'p':'e':'a':'t':r -> TokenRep : (lexer $ tail r)
     'u':'n':'l':'e':'s':'s':r -> TokenUnl : (lexer $ tail r)

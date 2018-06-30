@@ -11,6 +11,7 @@ import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
 --import Data.Char
+import Data.Ord as O
 import Misc
 import CFSM
 import DotStuff
@@ -134,28 +135,25 @@ factoriseNew :: GG -> GG
 -- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
 --
 factoriseNew gg = let ngg = normGG gg
-               in (case ngg of
-                      Par ggs   -> Par (L.map factoriseNew ggs)
-                      Seq ggs   -> Seq (L.map factoriseNew ggs)
-                      Rep gg' p -> Rep (factoriseNew gg') p
-                      Bra ggs   -> let prefix     = prefOf (S.elemAt 0 ggs)
-                                       (ggSet, o) = S.partition (startGG prefix) ggs
-                                       prefOf gg' =
-                                         case gg' of
-                                           Seq ggs' -> if L.null ggs' then error $ show (S.elemAt 0 ggs) else head ggs'
-                                           _        -> gg'
-                                   in normGG (Bra (S.union (fact prefix ggSet) (rest o)))
-                        where fact prefix ggSet = if S.size ggSet == 1
-                                                  then ggSet
-                                                  else S.singleton (Seq [prefix, factoriseNew (Bra (S.map suffOf ggSet))])
-                              suffOf gg'        = case gg' of
-                                                     Seq ggs' -> if L.length ggs' == 1 then Emp else Seq (tail ggs')
-                                                     _        -> Emp
-                              rest ggSet'       = if S.size ggSet' == 1
-                                                  then ggSet'
-                                                  else S.singleton $ factoriseNew (Bra ggSet')
-                      _         -> ngg
-                  )
+                  in (case ngg of
+                        Par ggs   -> Par (L.map factoriseNew ggs)
+                        Seq ggs   -> Seq (L.map factoriseNew ggs)
+                        Rep gg' p -> Rep (factoriseNew gg') p
+                        Bra ggs   -> let (seqs, o) = S.partition isSeq ggs
+                                         candidate = case (S.size seqs, S.size o) of
+                                                       (0, 0) -> error "Something very strange here"
+                                                       (_, 0) -> Seq (L.minimumBy (O.comparing L.length) ([l | Seq l <- S.toList seqs]))
+                                                       (0, _) -> ngg
+                                     in (if S.null seqs
+                                         then candidate
+                                         else combine (split candidate)
+                                        )
+                          where isSeq   = \_gg -> case _gg of Seq _ -> True; _ -> False
+                                combine = \(p, s) -> normGG Seq [p, Bra s]
+                                split   = \gc -> if check candidate seqs
+                                                 then 
+                        _         -> ngg
+                     )
 
 wb :: Set GG -> Bool
 --

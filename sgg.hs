@@ -42,7 +42,6 @@ main = do progargs <- getArgs
                       sem (M.member "--sloppy" flags) (-1) fact ptps
                 writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines) >>=
                   \_ -> putStrLn $ "\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg"
-                putStrLn "----------------------"
                 let path i ext =
                       mkFileName (ptps!i) dir "cfsm" ext
                 let legend m i =
