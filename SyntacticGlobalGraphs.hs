@@ -308,10 +308,10 @@ catPD :: ((DotNode, DotString) -> Bool) -> PD -> PD -> PD
 -- catPD (vs,as) (vs',as') appends (vs', as') attaching its
 -- source to the nodes of (vs,as) entering the sink of (vs,as)
 --
--- Pre: vs and vs' start and end with the source and target vertex of
+-- PRE: vs and vs' start and end with the source and target vertex of
 --      the corresponding graph
 --
--- Post: the result is the sequential composition of the graphs
+-- POST: the result is the sequential composition of the graphs
 --       embedding the second just before the sink of (vs,as); the
 --       source of the resulting graph is the source of (vs,as)
 --
