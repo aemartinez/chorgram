@@ -31,7 +31,7 @@
 {
 module RGGparser where
 import SyntacticGlobalGraphs
-import REG
+import ErlanGG
 import Data.List as L
 import Data.Set as S (empty, null, intersection, union, difference, fromList, member, Set)
 import qualified Data.Map as M (keys, empty, insert, union, Map)

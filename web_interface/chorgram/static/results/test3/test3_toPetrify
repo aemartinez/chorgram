@@ -1,0 +1,6 @@
+.outputs q0CCCq0CCCAdelPTPAAAM1delPTPCOCOhello q0CCCq0CCCAdelPTPAAAM1delPTPCOCOworld 
+.state graph 
+qq0_q0 q0CCCq0CCCAdelPTPAAAM1delPTPCOCOhello qq1_q1
+qq0_q0 q0CCCq0CCCAdelPTPAAAM1delPTPCOCOworld qq1_q1
+.marking {qq0_q0}
+.end

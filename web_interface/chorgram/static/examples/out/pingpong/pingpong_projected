@@ -1,0 +1,560 @@
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+
+.outputs A
+.state graph
+q0q0 M1 ! hello q1q1
+q0q0 M1 ! world q1q1
+.marking q0q0
+.end
+
+.outputs M1
+.state graph
+q0q0 A ? hello q1q1
+q0q0 A ? world q1q1
+.marking q0q0
+.end
+

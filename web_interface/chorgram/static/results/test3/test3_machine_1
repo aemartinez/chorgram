@@ -1,0 +1,9 @@
+Ops xxxx:0 AM1RECEIVEhello:1 AM1RECEIVEworld:1 
+ 
+Automaton M1
+States q0 q1 
+Final States q0 q1 
+Transitions 
+xxxx() -> q0
+AM1RECEIVEhello(q0) -> q1
+AM1RECEIVEworld(q0) -> q1

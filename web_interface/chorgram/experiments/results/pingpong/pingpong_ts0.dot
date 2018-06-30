@@ -1,0 +1,20 @@
+digraph ICTS {
+graph [bgcolor="transparent", bb=10];
+subgraph legend {
+	#rank = sink;
+	Legend [shape=rectangle, penwidth=0, fontname=courier, fontsize=10, fillcolor=gray94, style=filled, fontcolor=coral, margin=0.1,
+		label="Source file             : experiments/pingpong.fsa	\lDestination file        : experiments/results/pingpong/pingpong_ts0.dot	\lConfiguration pattern   : 	\lAction pattern          : - - - -	\lPath                    : 	\lNumber of configurations: 2	\lNumber of transitions   : 2\l"];
+}
+
+subgraph ts{
+"__start" [shape = "none"; label="";]
+{rank = same "__start" "q0_q0"}
+	"q0_q0"			[label="q0&bull;q0"];
+	"q1_q1"			[label="q1&bull;q1"];
+
+}{
+"__start" -> "q0_q0" [arrowhead=dot; label=""; penwidth=5; color=cornflowerblue]
+	"q0_q0" -> "q1_q1"			[label="A&rarr;M1:hello"];
+	"q0_q0" -> "q1_q1"			[label="A&rarr;M1:world"];
+
+}}

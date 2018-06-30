@@ -72,7 +72,7 @@
 {
 module GGparser where
 import SyntacticGlobalGraphs
-import REG
+import ErlanGG
 import Data.Set as S (empty, singleton, intersection, union, unions, difference, fromList, difference, toList, member, foldr, Set)
 import Data.List as L
 import qualified Data.Map as M (keys, empty, insert, union, Map)
@@ -109,8 +109,8 @@ import CFSM
 
 %right '|'
 %right '+'
-%right ';'
 %right '%'
+%right ';'
 %right ','
 
 %%

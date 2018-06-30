@@ -1,0 +1,13 @@
+.outputs A
+.state graph
+q0 1 ! hello q1
+q0 1 ! world q1
+.marking q0
+.end
+
+.outputs
+.state graph
+q0 0 ? hello q1
+q0 0 ? world q1
+.marking q0
+.end

@@ -1,0 +1,9 @@
+digraph CFSM_proj_A{
+ graph [color=white ratio=compress margin=0];
+	Aq0q0	[style=filled, color=cornflowerblue]
+	Aq0q0		[label = "q0q0"];
+	Aq1q1		[label = "q1q1"];
+	Aq0q0 -> Aq1q1	[label = "A&middot;M1 ! hello"];
+	Aq0q0 -> Aq1q1	[label = "A&middot;M1 ! world"];
+
+}

@@ -1,0 +1,11 @@
+digraph PN { 
+Pp0 [label="Pp0"]; 
+ Pp_init [label="Pp_init"]; 
+ Tq0q0AM1hello [label="A->M1:hello"]; 
+ Tq0q0AM1world [label="A->M1:world"]; 
+ Tt_init [label="s"]; 
+ Pp0 -> Tq0q0AM1hello; 
+Pp0 -> Tq0q0AM1world; 
+Pp_init -> Tt_init; 
+Tt_init -> Pp0; 
+}

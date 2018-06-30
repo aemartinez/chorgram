@@ -1,0 +1,12 @@
+The three binaries are for different CPUs of Apple computers:
+
+- petrify-intel is for the Intel-based Macs (only the recent hardware)
+- petrify-ppc is for PowerPC-based Macs (only the older hardware)
+- petrify-universal is for both platforms and should be the format of choice 
+  (see http://www.apple.com/universal)
+
+-----------------------------------------------------------------------
+Niels Lohmann   Institut für Informatik, Humboldt-Universität zu Berlin
+mail: Unter den Linden 6, 10099 Berlin          phone: +49 30 2093-3070
+office: 4.413, Rudower Chaussee 25, 12489 Berlin  fax: +49 30 2093-3067
+nlohmann@informatik.hu-berlin.de  www.informatik.hu-berlin.de/~nlohmann
