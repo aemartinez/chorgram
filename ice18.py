@@ -55,13 +55,15 @@ saySomething("Let's start!")
 
 ##################################### START HERE ###############################################
 
-# set files
+# set file names and directories
+#
 sgg, suff = "cab_ice18.sgg", "_ice18.erl"
-bname = os.path.basename((os.path.splitext(sgg))[0])
+bname = os.path.basename((os.path.splitext(sgg))[0])                   # bname = z for a string of the form x/y/z.ext
 dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) # + bname + os.sep
 mkdir(os.path.expanduser(dir) + bname)
 
 # get the erlang data structure of the global graph
+#
 saySomething("Generating " + bname + "in ~/emtalks/behAPI_ice18/demo/")
 callsgg = ([SGG, "-d", dir] +
            (["--sloppy"] if args.sloppy else []) +
@@ -70,14 +72,13 @@ callsgg = ([SGG, "-d", dir] +
 subprocess.check_call(callsgg)
 
 # prepare the erlang file from the template
+#
 with open(dir + "_" + test + ".erl") as f:
     codeTemplate = string.join(f.readlines())
 with open(dir + bname + "/reg.txt") as f:
     erlGG = f.readlines()
-code = codeTemplate % (string.join(erlGG))
 with open("../../Dropbox/mypapers/reversibleActors/code/" + test + suff, "w") as ice:
-    ice.write(code)
-
+    ice.write(codeTemplate % (string.join(erlGG)))
 saySomething("Erlang file to compile the demo in " + test + suff)
 saySomething("Have fun now :)")
 
