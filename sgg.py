@@ -58,6 +58,7 @@ dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) + bname + os.sep
 mkdir(dir)
 # basename = dir + bname # os.path.basename(args.filename)
 
+
 ##################################### START HERE ###############################################
 
 

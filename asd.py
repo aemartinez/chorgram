@@ -1,13 +1,13 @@
 # Author: Emilio Tuosto <emilio@le.ac.uk>
 #
-# Script for the demo at ICE2018
+# Script for CO7205
 
 #!/usr/bin/python
 
 import sys
 import subprocess
 import os
-import os.path
+import ntpath
 import string
 import glob
 import argparse
@@ -17,7 +17,7 @@ from utils import *
 SGG, dotCFG, cmdPref, test = "./sgg", ".dot.cfg", "demo", "test"
 
 # Setting flags
-parser = argparse.ArgumentParser(description="demo: script for demoing gg to erlang")
+parser = argparse.ArgumentParser(description="demo: script for running gg2erl")
 parser.add_argument("-df",
                     dest = "df",
                     default = "svg",
@@ -33,38 +33,38 @@ parser.add_argument("-l",
                     help = "Suppress legend from dot files")
 parser.add_argument("--dir",
                     dest = "dir",
-                    default = "../../emtalks/behAPI_ice18/demo/",
-                    help = "Specify the directory for the output files   {default: ~/emtalks/behAPI_ice18/demo/}")
+                    default = "./",
+                    help = "Specify the directory for the output files   {default: current directory}")
 parser.add_argument("--sloppy",
                     dest = "sloppy",
                     action = "store_true",
                     help = "Do not raise exception due to non well-formedness   {default: true}")
-# parser.add_argument("-rg",
-#                     dest = "rg",
-#                     action = "store_true",
-#                     help = "Uses the parser for REGs")
+parser.add_argument("filename",
+                    help = "Specify the path to file containing the CFSMs")
 args = parser.parse_args()
 
 def saySomething(msg):
     """Prints messages"""
-    print "demo@ice18:\t" + msg
-
+    print "|gg2erl| : \t" + msg
 
 _ = os.system('clear')
-saySomething("Let's start!")
+
 
 ##################################### START HERE ###############################################
 
+saySomething("Let's start!")
+
 # set file names and directories
 #
-sgg, suff = "cab_ice18.sgg", "_ice18.erl"
-bname = os.path.basename((os.path.splitext(sgg))[0])                   # bname = z for a string of the form x/y/z.ext
-dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) # + bname + os.sep
-mkdir(os.path.expanduser(dir) + bname)
+dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep)
+sgg = args.filename
+f, ext = os.path.splitext(sgg)                 # if sgg = "a/b/c.ext" then f = "a/b/c", ext = ".ext",
+bname = os.path.basename(f)                    # and bname = "a/b/c"
+mkdir(os.path.expanduser(dir) + bname)         # dir + bname is where resulting files are stored
 
 # get the erlang data structure of the global graph
 #
-saySomething("Generating " + bname + "in ~/emtalks/behAPI_ice18/demo/")
+saySomething("Processing " + bname + ext + " :: result in " + dir + "...")
 callsgg = ([SGG, "-d", dir] +
            (["--sloppy"] if args.sloppy else []) +
            (["-rg"]) +
@@ -73,13 +73,13 @@ subprocess.check_call(callsgg)
 
 # prepare the erlang file from the template
 #
-with open(dir + "_" + test + ".erl") as f:
+with open("erlang.template") as f:
     codeTemplate = string.join(f.readlines())
 with open(dir + bname + "/reg.txt") as f:
     erlGG = f.readlines()
-with open("../../Dropbox/mypapers/reversibleActors/code/" + test + suff, "w") as ice:
-    ice.write(codeTemplate % (string.join(erlGG)))
-saySomething("Erlang file to compile the demo in " + test + suff)
+with open(dir + bname + ".erl", "w") as f:
+    f.write(codeTemplate % (string.join(erlGG)))
+saySomething("Erlang file to compile the demo in " + dir + bname + ".erl")
 saySomething("Have fun now :)")
 
 
