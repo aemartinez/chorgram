@@ -70,6 +70,11 @@ callsgg = ([SGG, "-d", dir] +
            (["-rg"]) +
            [sgg])
 subprocess.check_call(callsgg)
+callsgg = ([SGG, "-d", dir] +
+           (["--sloppy"] if args.sloppy else []) +
+           (["--dot", "Gsplines=ortho"]) +
+           [sgg])
+subprocess.check_call(callsgg)
 
 # prepare the erlang file from the template
 #
