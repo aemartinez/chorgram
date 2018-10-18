@@ -33,7 +33,7 @@ parser.add_argument("-l",
                     help = "Suppress legend from dot files")
 parser.add_argument("--dir",
                     dest = "dir",
-                    default = "./",
+                    default = "/tmp/",
                     help = "Specify the directory for the output files   {default: current directory}")
 parser.add_argument("--sloppy",
                     dest = "sloppy",
@@ -58,28 +58,38 @@ saySomething("Let's start!")
 #
 dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep)
 sgg = args.filename
-f, ext = os.path.splitext(sgg)                 # if sgg = "a/b/c.ext" then f = "a/b/c", ext = ".ext",
-bname = os.path.basename(f)                    # and bname = "a/b/c"
-mkdir(os.path.expanduser(dir) + bname)         # dir + bname is where resulting files are stored
+name, ext = os.path.splitext(sgg)              # if sgg = "a/b/c.ext" then f = "a/b/c", ext = ".ext",
+basename = os.path.basename(name)                 # and basename = "a/b/c"
+mkdir(os.path.expanduser(dir) + basename)         # dir + basename is where resulting files are stored
 
 # get the erlang data structure of the global graph
 #
-saySomething("Processing " + bname + ext + " :: result in " + dir + "...")
+saySomething("Processing " + basename + ext + " :: result in " + dir + "...")
 callsgg = ([SGG, "-d", dir] +
            (["--sloppy"] if args.sloppy else []) +
            (["-rg"]) +
-           [args.dir + sgg])
+           [sgg])
 subprocess.check_call(callsgg)
 
 # prepare the erlang file from the template
 #
-with open("erlang.template") as f:
-    codeTemplate = string.join(f.readlines())
-with open(dir + bname + "/reg.txt") as f:
+codeTemplate = """
+-module(%s).
+
+-export([ main/0 ]).
+
+getGG() -> %s.
+
+main() ->
+    put(itr, rand:uniform(10) - 1),
+    gg2erl:mk_all("%s", getGG(), true).
+"""
+
+with open(dir + basename + os.sep + "reg.txt") as f:
     erlGG = f.readlines()
-with open(dir + bname + ".erl", "w") as f:
-    f.write(codeTemplate % (string.join(erlGG)))
-saySomething("Erlang file to compile the demo in " + dir + bname + ".erl")
+with open(basename + ".erl", "w") as f:
+    f.write(codeTemplate % (basename, string.join(erlGG), basename))
+saySomething("Erlang file to compile " + basename + ".erl")
 saySomething("Have fun now :)")
 
 

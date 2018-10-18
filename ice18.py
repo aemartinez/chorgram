@@ -73,8 +73,66 @@ subprocess.check_call(callsgg)
 
 # prepare the erlang file from the template
 #
-with open(dir + "_" + test + ".erl") as f:
-    codeTemplate = string.join(f.readlines())
+
+codeTemplate = """
+-module(%s).
+
+-export(
+   [
+    main/0
+   ]
+  ).
+
+-import(aux, [str_cat/2]).
+
+getGG() -> %s
+.
+
+gTrace([])-> [];
+
+gTrace([{_,{com,_,_,_}} | T ]) ->
+gTrace(T)
+;
+
+gTrace([{I,{cho, _, {Gl,_}, {Gr,_}}} | T ]) ->
+  [{I,rand:uniform(2)}] ++ gTrace(Gr) ++ gTrace(Gl) ++ gTrace(T)
+;
+
+gTrace([{I, {bra, _, Branch}} | T]) ->
+  [{I, rand:uniform(length(Branch))}] ++ lists:flatten(lists:map(fun({G, _}) -> gTrace(G) end, Branch)) ++ gTrace(T)
+;
+
+gTrace([{_,{par, Gs}} | T ]) ->
+Lst = lists:foldr(
+  fun(X,Acc) -> gTrace(X) ++ Acc end,
+  [],
+  Gs
+ ),
+Lst ++ gTrace(T)
+;
+
+gTrace([{I,{rec, _, {G, _}}} | T ]) ->
+  [{I, get(itr)}] ++ gTrace(G) ++ gTrace(T)
+.
+
+mk_trace(Itr) ->
+    case Itr of
+	0 -> put(itr, rand:uniform(10) - 1);
+	_ -> put(itr, Itr)
+    end,
+    Trace = gTrace(getGG()),
+    Mod = "-module(trace).\n-export([rnd/0]).\n\n"
+	++ "rnd() -> ["
+	++ str_cat(lists:map(fun({CP,V}) -> "{" ++ integer_to_list(CP) ++ ", " ++ integer_to_list(V) ++ "}" end , Trace) , ", ")
+	++ "]\n.",
+    file:write_file("trace.erl", Mod)
+.
+
+main() ->
+    mk_trace(0),
+    gg_compiler:mk_all("%s", getGG(), true)
+.
+"""
 with open(dir + bname + "/reg.txt") as f:
     erlGG = f.readlines()
 with open("../../Dropbox/mypapers/reversibleActors/code/" + test + suff, "w") as ice:
