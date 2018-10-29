@@ -64,16 +64,10 @@ mkdir(os.path.expanduser(dir) + basename)         # dir + basename is where resu
 
 # get the erlang data structure of the global graph
 #
-saySomething("Processing " + basename + ext + " :: result in " + dir + "...")
+saySomething("Processing " + basename + ext + " :: result in " + dir + basename + "...")
 callsgg = ([SGG, "-d", dir] +
            (["--sloppy"] if args.sloppy else []) +
-           (["-rg"]) +
-           [sgg])
-subprocess.check_call(callsgg)
-callsgg = ([SGG, "-d", dir] +
-           (["--sloppy"] if args.sloppy else []) +
-           (["--dot", "Gsplines=ortho"]) +
-           [sgg])
+           ["-rg", sgg])
 subprocess.check_call(callsgg)
 
 # prepare the erlang file from the template
@@ -82,18 +76,39 @@ codeTemplate = """
 -module(%s).
 
 -export([ main/0 ]).
+-import(aux, [ set_map/6 ]).
+
+gTrace([])-> maps:new()
+;
+gTrace([{_,{com,_,_,_}} | T ]) -> gTrace(T)
+;
+%% the rand for branches is on 2
+gTrace([{I, {cho, _, {Gl,_}, {Gr,_}}} | T ]) ->
+    maps:put(integer_to_list(I), integer_to_list(rand:uniform(2)),
+             maps:merge(maps:merge(gTrace(Gr), gTrace(Gl)), gTrace(T))
+            )
+;
+gTrace([{I, {par, Gs}} | T ]) ->
+    case Gs of
+        []        -> gTrace(T);
+        [G | Gs1] -> maps:merge(gTrace(G), gTrace([{I,{par, Gs1}} | T]))
+    end
+;
+gTrace([{I, {rec, _, {G, _}}} | T ]) ->
+    maps:put(integer_to_list(I), integer_to_list(get(itr)), maps:merge(gTrace(G), gTrace(T)))
+    %%  [{I, get(itr)}] ++ gTrace(G) ++ gTrace(T)
+.
 
 getGG() -> %s.
 
 main() ->
-    put(itr, rand:uniform(10) - 1),
-    gg2erl:mk_all("%s", getGG(), true).
+    gg2erl:mk_all("%s", getGG(), set_map(%s, rand:uniform(10) - 1, 1, false, std, std)).
 """
 
 with open(dir + basename + os.sep + "reg.txt") as f:
     erlGG = f.readlines()
-with open(basename + ".erl", "w") as f:
-    f.write(codeTemplate % (basename, string.join(erlGG), basename))
+with open("../../Dropbox/mypapers/reversibleActors/code/" + basename + ".erl", "w") as f:
+    f.write(codeTemplate % (basename, string.join(erlGG), basename, basename))
 saySomething("Erlang file to compile " + basename + ".erl")
 saySomething("Have fun now :)")
 

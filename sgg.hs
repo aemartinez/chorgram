@@ -31,12 +31,13 @@ main = do progargs <- getArgs
                 let ptps =
                       list2map $ S.toList names
                 writeToFile (dir ++ "in_sgg_parsed.txt") (show gg) >>= (\_ -> putStrLn $ "\t"++dir++"in.sgg: is the initial gg")
-                let norm = normGG gg
-                let fact = factorise norm
+                -- let norm = normGG gg
+                -- let fact = factorise norm
+                let fact = factorise gg
                 let sgg2file s s' graph =
                       writeToFile (dir ++ s) (gg2dot graph (baseName ++ s') (flines!ggsizenode))
                 sgg2file "graph_sgg.dot" ""    gg   >>= \_ -> putStrLn $ "\t" ++ dir ++ "graph_sgg.dot: is the input gg"
-                sgg2file "norm_sgg.dot" "norm" norm >>= \_ -> putStrLn $ "\t" ++ dir ++ "norm_sgg.dot:  is the normalised initial gg"
+                -- sgg2file "norm_sgg.dot" "norm" norm >>= \_ -> putStrLn $ "\t" ++ dir ++ "norm_sgg.dot:  is the normalised initial gg"
                 sgg2file "fact_sgg.dot" "fact" fact >>= \_ -> putStrLn $ "\t" ++ dir ++ "fact_sgg.dot:  is the factorised initial gg"
                 let ( _, hg ) =
                       sem (M.member "--sloppy" flags) (-1) fact ptps

@@ -127,33 +127,33 @@ factorise gg = case gg of
                 Rep gg' p -> Rep (factorise gg') p
 
 
-factoriseNew :: GG -> GG
---
--- factoriseNew gg rewrites a GG in normal form by factorising the common
--- parts of branches
--- PRE: gg in normal form
--- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
---
-factoriseNew gg = let ngg = normGG gg
-                  in (case ngg of
-                        Par ggs   -> Par (L.map factoriseNew ggs)
-                        Seq ggs   -> Seq (L.map factoriseNew ggs)
-                        Rep gg' p -> Rep (factoriseNew gg') p
-                        Bra ggs   -> let (seqs, o) = S.partition isSeq ggs
-                                         candidate = case (S.size seqs, S.size o) of
-                                                       (0, 0) -> error "Something very strange here"
-                                                       (_, 0) -> Seq (L.minimumBy (O.comparing L.length) ([l | Seq l <- S.toList seqs]))
-                                                       (0, _) -> ngg
-                                     in (if S.null seqs
-                                         then candidate
-                                         else combine (split candidate)
-                                        )
-                          where isSeq   = \_gg -> case _gg of Seq _ -> True; _ -> False
-                                combine = \(p, s) -> normGG Seq [p, Bra s]
-                                split   = \gc -> if check candidate seqs
-                                                 then 
-                        _         -> ngg
-                     )
+-- factoriseNew :: GG -> GG
+-- --
+-- -- factoriseNew gg rewrites a GG in normal form by factorising the common
+-- -- parts of branches
+-- -- PRE: gg in normal form
+-- -- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
+-- --
+-- factoriseNew gg = let ngg = normGG gg
+--                   in (case ngg of
+--                         Par ggs   -> Par (L.map factoriseNew ggs)
+--                         Seq ggs   -> Seq (L.map factoriseNew ggs)
+--                         Rep gg' p -> Rep (factoriseNew gg') p
+--                         Bra ggs   -> let (seqs, o) = S.partition isSeq ggs
+--                                          candidate = case (S.size seqs, S.size o) of
+--                                                        (0, 0) -> error "Something very strange here"
+--                                                        (_, 0) -> Seq (L.minimumBy (O.comparing L.length) ([l | Seq l <- S.toList seqs]))
+--                                                        (0, _) -> ngg
+--                                      in (if S.null seqs
+--                                          then candidate
+--                                          else combine (split candidate)
+--                                         )
+--                           where isSeq   = \_gg -> case _gg of Seq _ -> True; _ -> False
+--                                 combine = \(p, s) -> normGG Seq [p, Bra s]
+--                                 split   = \gc -> if check candidate seqs
+--                                                  then 
+--                         _         -> ngg
+--                      )
 
 wb :: Set GG -> Bool
 --

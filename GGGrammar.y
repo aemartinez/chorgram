@@ -8,15 +8,14 @@
 --
 --    G ::= (o)
 --       |  P -> P : M
---	 |  G|G
---       |  G+G
+--	 |  G | G
+--       |  { G + ... + G }
 --       |  sel P { Brc }
 --       |  branch P { Brc }
---       |  G;G
+--       |  G ; G
 --       |  * G @ P
 --       |  repeat P { LBody }
 --       |  ( G )
---       |  { G }
 --
 --    Brc   ::= G | G unless guard | B + B
 --
@@ -33,12 +32,12 @@
 -- constructs have the same semantics and require to specify the
 -- selector of the branch (to make it simple the realisation of
 -- projections on Erlang; the selector is mandatory for REGs and
--- optional otherwise.
+-- optional otherwise).
 --
 -- In the forward version of the parser
 --
 --   sel P { Gn unless g1 + ... + Gn unless gn } = G1 + ... + Gn      for all guards g1, ..., gn 
---   repeat P {G unless g} guards                = * G @ P            for all guards g
+--   repeat P {G unless g}                       = * G @ P            for all guards g
 --
 -- The binary operators |, +, and ; are given in ascending order of
 -- precedence.
@@ -55,12 +54,12 @@
 --
 -- Reserved characters not usable in strings are:
 --
---   @.,;:()[]{}|+*!?-%§
+--   @ . , ; : ( ) [ ] { } | + * ! ? - % §
 --
 -- Text enclosd by '[' and ']' is treated as comment
 --
 -- The parser generator is Haskell's 'Happy' and the parser
--- (GGparser.hs) is obtained by typing'make parser'.
+-- (GGparser.hs) is obtained by typing 'make parser'.
 --
 -- Basic syntactic checks are made during the parsing (e.g, (i) that
 -- sender and receiver of interactions have to be different and (2)
@@ -139,15 +138,16 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
 
   | G '|' G  	     		{ (Par ((checkToken TokenPar $1) ++ (checkToken TokenPar $3)), S.union (snd $1) (snd $3)) }
 
---G '+' G       		{ (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
-
-  | 'sel' str '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
+  | '{' branch '}'     		{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $2)), S.unions (L.map (\g -> snd $ fst g) $2)) }
+-- G + G { (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
 
   | 'sel' '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
 
-  | 'branch' str '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
+  | 'sel' str '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
 
   | 'branch' '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
+
+  | 'branch' str '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
 
   | G ';' G  	     		{ (Seq ((checkToken TokenSeq $1) ++ (checkToken TokenSeq $3)), S.union (snd $1) (snd $3)) }
 
@@ -182,7 +182,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
   | '(o)'                       { (Emp, S.empty) }
 
 
-guard : str '%' str             { M.empty }
+guard : str '%' str             { M.insert $1 $3 M.empty }
       | str '%' str ',' guard   { M.insert $1 $3 $5 }
 
 
@@ -252,34 +252,43 @@ data Token =
 -- lexer :: String -> [Token]
 -- lexer :: (Token -> Err a) -> Err a
 lexer s = case s of
-    []                        -> []
-    '(':'o':')':r             -> TokenEmp : lexer r
-    '[':r                     -> lexer $ tail (L.dropWhile (\c->c/=']') r)
-    '.':'.':r                 -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
-    ' ':r                     -> lexer r
-    '\n':r                    -> lexer r
-    '\t':r                    -> lexer r
-    '-':'>':r                 -> TokenArr : (lexer $ tail r)
-    '=':'>':r                 -> TokenMAr : (lexer $ tail r)
-    '|':r                     -> TokenPar : lexer r
-    '+':r                     -> TokenBra : lexer r
-    's':'e':'l':r             -> TokenSel : (lexer $ tail r)
-    'b':'r':'a':'n':'c':'h':r -> TokenSel : (lexer $ tail r)
-    '*':r                     -> TokenSta : lexer r
-    'r':'e':'p':'e':'a':'t':r -> TokenRep : (lexer $ tail r)
-    'u':'n':'l':'e':'s':'s':r -> TokenUnl : (lexer $ tail r)
-    '%':r                     -> TokenGrd : lexer r
-    '@':r                     -> TokenUnt : lexer r
-    ':':r                     -> TokenSec : lexer r
-    ';':r                     -> TokenSeq : lexer r
-    ',':r                     -> TokenCom : lexer r
-    '(':r                     -> TokenBro : lexer r
-    ')':r                     -> TokenBrc : lexer r
-    '{':r                     -> TokenCurlyo : lexer r
-    '}':r                     -> TokenCurlyc : lexer r
-    _                         -> TokenStr (fst s') : (lexer $ snd s')
+    []                             -> []
+    '(':'o':')':r                  -> TokenEmp : lexer r
+    '[':r                          -> lexer $ tail (L.dropWhile (\c->c/=']') r)
+    '.':'.':r                      -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
+    ' ':r                          -> lexer r
+    '\n':r                         -> lexer r
+    '\t':r                         -> lexer r
+    '-':'>':r                      -> TokenArr : (lexer $ tail r)
+    '=':'>':r                      -> TokenMAr : (lexer $ tail r)
+    '|':r                          -> TokenPar : lexer r
+    '+':r                          -> TokenBra : lexer r
+    's':'e':'l':' ':r              -> TokenSel : (lexer $ tail r)
+    's':'e':'l':'\n':r             -> TokenSel : (lexer $ tail r)
+    's':'e':'l':'\t':r             -> TokenSel : (lexer $ tail r)
+    'b':'r':'a':'n':'c':'h':' ':r  -> TokenSel : (lexer $ tail r)
+    'b':'r':'a':'n':'c':'h':'\n':r -> TokenSel : (lexer $ tail r)
+    'b':'r':'a':'n':'c':'h':'\t':r -> TokenSel : (lexer $ tail r)
+    '*':r                          -> TokenSta : lexer r
+    'r':'e':'p':'e':'a':'t':' ':r  -> TokenRep : (lexer $ tail r)
+    'r':'e':'p':'e':'a':'t':'\n':r -> TokenRep : (lexer $ tail r)
+    'r':'e':'p':'e':'a':'t':'\t':r -> TokenRep : (lexer $ tail r)
+    'u':'n':'l':'e':'s':'s':' ':r  -> TokenUnl : (lexer $ tail r)
+    'u':'n':'l':'e':'s':'s':'\t':r -> TokenUnl : (lexer $ tail r)
+    'u':'n':'l':'e':'s':'s':'\r':r -> TokenUnl : (lexer $ tail r)
+    '%':r                          -> TokenGrd : lexer r
+    '@':r                          -> TokenUnt : lexer r
+    ':':r                          -> TokenSec : lexer r
+    ';':r                          -> TokenSeq : lexer r
+    ',':r                          -> TokenCom : lexer r
+    '(':r                          -> TokenBro : lexer r
+    ')':r                          -> TokenBrc : lexer r
+    '{':r                          -> TokenCurlyo : lexer r
+    '}':r                          -> TokenCurlyc : lexer r
+    _                              -> TokenStr (fst s') : (lexer $ snd s')
         where s' = span isAlpha s
-    
+
+
 parseError :: [Token] -> a
 parseError err = case err of
                     TokenErr s:_ -> myErr $ show s
