@@ -107,6 +107,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
   | 'sel' str '{' branch '}'	{ let p = S.fromList $ L.concat (L.map (\((_, ptps), guard) -> (S.toList ptps) ++ M.keys guard) $4) in
                                     case isPtp $2 of
                                        True  -> let branches = L.map (\((g, _), guard) -> (g, guard)) $4 in ((Arb $2 branches), p)
+--TODO: FIX THIS: branches don't compute the list of participants correctly
                                        False -> myErr ("Bad name " ++ $2)
                                 }
 

@@ -10,12 +10,16 @@
 --    G ::= (o)
 --       |  P -> P : M
 --	 |  G | G
---       |  G + ... + G
+--       |  { G + ... + G }
+--       |  sel { Brc }
 --       |  sel P { Brc }
+--       |  branch { Brc }
 --       |  branch P { Brc }
 --       |  G ; G
 --       |  * G @ P
+--       |  repeat { G unless guard }
 --       |  repeat P { G unless guard }
+--       |  { G }
 --       |  ( G )
 --
 --    Brc   ::= G | G unless guard | B + B
@@ -122,24 +126,25 @@ G : B                                   { $1 }
 
 B : S                                   { $1 }
 
-  | Br '+' Bs                           { (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
+  | '{' Br '+' Bs '}'                   { (Bra (S.fromList $ (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g)) [] (L.map fst ([$2] ++ $4)))), ptpsBranches ([$2] ++ $4)) }
 
-  | 'sel' '{' Br '+' Bs '}'        	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
+  | choiceop '{' Br '+' Bs '}'        	{ (Bra (S.fromList $ (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g)) [] (L.map fst ([$3] ++ $5)))), ptpsBranches ([$3] ++ $5)) }
 
-  | 'sel' str '{' Br '+' Bs '}'	        { (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
-
-  | 'branch' '{' Br '+' Bs '}'	        { (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
-
-  | 'branch' str '{' Br '+' Bs '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
+  | choiceop str '{' Br '+' Bs '}'	{ (Bra (S.fromList $ (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g)) [] (L.map fst ([$4] ++ $6)))), ptpsBranches ([$4] ++ $6)) }
 
 
-Bs : Br                                 { $1 }
+choiceop : 'sel' {}
+  | 'branch'     {}
 
-   | Br '+' Bs                          { (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
 
-Br : S                                  { $1 }
+Bs : Br                                 { [ $1 ] }
 
-   | S 'unless' guard                   { [ checkGuard $1 $3 ] }
+   | Br '+' Bs                          { [$1] ++ $3 }
+
+
+Br : S                                  { ($1, M.empty) }
+
+   | S 'unless' guard                   { checkGuard $1 $3 }
 
 
 S : '(o)'                               { (Emp, S.empty) }
@@ -328,6 +333,11 @@ catchErr :: Err a -> (String -> Err a) -> Err a
 catchErr m k = case m of
       		Ok a     -> Ok a
 		Failed e -> k e
+
+ptpsBranches :: [((GG, Set Ptp), ReversionGuard)] -> Set Ptp
+-- ptpsBranches [] = S.empty
+-- ptpsBranches ((_, p),_):r = S.union p (ptpsBranches r)
+ptpsBranches = \l -> L.foldr S.union S.empty (L.map (\x -> snd $ fst x) l)
 
 
 checkGuard :: (GG, Set Ptp) -> ReversionGuard -> ((GG, Set Ptp), ReversionGuard)
