@@ -33,7 +33,7 @@ module RGGparser where
 import SyntacticGlobalGraphs
 import ErlanGG
 import Data.List as L
-import Data.Set as S (empty, null, intersection, union, difference, fromList, member, Set)
+import Data.Set as S (empty, null, intersection, union, difference, toList, fromList, member, Set)
 import qualified Data.Map as M (keys, empty, insert, union, Map)
 import Misc
 import CFSM
@@ -104,7 +104,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
                                   else myErr("Non disjoint threads " ++ (show ptps))
                                 }
 
-  | 'sel' str '{' branch '}'	{ let p = S.fromList $ L.concat (L.map (\(_, guard) -> M.keys guard) $4) in
+  | 'sel' str '{' branch '}'	{ let p = S.fromList $ L.concat (L.map (\((_, ptps), guard) -> (S.toList ptps) ++ M.keys guard) $4) in
                                     case isPtp $2 of
                                        True  -> let branches = L.map (\((g, _), guard) -> (g, guard)) $4 in ((Arb $2 branches), p)
                                        False -> myErr ("Bad name " ++ $2)
