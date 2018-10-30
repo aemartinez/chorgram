@@ -10,12 +10,16 @@
 --    G ::= (o)
 --       |  P -> P : M
 --	 |  G | G
---       |  G + ... + G
+--       |  { G + ... + G }
+--       |  sel { Brc }
 --       |  sel P { Brc }
+--       |  branch { Brc }
 --       |  branch P { Brc }
 --       |  G ; G
 --       |  * G @ P
+--       |  repeat { G unless guard }
 --       |  repeat P { G unless guard }
+--       |  { G }
 --       |  ( G )
 --
 --    Brc   ::= G | G unless guard | B + B
@@ -122,24 +126,25 @@ G : B                                   { $1 }
 
 B : S                                   { $1 }
 
-  | Br '+' Bs                           { (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
+  | '{' Br '+' Bs '}'                   { (Bra (S.fromList $ (checkToken TokenBra $2) ++ (checkToken TokenBra $4)), S.union (snd $2) (snd $4)) }
 
-  | 'sel' '{' Br '+' Bs '}'        	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
+  | choiceop '{' Bs '+' Br '}'        	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
 
-  | 'sel' str '{' Br '+' Bs '}'	        { (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
-
-  | 'branch' '{' Br '+' Bs '}'	        { (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
-
-  | 'branch' str '{' Br '+' Bs '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
+  | choiceop str '{' Bs '+' Br '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
 
 
-Bs : Br                                 { $1 }
+choiceop : 'sel' {}
+  | 'branch'     {}
 
-   | Br '+' Bs                          { (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
+
+Bs : Br                                 { [ $1 ] }
+
+   | Bs '+' Br                          { [ (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) ] }
+
 
 Br : S                                  { $1 }
 
-   | S 'unless' guard                   { [ checkGuard $1 $3 ] }
+   | S 'unless' guard                   { checkGuard $1 $3 }
 
 
 S : '(o)'                               { (Emp, S.empty) }
