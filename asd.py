@@ -45,7 +45,7 @@ args = parser.parse_args()
 
 def saySomething(msg):
     """Prints messages"""
-    print "|gg2erl| : \t" + msg
+    print("|gg2erl| : \t" + msg)
 
 _ = os.system('clear')
 
@@ -108,7 +108,7 @@ main() ->
 with open(dir + basename + os.sep + "reg.txt") as f:
     erlGG = f.readlines()
 with open("../../Dropbox/mypapers/reversibleActors/code/" + basename + ".erl", "w") as f:
-    f.write(codeTemplate % (basename, string.join(erlGG), basename, basename))
+    f.write(codeTemplate % (basename, ' '.join(erlGG), basename, basename))
 saySomething("Erlang file to compile " + basename + ".erl")
 saySomething("Have fun now :)")
 

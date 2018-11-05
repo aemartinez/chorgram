@@ -58,7 +58,7 @@ callsgg = ([SGG, "-d", args.dir] +
            (["-l"] if args.leg else []) +
            [args.filename])
 
-debugMsg(args.debug, cmdname, string.join(callsgg))
+debugMsg(args.debug, cmdname, ' '.join(callsgg))
 sggtime = time.time()
 subprocess.check_call(callsgg)
 

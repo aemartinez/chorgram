@@ -187,7 +187,7 @@ callgmc = ([GMC,
            [args.filename]
 )
 
-debugMsg(args.debug, cmdname, string.join(callgmc))
+debugMsg(args.debug, cmdname, ' '.join(callgmc))
 gmctime = time.time()
 try:
     subprocess.check_call(callgmc)
@@ -232,7 +232,7 @@ for i in range(machine_number):
     for line in cmd.stdout: spa = line    # read the last line produced by hkc
     spa = line.split(': ')                # after ': ' on the last line of its output hkc returns the boolean
     hkc_boolean_position = 1              # position of the boolean returned by hkc after the split
-    print spa
+    print(spa)
     res = spa[hkc_boolean_position].split(',')[0]
     tmpbool = tmpbool and (res == "true")
     debugMsg(args.debug, cmdname, "Is machine " + str(i) + " equivalent to its projection? "+ res)

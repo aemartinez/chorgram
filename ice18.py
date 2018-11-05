@@ -47,7 +47,7 @@ args = parser.parse_args()
 
 def saySomething(msg):
     """Prints messages"""
-    print "demo@ice18:\t" + msg
+    print("demo@ice18:\t" + msg)
 
 
 _ = os.system('clear')
@@ -136,7 +136,7 @@ main() ->
 with open(dir + bname + "/reg.txt") as f:
     erlGG = f.readlines()
 with open("../../Dropbox/mypapers/reversibleActors/code/" + test + suff, "w") as ice:
-    ice.write(codeTemplate % (string.join(erlGG)))
+    ice.write(codeTemplate % (' '.join(erlGG)))
 saySomething("Erlang file to compile the demo in " + test + suff)
 saySomething("Have fun now :)")
 
