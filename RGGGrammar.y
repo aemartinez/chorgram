@@ -95,7 +95,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
                                 }
 
   | G '|' G  	     		{ let ptps = (S.intersection (snd $1) (snd $3)) in
-                                  if S.null ptps
+                                  if True --S.null ptps
                                   then case (not (emptyG $ fst $1), not (emptyG $ fst $3)) of
                                          (True,  True)  -> (Rap ((checkToken TokenraP (fst $1)) ++ (checkToken TokenraP (fst $3))), S.union (snd $1) (snd $3))
                                          (True,  False) -> $1
