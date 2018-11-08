@@ -1,8 +1,9 @@
+#!/usr/bin/python
+
+
 # Author: Emilio Tuosto <emilio@le.ac.uk>
 #
 # Script for CO7205
-
-#!/usr/bin/python
 
 import sys
 import subprocess

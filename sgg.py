@@ -1,8 +1,10 @@
+#!/usr/bin/python
+
+
 # Author: Emilio Tuosto <emilio@le.ac.uk>
 #
-# This python script combines the parts of the tool
+# This python script combines several parts of ChorGram
 
-#!/usr/bin/python
 import sys
 import subprocess
 import os
@@ -14,9 +16,7 @@ import argparse
 
 from utils import *
 
-SGG = "./sgg"
-dotCFG = '.dot.cfg'
-cmd = "chosem"
+SGG = "sgg"
 
 # Setting flags
 parser = argparse.ArgumentParser(description="sgg: semantics of syntactic global graphs and their projections to communicating machines")
@@ -56,13 +56,11 @@ args = parser.parse_args()
 bname = os.path.basename((os.path.splitext(args.filename))[0])
 dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) + bname + os.sep
 mkdir(dir)
-# basename = dir + bname # os.path.basename(args.filename)
 
 
 ##################################### START HERE ###############################################
 
-
-debugMsg(args.debug, cmd, "\n   Generating " + bname + "\n\tResult in " + dir + "\n")
+debugMsg(args.debug, SGG, "\n   Generating " + bname + "\n\tResult in " + dir + "\n")
 
 starttime = time.time()
 
@@ -72,35 +70,7 @@ callsgg = ([SGG, "-d", args.dir] +
            (["-rg"] if args.rg else []) +
            [args.filename])
 
-debugMsg(args.debug, cmd, ' '.join(callsgg))
+debugMsg(args.debug, SGG, ' '.join(callsgg))
 sggtime = time.time()
 subprocess.check_call(callsgg)
 
-########################################## DOT #################################################
-dotmap = {}
-with open(dotCFG) as f:
-    lines = f.readlines()
-for i in range( len(lines) -1 ) :
-    pair = (lines[i+1]).split()
-    key  = pair[0]
-    val  = pair[1]
-    dotmap[key] = val
-
-dot = ["dot"] + ([] if (args.dot==None) else (['-' + d for d in args.dot]))
-copt = ["-T"          + (dotmap['ggfmt'] if (args.df==None) else args.df),
-        "-Gnodesep="  + dotmap['ggnodesep'],
-        "-Nfontname=" + dotmap['nodefont'],
-        "-Efontname=" + dotmap['edgefont']]
-gopt = copt + ["-Gsplines=" + dotmap['gglines']]
-sopt = copt + ["-Gsplines=" + dotmap['semlines']]
-
-for x in [d for d in os.listdir(dir) if d[-4:] == ".dot" and d[:4] != "cfsm" and d[:3] != "sem"]:
-    debugMsg(args.debug, cmd, "Dot-tifying " + dir + x)
-    subprocess.call(dot + gopt + [dir + x] + ["-o", dir + x[:-3] + args.df])
-
-for x in [d for d in os.listdir(dir) if d[-4:] == ".dot" and d[:4] == "cfsm"]:
-    debugMsg(args.debug, cmd, "Dot-tifying " + dir + x)
-    subprocess.call(dot + [gopt[0]] + [dir + x] + ["-o", dir + x[:-3] + args.df])
-
-debugMsg(args.debug, cmd, "Dot-tifying " + dir + "sem_sgg.dot")
-subprocess.call(dot + sopt + [dir + "sem_sgg.dot"] + ["-o", dir + "sem_sgg." + args.df])

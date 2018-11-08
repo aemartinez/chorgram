@@ -1,8 +1,9 @@
+#!/usr/bin/python
+
+
 # Author: Emilio Tuosto <emilio@le.ac.uk>
 #
 # Script for the demo at ICE2018
-
-#!/usr/bin/python
 
 import sys
 import subprocess
