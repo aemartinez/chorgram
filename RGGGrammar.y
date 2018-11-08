@@ -123,16 +123,14 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
                      guard
                  '}'            { case (isPtp $2, S.member $2 (snd $4)) of
                                     (True,  True)  -> let cg = checkGuard $4 $6 in (Per $2 (fst $ fst cg) (snd cg), snd $4)
-                                    (True,  False) -> myErr("Participant " ++ $2 ++ " must be in the body of the loop")
-                                    (False, True)  -> myErr("Bad name " ++ $2)
-                                    (False, False) -> myErr("Bad name " ++ $2 ++ " (and a selector must be in the body)")
+                                    (False, _) -> myErr("Bad name " ++ $2 ++ " (and a selector must be in the body)")
+                                    (True, False) -> myErr ("Participant " ++ $2 ++ " is among the loop's participants: " ++ (show snd $4))
                                 }
 
   | 'repeat' str '{' G '}'      { case (isPtp $2, S.member $2 (snd $4)) of
                                     (True,  True)  -> let cg = M.empty in (Per $2 (fst $4) cg, snd $4)
-                                    (True,  False) -> myErr("Participant " ++ $2 ++ " must be in the body of the loop")
-                                    (False, True)  -> myErr("Bad name " ++ $2)
-                                    (False, False) -> myErr("Bad name " ++ $2 ++ " (and a selector must be in the body)")
+                                    (False, _)  -> myErr("Bad name " ++ $2)
+                                    (True, False) -> myErr ("Participant " ++ $2 ++ " is among the loop's participants: " ++ (show snd $4))
                                 }
 
   | '(' G ')'			{ ( $2 ) }

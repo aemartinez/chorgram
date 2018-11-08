@@ -37,7 +37,7 @@ def sysparser():
 
 menus = {}
 
-root = Tk()
+root = Tk(className="ChorGram")
 
 # w = Label(root)
 
@@ -69,8 +69,8 @@ menus["Tools"] = (toolsmenu, [("gg2cfsm", gg2cfsm),
 mk_menu("Tools")
 
 configmenu = Menu(menubar)
-menus["Config"] = (configmenu,[("DOT", dummyCmd),
-                               ("X", dummyCmd),
+menus["Config"] = (configmenu,[("Graphic output", dummyCmd),
+                               ("Auxiliary tools", dummyCmd),
                                ("Y", dummyCmd),
                                ("Z", dummyCmd)]
 )

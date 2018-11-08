@@ -155,14 +155,14 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
       				  case ((isPtp $4), (S.member $4 (snd $2))) of
                                     (True, True)  -> (Rep (fst $2) $4 , S.union (S.singleton $4) (snd $2))
                                     (False, _)    -> myErr ("Bad name " ++ $4)
-                                    (True, False) -> myErr ("Participant " ++ $4 ++ " is not in the loop")
+                                    (True, False) -> myErr ("Participant " ++ $4 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $2))
                                 }
 
   | 'repeat' str '{' G '}'      {
       				  case ((isPtp $2), (S.member $2 (snd $4))) of
                                     (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
                                     (False, _)    -> myErr ("Bad name " ++ $2)
-                                    (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
+                                    (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
                                 }
 
   | 'repeat' str '{' G
@@ -172,7 +172,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
       				  case ((isPtp $2), (S.member $2 (snd $4))) of
                                     (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
                                     (False, _)    -> myErr ("Bad name " ++ $2)
-                                    (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
+                                    (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
                                 }
 
   | '(' G ')'			{ $2 }
