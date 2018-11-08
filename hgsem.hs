@@ -1,15 +1,10 @@
 import Misc
 import DotStuff
 import GGparser
-import RGGparser
-import CFSM
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
-import SyntacticGlobalGraphs
-import ErlanGG
 import SemanticGlobalGraphs
-import BCGBridge
 import System.Environment
 
 main :: IO ()
