@@ -31,11 +31,12 @@
 -- the iteration. Guards are used only for the reversible semantics
 -- and the string in them is supposed to be some valid erlang code.
 -- Likewise for the sel construct, which generalises the choice for
--- the reversible semantics.  Notice that the sel and the branch
+-- the reversible semantics. Notice that the sel and the branch
 -- constructs have the same semantics and require to specify the
 -- selector of the branch (to make it simple the realisation of
 -- projections on Erlang; the selector is mandatory for REGs and
 -- optional otherwise).
+-- The clause 'unless guard' is optional in branching and iteration.
 --
 -- In the forward version of the parser
 --
@@ -74,7 +75,7 @@
 -- TODO: add line numbers
 --
 {
-module GGparser where
+module NewGGparser where
 import SyntacticGlobalGraphs
 import ErlanGG
 import Data.Set as S (empty, singleton, intersection, union, unions, difference, fromList, difference, toList, member, foldr, Set)
@@ -151,7 +152,12 @@ S : '(o)'                               { (Emp, S.empty) }
 
   | Blk                                 { $1 }
 
-  | Blk ';' S                           { (Seq ((checkToken TokenSeq $1) ++ (checkToken TokenSeq $3)), S.union (snd $1) (snd $3)) }
+  | Blk ';' B                           { (Seq ((checkToken TokenSeq $1) ++ (checkToken TokenSeq $3)), S.union (snd $1) (snd $3)) }
+
+  | '(' G ')'                           { $2 }    -- this is for backward compatibility
+
+  | '{' G '}'                           { $2 }
+
 
 
 Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
@@ -177,26 +183,23 @@ Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 =
       			        	  case ((isPtp $4), (S.member $4 (snd $2))) of
                                             (True, True)  -> (Rep (fst $2) $4 , S.union (S.singleton $4) (snd $2))
                                             (False, _)    -> myErr ("Bad name " ++ $4)
-                                            (True, False) -> myErr ("Participant " ++ $4 ++ " is not in the loop")
+                                            (True, False) -> myErr ("Participant " ++ $4 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $2))
                                         }
 
   | 'repeat' str '{' G '}'              {
               				  case ((isPtp $2), (S.member $2 (snd $4))) of
                                             (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
                                             (False, _)    -> myErr ("Bad name " ++ $2)
-                                            (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
+                                            (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
                                         }
 
   | 'repeat' str '{' G 'unless' guard '}'    {
                                                case ((isPtp $2), (S.member $2 (snd $4))) of
                                                  (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
                                                  (False, _)    -> myErr ("Bad name " ++ $2)
-                                                 (True, False) -> myErr ("Participant " ++ $2 ++ " is not in the loop")
+                                                 (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
                                              }
 
-  | '(' G ')'                                { $2 }    -- this is for backward compatibility
-
-  | '{' G '}'			             { $2 }
 
 
 guard : str '%' str             { M.insert $1 $3 M.empty }
@@ -205,7 +208,7 @@ guard : str '%' str             { M.insert $1 $3 M.empty }
 
 
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
-  | str ',' ptps                { if (isPtp $1)
+     | str ',' ptps             { if (isPtp $1)
                                   then (case $3 of
                                         [] ->  [$1]
                                         (s:l) -> ($1:s:l))
@@ -224,8 +227,8 @@ data Token =
   | TokenSel
   | TokenGrd
   | TokenSeq
-  | TokenSta
   | TokenRep
+  | TokenSta
   | TokenUnt
   | TokenSec
   | TokenBro
@@ -251,7 +254,6 @@ data Token =
 --                 TokenSel -> "sel"
 --                 TokenSel -> "..."
 --                 TokenSeq -> ";"
---                 TokenSta -> "*"
 --                 TokenUnt -> "@"
 --                 TokenSec -> ":"
 --                 TokenBro -> "("
@@ -272,23 +274,23 @@ lexer s = case s of
     ' ':r                          -> lexer r
     '\n':r                         -> lexer r
     '\t':r                         -> lexer r
-    '-':'>':r                      -> TokenArr : (lexer $ tail r)
-    '=':'>':r                      -> TokenMAr : (lexer $ tail r)
+    '-':'>':r                      -> TokenArr : (lexer r)
+    '=':'>':r                      -> TokenMAr : (lexer r)
     '|':r                          -> TokenPar : lexer r
     '+':r                          -> TokenBra : lexer r
-    's':'e':'l':' ':r              -> TokenSel : (lexer $ tail r)
-    's':'e':'l':'\n':r             -> TokenSel : (lexer $ tail r)
-    's':'e':'l':'\t':r             -> TokenSel : (lexer $ tail r)
-    'b':'r':'a':'n':'c':'h':' ':r  -> TokenSel : (lexer $ tail r)
-    'b':'r':'a':'n':'c':'h':'\n':r -> TokenSel : (lexer $ tail r)
-    'b':'r':'a':'n':'c':'h':'\t':r -> TokenSel : (lexer $ tail r)
+    's':'e':'l':' ':r              -> TokenSel : (lexer r)
+    's':'e':'l':'\n':r             -> TokenSel : (lexer r)
+    's':'e':'l':'\t':r             -> TokenSel : (lexer r)
+    'b':'r':'a':'n':'c':'h':' ':r  -> TokenSel : (lexer r)
+    'b':'r':'a':'n':'c':'h':'\n':r -> TokenSel : (lexer r)
+    'b':'r':'a':'n':'c':'h':'\t':r -> TokenSel : (lexer r)
     '*':r                          -> TokenSta : lexer r
-    'r':'e':'p':'e':'a':'t':' ':r  -> TokenRep : (lexer $ tail r)
-    'r':'e':'p':'e':'a':'t':'\n':r -> TokenRep : (lexer $ tail r)
-    'r':'e':'p':'e':'a':'t':'\t':r -> TokenRep : (lexer $ tail r)
-    'u':'n':'l':'e':'s':'s':' ':r  -> TokenUnl : (lexer $ tail r)
-    'u':'n':'l':'e':'s':'s':'\t':r -> TokenUnl : (lexer $ tail r)
-    'u':'n':'l':'e':'s':'s':'\r':r -> TokenUnl : (lexer $ tail r)
+    'r':'e':'p':'e':'a':'t':' ':r  -> TokenRep : (lexer r)
+    'r':'e':'p':'e':'a':'t':'\n':r -> TokenRep : (lexer r)
+    'r':'e':'p':'e':'a':'t':'\t':r -> TokenRep : (lexer r)
+    'u':'n':'l':'e':'s':'s':' ':r  -> TokenUnl : (lexer r)
+    'u':'n':'l':'e':'s':'s':'\t':r -> TokenUnl : (lexer r)
+    'u':'n':'l':'e':'s':'s':'\r':r -> TokenUnl : (lexer r)
     '%':r                          -> TokenGrd : lexer r
     '@':r                          -> TokenUnt : lexer r
     ':':r                          -> TokenSec : lexer r

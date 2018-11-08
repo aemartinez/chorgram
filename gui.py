@@ -1,13 +1,5 @@
 from tkinter import *
 
-
-def mk_menu(key, theMenu):
-    (name, actions) = theMenu
-    name.add_cascade(label=key, menu=name)
-    for (cmdDisplay, cmd) in actions:
-        name.add_command(label=cmdDisplay, command=cmd)
-
-        
 def newFile():
     print("New File!")
 def openFile():
@@ -45,11 +37,17 @@ def sysparser():
 
 menus = {}
 
-root = Tk()
+root = Tk(className="ChorGram")
 
 # w = Label(root)
 
 menubar = Menu(root)
+
+def mk_menu(key):
+    (name, actions) = menus[key]
+    menubar.add_cascade(label=key, menu=name)
+    for (cmdDisplay, cmd) in actions:
+        name.add_command(label=cmdDisplay, command=cmd)
 
 # Defining menus
 filemenu = Menu(menubar, tearoff = 0)
@@ -58,7 +56,7 @@ menus["File"] = (filemenu, [("New File", newFile),
                             ("Save File", saveFile),
                             ("Save As", saveAs)]
 )
-mk_menu("File", menus["File"])
+mk_menu("File")
 
 toolsmenu = Menu(menubar)
 menus["Tools"] = (toolsmenu, [("gg2cfsm", gg2cfsm),
@@ -68,17 +66,21 @@ menus["Tools"] = (toolsmenu, [("gg2cfsm", gg2cfsm),
                               ("Parse system of CFSMs", sysparser),
                               ("semantics", semantics)]
 )
+mk_menu("Tools")
+
 configmenu = Menu(menubar)
-menus["Config"] = (configmenu,[("DOT", dummyCmd),
-                               ("X", dummyCmd),
+menus["Config"] = (configmenu,[("Graphic output", dummyCmd),
+                               ("Auxiliary tools", dummyCmd),
                                ("Y", dummyCmd),
                                ("Z", dummyCmd)]
 )
+mk_menu("Config")
+
 helpmenu = Menu(menubar)
 menus["Help"] = (helpmenu, [("About...", about),
                             ("Help", dummyCmd)]
 )
-
+mk_menu("Help")
 
 # for k in menus.keys():
 #     print(k)

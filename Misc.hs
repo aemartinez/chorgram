@@ -65,7 +65,7 @@ isAlpha c = c € ([x | x <- ['0'.. 'z'] ++ ['/', '$', '#', '&', '~', '\"'],
 
 isPtp :: String -> Bool
 -- Names of participants have to begin with a letter
-isPtp s = (L.null s) || ( ((head s) € (['a'.. 'z'] ++ ['A'.. 'Z'])) && (L.all isAlpha (tail s)) )
+isPtp s = (s /= []) && ( ((head s) € (['a'.. 'z'] ++ ['A'.. 'Z'])) && (L.all isAlpha (tail s)) )
 
 idxOffset :: (Num a, Eq b) => b -> [b] -> a -> a
 -- PRE:  
