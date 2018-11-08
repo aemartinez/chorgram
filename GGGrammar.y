@@ -3,23 +3,26 @@
 --
 
 -- A very basic grammar and parser for the textual editing of global
--- graphs.  The grammar is the one used in the ICE16 paper with the
--- extensions for reversibility-enabled graphs of DAIS 18
+-- graphs. The grammar is a revised version of the one used in the
+-- ICE16 paper with the extensions for reversibility-enabled graphs of
+-- DAIS 18
 --
 --    G ::= (o)
 --       |  P -> P : M
 --	 |  G | G
 --       |  { G + ... + G }
+--       |  sel { Brc }
 --       |  sel P { Brc }
+--       |  branch { Brc }
 --       |  branch P { Brc }
 --       |  G ; G
 --       |  * G @ P
---       |  repeat P { LBody }
+--       |  repeat { G unless guard }
+--       |  repeat P { G unless guard }
+--       |  { G }
 --       |  ( G )
 --
 --    Brc   ::= G | G unless guard | B + B
---
---    LBody ::= G unless guard
 --
 --    guard ::= P % str | P % str, guard
 --
@@ -28,11 +31,12 @@
 -- the iteration. Guards are used only for the reversible semantics
 -- and the string in them is supposed to be some valid erlang code.
 -- Likewise for the sel construct, which generalises the choice for
--- the reversible semantics.  Notice that the sel and the branch
+-- the reversible semantics. Notice that the sel and the branch
 -- constructs have the same semantics and require to specify the
 -- selector of the branch (to make it simple the realisation of
 -- projections on Erlang; the selector is mandatory for REGs and
 -- optional otherwise).
+-- The clause 'unless guard' is optional in branching and iteration.
 --
 -- In the forward version of the parser
 --
@@ -56,7 +60,8 @@
 --
 --   @ . , ; : ( ) [ ] { } | + * ! ? - % §
 --
--- Text enclosd by '[' and ']' is treated as comment
+-- Text enclosd by '[' and ']' and is treated as comment and,
+-- after '..', so is the rest of a line.
 --
 -- The parser generator is Haskell's 'Happy' and the parser
 -- (GGparser.hs) is obtained by typing 'make parser'.
@@ -111,90 +116,99 @@ import CFSM
 
 %right '|'
 %right '+'
-%right ';'
 %right '%'
+%right ';'
 %right ','
 
 %%
+G : B                                   { $1 }
 
-G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
-				    (True, True, True)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])
-				    (True, False, True)  -> myErr ("Bad name " ++ $3)
-				    (True, True, False)  -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
-				    (_, False, False)    -> myErr ("Whaaat??? Sender " ++ $1 ++ " and receiver " ++ $3 ++ " are equal AND different!!!")
-				    (_, True, True)      -> myErr ("Whaaat??? Sender " ++ $1 ++ " and receiver " ++ $3 ++ " are equal AND different!!!")
-				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
-				    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
-                                }
+  | B '|' G  	     	        	{ (Par ((checkToken TokenPar $1) ++ (checkToken TokenPar $3)), S.union (snd $1) (snd $3)) }
 
-  | str '=>' ptps ':' str       { case ((isPtp $1), not(L.elem $1 $3)) of
-                                  (True,  True)  -> case $3 of
-                                                      []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
-                                                      s:[] -> ((Act ($1 , s) $5), S.fromList([$1,s]))
-                                                      _    -> (Par (L.map (\s -> (Act ($1 , s) $5)) $3),S.fromList($1:$3))
-                                  (True,  False) -> myErr ($1 ++ " must be in " ++ (show $3))
-                                  (False, _)     -> myErr ("Bad name " ++ $1)
-                                }
 
-  | G '|' G  	     		{ (Par ((checkToken TokenPar $1) ++ (checkToken TokenPar $3)), S.union (snd $1) (snd $3)) }
+B : S                                   { $1 }
 
---  | '{' branch '}'     		{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $2)), S.unions (L.map (\g -> snd $ fst g) $2)) }
--- G + G { (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
+  | '{' Br '+' Bs '}'                   { (Bra (S.fromList $ (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g)) [] (L.map fst ([$2] ++ $4)))), ptpsBranches ([$2] ++ $4)) }
 
-  | 'sel' '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
+  | choiceop '{' Br '+' Bs '}'        	{ (Bra (S.fromList $ (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g)) [] (L.map fst ([$3] ++ $5)))), ptpsBranches ([$3] ++ $5)) }
 
-  | 'sel' str '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
+  | choiceop str '{' Br '+' Bs '}'	{ (Bra (S.fromList $ (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g)) [] (L.map fst ([$4] ++ $6)))), ptpsBranches ([$4] ++ $6)) }
 
-  | 'branch' '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
 
-  | 'branch' str '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $4)), S.unions (L.map (\g -> snd $ fst g) $4)) }
+choiceop : 'sel' {}
+  | 'branch'     {}
 
-  | G ';' G  	     		{ (Seq ((checkToken TokenSeq $1) ++ (checkToken TokenSeq $3)), S.union (snd $1) (snd $3)) }
 
-  | '*' G '@' str               {
-      				  case ((isPtp $4), (S.member $4 (snd $2))) of
-                                    (True, True)  -> (Rep (fst $2) $4 , S.union (S.singleton $4) (snd $2))
-                                    (False, _)    -> myErr ("Bad name " ++ $4)
-                                    (True, False) -> myErr ("Participant " ++ $4 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $2))
-                                }
+Bs : Br                                 { [ $1 ] }
 
-  | 'repeat' str '{' G '}'      {
-      				  case ((isPtp $2), (S.member $2 (snd $4))) of
-                                    (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
-                                    (False, _)    -> myErr ("Bad name " ++ $2)
-                                    (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
-                                }
+   | Br '+' Bs                          { [$1] ++ $3 }
 
-  | 'repeat' str '{' G
-                     'unless'
-                     guard
-                 '}'            {
-      				  case ((isPtp $2), (S.member $2 (snd $4))) of
-                                    (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
-                                    (False, _)    -> myErr ("Bad name " ++ $2)
-                                    (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
-                                }
 
-  | '(' G ')'			{ $2 }
+Br : S                                  { ($1, M.empty) }
 
-  | '{' G '}'			{ $2 }
+   | S 'unless' guard                   { checkGuard $1 $3 }
 
-  | '(o)'                       { (Emp, S.empty) }
+
+S : '(o)'                               { (Emp, S.empty) }
+
+  | Blk                                 { $1 }
+
+  | Blk ';' B                           { (Seq ((checkToken TokenSeq $1) ++ (checkToken TokenSeq $3)), S.union (snd $1) (snd $3)) }
+
+  | '(' G ')'                           { $2 }    -- this is for backward compatibility
+
+  | '{' G '}'                           { $2 }
+
+
+
+Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
+        				    (True, True, True)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])
+	        			    (True, False, True)  -> myErr ("Bad name " ++ $3)
+		        		    (True, True, False)  -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
+			        	    (_, False, False)    -> myErr ("Whaaat??? Sender " ++ $1 ++ " and receiver " ++ $3 ++ " are equal AND different!!!")
+				            (_, True, True)      -> myErr ("Whaaat??? Sender " ++ $1 ++ " and receiver " ++ $3 ++ " are equal AND different!!!")
+        				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
+	        			    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
+                                        }
+
+  | str '=>' ptps ':' str               { case ((isPtp $1), not(L.elem $1 $3)) of
+                                            (True,  True)  -> case $3 of
+                                                                []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
+                                                                s:[] -> ((Act ($1 , s) $5), S.fromList([$1,s]))
+                                                                _    -> (Par (L.map (\s -> (Act ($1 , s) $5)) $3),S.fromList($1:$3))
+                                            (True,  False) -> myErr ($1 ++ " must be in " ++ (show $3))
+                                            (False, _)     -> myErr ("Bad name " ++ $1)
+                                        }
+
+  | '*' G '@' str                       {
+      			        	  case ((isPtp $4), (S.member $4 (snd $2))) of
+                                            (True, True)  -> (Rep (fst $2) $4 , S.union (S.singleton $4) (snd $2))
+                                            (False, _)    -> myErr ("Bad name " ++ $4)
+                                            (True, False) -> myErr ("Participant " ++ $4 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $2))
+                                        }
+
+  | 'repeat' str '{' G '}'              {
+              				  case ((isPtp $2), (S.member $2 (snd $4))) of
+                                            (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
+                                            (False, _)    -> myErr ("Bad name " ++ $2)
+                                            (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
+                                        }
+
+  | 'repeat' str '{' G 'unless' guard '}'    {
+                                               case ((isPtp $2), (S.member $2 (snd $4))) of
+                                                 (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
+                                                 (False, _)    -> myErr ("Bad name " ++ $2)
+                                                 (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
+                                             }
+
 
 
 guard : str '%' str             { M.insert $1 $3 M.empty }
       | str '%' str ',' guard   { M.insert $1 $3 $5 }
 
 
-branch : G                      { [ ($1, M.empty) ] }
-
-       | G 'unless' guard       { [ checkGuard $1 $3 ] }
-
-       | branch '+' branch      { $1 ++ $3 }
-
 
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
-
      | str ',' ptps             { if (isPtp $1)
                                   then (case $3 of
                                         [] ->  [$1]
@@ -214,8 +228,8 @@ data Token =
   | TokenSel
   | TokenGrd
   | TokenSeq
-  | TokenSta
   | TokenRep
+  | TokenSta
   | TokenUnt
   | TokenSec
   | TokenBro
@@ -241,7 +255,6 @@ data Token =
 --                 TokenSel -> "sel"
 --                 TokenSel -> "..."
 --                 TokenSeq -> ";"
---                 TokenSta -> "*"
 --                 TokenUnt -> "@"
 --                 TokenSec -> ":"
 --                 TokenBro -> "("
@@ -262,23 +275,23 @@ lexer s = case s of
     ' ':r                          -> lexer r
     '\n':r                         -> lexer r
     '\t':r                         -> lexer r
-    '-':'>':r                      -> TokenArr : (lexer $ tail r)
-    '=':'>':r                      -> TokenMAr : (lexer $ tail r)
+    '-':'>':r                      -> TokenArr : (lexer r)
+    '=':'>':r                      -> TokenMAr : (lexer r)
     '|':r                          -> TokenPar : lexer r
     '+':r                          -> TokenBra : lexer r
-    's':'e':'l':' ':r              -> TokenSel : (lexer $ tail r)
-    's':'e':'l':'\n':r             -> TokenSel : (lexer $ tail r)
-    's':'e':'l':'\t':r             -> TokenSel : (lexer $ tail r)
-    'b':'r':'a':'n':'c':'h':' ':r  -> TokenSel : (lexer $ tail r)
-    'b':'r':'a':'n':'c':'h':'\n':r -> TokenSel : (lexer $ tail r)
-    'b':'r':'a':'n':'c':'h':'\t':r -> TokenSel : (lexer $ tail r)
+    's':'e':'l':' ':r              -> TokenSel : (lexer r)
+    's':'e':'l':'\n':r             -> TokenSel : (lexer r)
+    's':'e':'l':'\t':r             -> TokenSel : (lexer r)
+    'b':'r':'a':'n':'c':'h':' ':r  -> TokenSel : (lexer r)
+    'b':'r':'a':'n':'c':'h':'\n':r -> TokenSel : (lexer r)
+    'b':'r':'a':'n':'c':'h':'\t':r -> TokenSel : (lexer r)
     '*':r                          -> TokenSta : lexer r
-    'r':'e':'p':'e':'a':'t':' ':r  -> TokenRep : (lexer $ tail r)
-    'r':'e':'p':'e':'a':'t':'\n':r -> TokenRep : (lexer $ tail r)
-    'r':'e':'p':'e':'a':'t':'\t':r -> TokenRep : (lexer $ tail r)
-    'u':'n':'l':'e':'s':'s':' ':r  -> TokenUnl : (lexer $ tail r)
-    'u':'n':'l':'e':'s':'s':'\t':r -> TokenUnl : (lexer $ tail r)
-    'u':'n':'l':'e':'s':'s':'\r':r -> TokenUnl : (lexer $ tail r)
+    'r':'e':'p':'e':'a':'t':' ':r  -> TokenRep : (lexer r)
+    'r':'e':'p':'e':'a':'t':'\n':r -> TokenRep : (lexer r)
+    'r':'e':'p':'e':'a':'t':'\t':r -> TokenRep : (lexer r)
+    'u':'n':'l':'e':'s':'s':' ':r  -> TokenUnl : (lexer r)
+    'u':'n':'l':'e':'s':'s':'\t':r -> TokenUnl : (lexer r)
+    'u':'n':'l':'e':'s':'s':'\r':r -> TokenUnl : (lexer r)
     '%':r                          -> TokenGrd : lexer r
     '@':r                          -> TokenUnt : lexer r
     ':':r                          -> TokenSec : lexer r
@@ -323,6 +336,11 @@ catchErr :: Err a -> (String -> Err a) -> Err a
 catchErr m k = case m of
       		Ok a     -> Ok a
 		Failed e -> k e
+
+ptpsBranches :: [((GG, Set Ptp), ReversionGuard)] -> Set Ptp
+-- ptpsBranches [] = S.empty
+-- ptpsBranches ((_, p),_):r = S.union p (ptpsBranches r)
+ptpsBranches = \l -> L.foldr S.union S.empty (L.map (\x -> snd $ fst x) l)
 
 
 checkGuard :: (GG, Set Ptp) -> ReversionGuard -> ((GG, Set Ptp), ReversionGuard)

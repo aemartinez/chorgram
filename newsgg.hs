@@ -1,6 +1,6 @@
 import Misc
 import DotStuff
-import NewGGparser
+import GGparser
 import RGGparser
 import CFSM
 import Data.Set as S
@@ -27,7 +27,7 @@ main = do progargs <- getArgs
                 then do
                 putStrLn $ msgFormat SGG "start"
                 let ( gg, names ) =
-                      (gggrammar . NewGGparser.lexer) ggtxt
+                      (gggrammar . GGparser.lexer) ggtxt
                 let ptps =
                       list2map $ S.toList names
                 writeToFile (dir ++ "in_sgg_parsed.txt") (show gg)
