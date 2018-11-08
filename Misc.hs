@@ -15,7 +15,7 @@ type Message             = String
 type Atrans vertex label = (vertex, label, vertex)
 type Agraph vertex label = (Set vertex, vertex, Set label, Set(Atrans vertex label))
 
-data Command = GMC | GG | SGG | SYS | MIN | PROD
+data Command = GMC | GG | SGG | SYS | MIN | PROD | HGSEM
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
 
 -- Some useful functions
@@ -189,22 +189,25 @@ usage :: Command -> String
 -- Message on how to use a command
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
-               GMC  -> "gmc [-b | --bound number] [-l] [-m | --multiplicity number] [--minimise] [-sn] [--determinise] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] [-l] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n"
-               GG   -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               SGG  -> "sgg [-d dirpath] [-l] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               SYS  -> "systemparser [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               MIN  -> "minimise [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               PROD -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               GMC   -> "gmc [-b | --bound number] [-l] [-m | --multiplicity number] [--minimise] [-sn] [--determinise] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] [-l] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n"
+               GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               SYS   -> "systemparser [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               MIN   -> "minimise [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               HGSEM -> "hgsem [-d dirpath] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
 
 msgFormat :: Command -> String -> String
 msgFormat cmd msg =
   let pre = case cmd of
-        GMC  -> "gmc:\t"
-        GG   -> "gg:\t"
-        SGG  -> "sgg:\t"
-        SYS  -> "systemparser:\t"
-        MIN  -> "minimise:\t"
-        PROD -> "cfsmprod:\t"
+              GMC   -> "gmc:\t"
+              GG    -> "gg:\t"
+              SGG   -> "sgg:\t"
+              SYS   -> "systemparser:\t"
+              MIN   -> "minimise:\t"
+              PROD  -> "cfsmprod:\t"
+              HGSEM -> "hgsem:\t"
+
   in pre ++ msg
 
 
@@ -214,21 +217,22 @@ myPrint flags cmd msg = if (flags!"-v" == "v") then putStrLn $ msgFormat cmd msg
 defaultFlags :: Command -> Map String String
 -- The default argument of each command
 defaultFlags cmd = case cmd of
-                     GMC  -> M.fromList [("-d",dirpath),
-                                         ("-v",""),
-                                         ("-m","0"),   -- multiplicity **deprecated**
-                                         ("-ts",""),
-                                         ("-b","0"),
-                                         ("-cp", ""),
-                                         ("-tp", "- - - -"),
-                                         ("-p", ""),
-                                         ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
-                                        ]
-                     GG   -> M.fromList [("-d",dirpath), ("-v","")]
-                     SGG  -> M.fromList [("-d",dirpath), ("-v","")]
-                     SYS  -> M.fromList [("-d",dirpath), ("-v","")]
-                     MIN  -> M.fromList [("-d",dirpath), ("-v","")]
-                     PROD -> M.fromList [("-d",dirpath), ("-v","")]
+                     GMC   -> M.fromList [("-d",dirpath),
+                                          ("-v",""),
+                                          ("-m","0"),   -- multiplicity **deprecated**
+                                          ("-ts",""),
+                                          ("-b","0"),
+                                          ("-cp", ""),
+                                          ("-tp", "- - - -"),
+                                          ("-p", ""),
+                                          ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
+                                         ]
+                     GG    -> M.fromList [("-d",dirpath), ("-v","")]
+                     SGG   -> M.fromList [("-d",dirpath), ("-v","")]
+                     SYS   -> M.fromList [("-d",dirpath), ("-v","")]
+                     MIN   -> M.fromList [("-d",dirpath), ("-v","")]
+                     PROD  -> M.fromList [("-d",dirpath), ("-v","")]
+                     HGSEM -> M.fromList [("-d",dirpath), ("-v","")]
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
@@ -274,6 +278,10 @@ getFlags cmd args =
     PROD -> case args of
       []        -> defaultFlags(cmd)
       "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+    HGSEM -> case args of
+      []            -> defaultFlags(cmd)
+      "--sloppy":xs -> M.insert "--sloppy" "yes" (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d"  y    (getFlags cmd xs)
       _         -> error $ usage(cmd)
 
 --

@@ -31,7 +31,7 @@ main = do progargs <- getArgs
                 let ptps =
                       list2map $ S.toList names
                 writeToFile (dir ++ "in_sgg_parsed.txt") (show gg)
-                  >>= (\_ -> putStrLn $ "\t" ++ dir ++ "in.sgg: is the initial gg")
+                  >>= (\_ -> putStrLn $ "\t" ++ dir ++ "in_sgg_parsed.txt: is the abstract syntax tree of the gg in input")
                 -- let norm = normGG gg
                 -- let fact = factorise norm
                 -- let fact = factorise gg
