@@ -60,7 +60,8 @@
 --
 --   @ . , ; : ( ) [ ] { } | + * ! ? - % §
 --
--- Text enclosd by '[' and ']' is treated as comment
+-- Text enclosd by '[' and ']' and is treated as comment and,
+-- after '..', so is the rest of a line.
 --
 -- The parser generator is Haskell's 'Happy' and the parser
 -- (GGparser.hs) is obtained by typing 'make parser'.
