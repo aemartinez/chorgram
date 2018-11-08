@@ -111,8 +111,8 @@ import CFSM
 
 %right '|'
 %right '+'
-%right '%'
 %right ';'
+%right '%'
 %right ','
 
 %%
@@ -138,7 +138,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
 
   | G '|' G  	     		{ (Par ((checkToken TokenPar $1) ++ (checkToken TokenPar $3)), S.union (snd $1) (snd $3)) }
 
-  | '{' branch '}'     		{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $2)), S.unions (L.map (\g -> snd $ fst g) $2)) }
+--  | '{' branch '}'     		{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $2)), S.unions (L.map (\g -> snd $ fst g) $2)) }
 -- G + G { (Bra (S.fromList $ (checkToken TokenBra $1) ++ (checkToken TokenBra $3)), S.union (snd $1) (snd $3)) }
 
   | 'sel' '{' branch '}'	{ (Bra (S.fromList $ (L.map (\g -> fst $ fst g) $3)), S.unions (L.map (\g -> snd $ fst g) $3)) }
@@ -177,7 +177,7 @@ G : str '->' str ':' str        { case ((isPtp $1), (isPtp $3), not($1 == $3)) o
 
   | '(' G ')'			{ $2 }
 
---  | '{' G '}'			{ $2 }
+  | '{' G '}'			{ $2 }
 
   | '(o)'                       { (Emp, S.empty) }
 
@@ -187,12 +187,15 @@ guard : str '%' str             { M.insert $1 $3 M.empty }
 
 
 branch : G                      { [ ($1, M.empty) ] }
+
        | G 'unless' guard       { [ checkGuard $1 $3 ] }
+
        | branch '+' branch      { $1 ++ $3 }
 
 
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
-  | str ',' ptps                { if (isPtp $1)
+
+     | str ',' ptps             { if (isPtp $1)
                                   then (case $3 of
                                         [] ->  [$1]
                                         (s:l) -> ($1:s:l))
