@@ -1,3 +1,12 @@
+#!/usr/bin/python3
+
+
+# Author: Emilio Tuosto <emilio@le.ac.uk>
+#
+# My first GUI :)
+
+
+
 from tkinter import *
 
 def newFile():

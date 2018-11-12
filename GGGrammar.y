@@ -121,46 +121,70 @@ import CFSM
 %right ','
 
 %%
+
+G :: { (GG, Set Ptp) }
 G : B                                   { $1 }
+  | B '|' G  	     	        	{ (Par ((checkToken TokenPar $1)
+                                                ++ (checkToken TokenPar $3)),
+                                            S.union (snd $1) (snd $3))
+                                        }
 
-  | B '|' G  	     	        	{ (Par ((checkToken TokenPar $1) ++ (checkToken TokenPar $3)), S.union (snd $1) (snd $3)) }
 
-
+B :: { (GG, Set Ptp) }
 B : S                                   { $1 }
+  | '{' Br '+' Bs '}'                   { (Bra (S.fromList $
+                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
+                                                   []
+                                                   (L.map fst ([$2] ++ $4))
+                                                 )
+                                               ),
+                                            ptpsBranches ([$2] ++ $4))
+                                        }
+  | choiceop '{' Br '+' Bs '}'        	{ (Bra (S.fromList $
+                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
+                                                   []
+                                                   (L.map fst ([$3] ++ $5))
+                                                 )
+                                               ),
+                                            ptpsBranches ([$3] ++ $5))
+                                        }
+  | choiceop str '{' Br '+' Bs '}'	{ (Bra (S.fromList $
+                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
+                                                   []
+                                                   (L.map fst ([$4] ++ $6))
+                                                 )
+                                               ),
+                                            ptpsBranches ([$4] ++ $6))
+                                        }
 
-  | '{' Br '+' Bs '}'                   { (Bra (S.fromList $ (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g)) [] (L.map fst ([$2] ++ $4)))), ptpsBranches ([$2] ++ $4)) }
 
-  | choiceop '{' Br '+' Bs '}'        	{ (Bra (S.fromList $ (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g)) [] (L.map fst ([$3] ++ $5)))), ptpsBranches ([$3] ++ $5)) }
-
-  | choiceop str '{' Br '+' Bs '}'	{ (Bra (S.fromList $ (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g)) [] (L.map fst ([$4] ++ $6)))), ptpsBranches ([$4] ++ $6)) }
+choiceop : 'sel'        {}
+         | 'branch'     {}
 
 
-choiceop : 'sel' {}
-  | 'branch'     {}
-
-
+Bs :: { [((GG, Set Ptp), M.Map String String)] }
 Bs : Br                                 { [ $1 ] }
-
    | Br '+' Bs                          { [$1] ++ $3 }
 
 
+Br :: { ((GG, Set Ptp), M.Map String String) }
 Br : S                                  { ($1, M.empty) }
-
    | S 'unless' guard                   { checkGuard $1 $3 }
 
 
+S :: { (GG, Set Ptp) }
 S : '(o)'                               { (Emp, S.empty) }
-
   | Blk                                 { $1 }
-
-  | Blk ';' B                           { (Seq ((checkToken TokenSeq $1) ++ (checkToken TokenSeq $3)), S.union (snd $1) (snd $3)) }
-
+  | Blk ';' B                           { (Seq ((checkToken TokenSeq $1)
+                                                 ++ (checkToken TokenSeq $3)),
+                                            S.union (snd $1) (snd $3))
+                                        }
   | '(' G ')'                           { $2 }    -- this is for backward compatibility
-
   | '{' G '}'                           { $2 }
 
 
 
+Blk :: { (GG, Set Ptp) }
 Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
         				    (True, True, True)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])
 	        			    (True, False, True)  -> myErr ("Bad name " ++ $3)
@@ -170,7 +194,6 @@ Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 =
         				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
 	        			    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
                                         }
-
   | str '=>' ptps ':' str               { case ((isPtp $1), not(L.elem $1 $3)) of
                                             (True,  True)  -> case $3 of
                                                                 []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
@@ -179,21 +202,18 @@ Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 =
                                             (True,  False) -> myErr ($1 ++ " must be in " ++ (show $3))
                                             (False, _)     -> myErr ("Bad name " ++ $1)
                                         }
-
   | '*' G '@' str                       {
       			        	  case ((isPtp $4), (S.member $4 (snd $2))) of
                                             (True, True)  -> (Rep (fst $2) $4 , S.union (S.singleton $4) (snd $2))
                                             (False, _)    -> myErr ("Bad name " ++ $4)
                                             (True, False) -> myErr ("Participant " ++ $4 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $2))
                                         }
-
   | 'repeat' str '{' G '}'              {
               				  case ((isPtp $2), (S.member $2 (snd $4))) of
                                             (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
                                             (False, _)    -> myErr ("Bad name " ++ $2)
                                             (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
                                         }
-
   | 'repeat' str '{' G 'unless' guard '}'    {
                                                case ((isPtp $2), (S.member $2 (snd $4))) of
                                                  (True, True)  -> (Rep (fst $4) $2 , S.union (S.singleton $2) (snd $4))
@@ -202,12 +222,12 @@ Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 =
                                              }
 
 
-
+guard :: { M.Map String String }
 guard : str '%' str             { M.insert $1 $3 M.empty }
       | str '%' str ',' guard   { M.insert $1 $3 $5 }
 
 
-
+ptps :: { [String] }
 ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name " ++ $1) }
      | str ',' ptps             { if (isPtp $1)
                                   then (case $3 of
