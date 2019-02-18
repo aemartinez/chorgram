@@ -1,3 +1,12 @@
+--
+-- Authors: Emilio Tuosto <emilio@le.ac.uk>
+--
+-- This file contains the main program that supports the pomset
+-- and reversible semantics of global graphs.
+--
+-- At the moment very little is implemented.
+--
+
 import Misc
 import DotStuff
 import GGparser

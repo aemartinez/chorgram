@@ -98,7 +98,7 @@ factorise :: GG -> GG
 --
 -- factorise gg rewrites a GG in normal form by factorising the common
 -- parts of branches
--- PRE: gg in normal form
+-- PRE : gg in normal form
 -- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
 --
 factorise gg = case gg of
@@ -131,7 +131,7 @@ factorise gg = case gg of
 -- --
 -- -- factoriseNew gg rewrites a GG in normal form by factorising the common
 -- -- parts of branches
--- -- PRE: gg in normal form
+-- -- PRE : gg in normal form
 -- -- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
 -- --
 -- factoriseNew gg = let ngg = normGG gg
@@ -157,7 +157,7 @@ factorise gg = case gg of
 
 wb :: Set GG -> Bool
 --
--- PRE: the input ggs are factorised
+-- PRE : the input ggs are factorised
 -- POST: returns True iff th list is well-branched
 --        
 wb ggs =
@@ -220,10 +220,10 @@ ggptp ptps g = case g of
 
 proj :: GG -> Ptp -> State -> State -> Int -> (CFSM, State)
 --
--- PRE:  actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
+-- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
 -- POST: the non-minimised projection of GG wrt p and a unique exiting state (it must always exist!)
--- n is a counter for fresh state generation
--- q0 and qe correspond to the entry and exit state, respectively
+--       n is a counter for fresh state generation
+--       q0 and qe correspond to the entry and exit state, respectively
 --
 proj gg p q0 qe n =
   let suf  = show n
@@ -276,14 +276,14 @@ proj gg p q0 qe n =
                                  initialOf body ,
                                  S.unions [actionsOf body, actionsOf loop, actionsOf exit] ,
                                  S.unions [transitionsOf body, transitionsOf loop, transitionsOf exit] )
-              ( body , q )   = proj g p q0 (qe ++ suf) (n+2)
+              ( body , q )   = proj g p q0 (qe ++ suf) (n + 2)
               ( loop' , ql ) = proj (helper (lpref ++ suf)) p q (q0 ++ suf) (n + 2)
               loop           = replaceState ql q0 loop'
               ( exit , qe' ) = proj (helper (epref ++ suf)) p q qe (n + 2)
               helper s       = Par (L.map (\p'' -> Act (p',p'') s) (S.toList $ S.delete p' repptps))
 
 --
--- PRE:  actions are well formed (wffActions) ^ q0 /= qe ^ ps are all the participants of gg
+-- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ ps are all the participants of gg
 -- POST: the system corresponding to GG wrt ps
 -- n is a counter for fresh state generation
 -- q0 and qe are used to generate  (entry and exit) nodes of each participant
@@ -368,8 +368,8 @@ catPD :: ((DotNode, DotString) -> Bool) -> PD -> PD -> PD
 -- catPD (vs,as) (vs',as') appends (vs', as') attaching its
 -- source to the nodes of (vs,as) entering the sink of (vs,as)
 --
--- PRE: vs and vs' start and end with the source and target vertex of
---      the corresponding graph
+-- PRE : vs and vs' start and end with the source and target vertex of
+--       the corresponding graph
 --
 -- POST: the result is the sequential composition of the graphs
 --       embedding the second just before the sink of (vs,as); the

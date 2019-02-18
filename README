@@ -33,6 +33,8 @@ Dependency.hs
 
 DotStuff.hs: configuration for dot
 
+gg2fsa.hs: projects a global graph on its CFSMs in .fsa format
+
 GGGrammar.y: lex/yacc parser generator for the syntax of GGs
 
 GlobalGraph.hs: data and functions on GGs
