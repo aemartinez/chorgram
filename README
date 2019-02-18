@@ -53,7 +53,7 @@ PetriNet.hs: utils on Petri nets
 
 Representability.hs: representability checker
 
-SemanticGlobalGraphs.hs: computes the semantics of GGs
+SemanticGlobalGraphs.hs: computes the semantics of GGs...well, not really yet! The 'sloopy' option is the default, due to my 'lazy' option
 
 sgg.hs: extracts the semantics of a GGs and its (non minimised) projections
 

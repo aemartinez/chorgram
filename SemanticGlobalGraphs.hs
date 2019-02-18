@@ -2,7 +2,8 @@
 --
 -- Author: Emilio Tuosto <emilio@le.ac.uk>
 --
--- This module implements the semantics defined in ICE16
+-- This module would like to implement the semantics defined in
+-- ICE16...but it does not do it yet
 --
 
 module SemanticGlobalGraphs where
@@ -15,6 +16,8 @@ import Misc
 import CFSM
 import DotStuff
 import Data.Map.Strict as M
+
+-- TODO: 
 
 --
 -- Types for control points and events with the assumption that

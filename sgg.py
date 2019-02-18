@@ -66,7 +66,11 @@ starttime = time.time()
 
 callsgg = ([SGG, "-d", args.dir] +
            (["-l"] if args.leg else []) +
-           (["--sloppy"] if args.sloppy else []) +
+           #
+           # (["--sloppy"] if args.sloppy else []) +
+           # for the moment --sloppy has to be the default
+           #
+           (["--sloppy"]) +
            (["-rg"] if args.rg else []) +
            [args.filename])
 
