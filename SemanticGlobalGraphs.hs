@@ -218,7 +218,7 @@ semList sloppy mu ggs ptps = case ggs of
 -- The semantic function [[_]] of ICE16; it is assumed that some
 -- syntactic checks are performed. Eg in Rep g' p we assume p is
 -- one of the participants in g'.
--- The labels of the evens corresponds to those used in proj (again
+-- The labels of the events correspond to those used in proj (again
 -- this is the case for iteration)
 --
 sem :: Bool -> Mu -> GG -> P -> (Mu, HG)

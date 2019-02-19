@@ -11,6 +11,7 @@ import CFSM (cfsm2String)
 import FSA (minimise)
 import Data.Set (toList)
 import Data.List as L
+import Data.Map.Strict as M
 import SyntacticGlobalGraphs
 import System.Environment
 
@@ -28,8 +29,9 @@ main = do progargs <- getArgs
                     (gggrammar . GGparser.lexer) ggtxt
               let ptps =
                     Data.Set.toList names
+              -- TODO: fix this String -> [CFSM] -> [[String]] -> System inefficiency 
               let cfsms =
-                    L.map (minimise . fst) (L.map (\p -> proj gg p "q0" "qe" 1) ptps)
-              let fsafmt =
-                    L.map (\(i,m) -> CFSM.cfsm2String i m ++ "\n\n") (L.zip ptps cfsms)
-              writeToFile (dir ++ baseName ++ ".fsa") (L.concat fsafmt)
+                    L.map (minimise . fst) (L.map (\p -> proj gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
+              -- let sys =
+              --       CFSM.parseFSA ((L.map (\(i,m) -> lines (CFSM.cfsm2String i m))) (L.zip ptps cfsms))
+              writeToFile (dir ++ baseName ++ ".fsa") (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))

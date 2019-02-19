@@ -19,7 +19,7 @@ gitmsg = "checkpoint"
 # compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs
 #	$(ccmd)
 
-compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs
+compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs gg2fsa.hs
 	$(MAKE) all
 
 all:
@@ -28,7 +28,8 @@ all:
 	$(ccmd) GGparser.hs &&\
 	$(ccmd) SystemParser.hs &&\
 	$(ccmd) sgg.hs &&\
-	$(ccmd) sysparser.hs
+	$(ccmd) sysparser.hs &&\
+	$(ccmd) gg2fsa.hs
 
 debug:
 	$(ccdebug) gmc.hs &&\
@@ -36,7 +37,8 @@ debug:
 	$(ccdebug) GGparser.hs &&\
 	$(ccdebug) SystemParser.hs &&\
 	$(ccdebug) sgg.hs &&\
-	$(ccdebug) sysparser.hs
+	$(ccdebug) sysparser.hs\
+	$(ccdebug) gg2fsa.hs
 
 # To get the stack trace, add +RTS -xc at the end of the gmc or BuildGlobal command
 prof:
@@ -71,7 +73,8 @@ setup:
 	make all
 
 e:
-	 e -T $(title) gmc.hs &
+	e -T $(title) gmc.hs &
 
 git:
+	git pull
 	git commit -am $(gitmsg) && git push

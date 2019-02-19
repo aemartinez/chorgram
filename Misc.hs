@@ -189,7 +189,7 @@ usage :: Command -> String
 -- Message on how to use a command
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
-               GMC   -> "gmc [-b | --bound number] [-l] [-m | --multiplicity number] [--minimise] [-sn] [--determinise] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] [-l] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n"
+               GMC   -> "gmc [-b | --bound number] [-l] [-m | --multiplicity number] [--minimise] [-sn] [--determinise] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n"
                GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
@@ -256,14 +256,13 @@ getFlags cmd args =
       "-cp":y:xs         -> M.insert "-cp" y      (getFlags cmd xs)
       "-tp":y:xs         -> M.insert "-tp" y      (getFlags cmd xs)
       "-p":y:xs          -> M.insert "-p"  y      (getFlags cmd xs)
-      "-v":y:xs          -> M.insert "-v"  y      (getFlags cmd xs)
+      "-v":xs            -> M.insert "-v"  "v"    (getFlags cmd xs)
       _                  -> error $ usage(cmd)
     GG  ->  case args of
-      []     -> defaultFlags(cmd)
-      x:y:xs -> case x of
-        "-d" -> M.insert "-d" y (getFlags cmd xs)
-        "-v" -> M.insert "-v" y (getFlags cmd xs)
-        _    -> error $ usage(cmd)
+      []        -> defaultFlags(cmd)
+      "-d":y:xs -> M.insert "-d" y    (getFlags cmd xs)
+      "-v":xs   -> M.insert "-v" "v"  (getFlags cmd xs)
+      _         -> error $ usage(cmd)
     SGG -> case args of
       []            -> defaultFlags(cmd)
       "-d":y:xs     -> M.insert "-d"  y    (getFlags cmd xs)

@@ -173,15 +173,15 @@ def logexperiment(str = ""):
 ############################### START HERE ###################################
 
 callgmc = ([GMC,
-            "-d", args.dir,
-            "-p", args.path,
-            "-m", str(args.mul),
-            "-tp", args.tp,
-            "-cp", args.cp,
-            "-b", str(args.bound),
-            "-D", str(args.D),
-            "-v", "" if args.shh else "v"] +
-           (["-l"] if args.leg else []) +
+            "-d",   args.dir,
+            "-p",   args.path,
+            "-m",   str(args.mul),
+            "-tp",  args.tp,
+            "-cp",  args.cp,
+            "-b",   str(args.bound),
+            "-D",   str(args.D),
+            " "     if args.shh else "-v"] +
+           (["-l"]  if args.leg else []) +
            (["-sn"] if args.sn else []) +
            (["-ts"] if args.ts else []) +
            [args.filename]
@@ -246,13 +246,10 @@ debugMsg(args.debug, cmdname, txt, True)
 debugMsg(args.debug, cmdname, "Calling petrify...")
 start = time.time()
 try:
-    subprocess.check_call([PETRY,
-                           "-dead","-ip",
-                           "-efc", basename + "_toPetrify",
-                           "-o" , dir + TEMP]
-    )
+    petricmd = [PETRY, "-dead","-ip", "-efc", basename + "_toPetrify", "-o" , dir + TEMP]
+    subprocess.check_call(petricmd)
 except:
-    debugMsg(args.debug, cmdname, "Petrification failed. Something wrong with " + PETRY)
+    debugMsg(args.debug, cmdname, "Petrification failed. Something wrong with " + PETRY + ": " + " ".join(petricmd))
     loginfo = loginfo + ["petrify err"]
 stop = time.time()
 petritime = stop - start
@@ -274,10 +271,11 @@ try:
             for l in lines: fout.write(l)
         debugMsg(args.debug, cmdname, "Generating Global Graph...")
         ggstarttime = time.time()
-        subprocess.check_call([BG, "-d" , dir, "-v", "" if args.shh else "v", basename + PNET])
+        bgcmd = [BG, "-d" , dir, "" if args.shh else "-v", basename + PNET]
+        subprocess.check_call(bgcmd)
         endtime = time.time()
 except:
-    debugMsg(args.debug, cmdname, "Something wrong with the generation of global graph...")
+    debugMsg(args.debug, cmdname, "Something wrong with the generation of global graph: " + " ".join(bgcmd))
     loginfo = loginfo + [BG + " err"]
     ggstarttime = time.time()
     endtime = time.time()

@@ -11,7 +11,7 @@ import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
 --import Data.Char
-import Data.Ord as O
+--import Data.Ord as O
 import Misc
 import CFSM
 import DotStuff
@@ -218,16 +218,17 @@ ggptp ptps g = case g of
                 Seq gs      -> S.union ptps (S.unions (L.map (ggptp S.empty) gs))
                 Rep g' p    -> S.union ptps (ggptp (S.singleton p) g')
 
-proj :: GG -> Ptp -> State -> State -> Int -> (CFSM, State)
+proj :: GG -> P -> Ptp -> State -> State -> Int -> (CFSM, State)
 --
 -- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
 -- POST: the non-minimised projection of GG wrt p and a unique exiting state (it must always exist!)
 --       n is a counter for fresh state generation
 --       q0 and qe correspond to the entry and exit state, respectively
 --
-proj gg p q0 qe n =
-  let suf  = show n
-      taul = ((p,p), Tau, "")
+proj gg pmap p q0 qe n =
+  let inverse = M.fromList $ (L.zip (M.elems pmap) (M.keys pmap))
+      suf  = show n
+      taul = ((show $ inverse!p, show $ inverse!p), Tau, "")
       dm   = ( (S.fromList [q0,qe], q0, S.singleton taul, tautrx q0 qe) , qe )
       tautrx q1 q2 = if q1==q2 then S.empty else S.singleton (q1, taul, q2)
   in case gg of
@@ -235,7 +236,7 @@ proj gg p q0 qe n =
       Act (s,r) m -> if (p/=s && p/=r)
                      then dm
                      else ( ((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0,c,qe))) , qe )
-        where c = if (p == s) then ((p,r),Send,m) else ((s,p),Receive,m)
+        where c = if (p == s) then ((show $ inverse!p, show $ inverse!r), Send, m) else ((show $ inverse!s, show $ inverse!p), Receive, m)
       Par ggs     -> ( replaceState (initialOf m) q0 ( S.union (S.singleton qe) (statesOf m ) ,
                                                        initialOf m ,
                                                        S.union (actionsOf m) (S.singleton taul) ,
@@ -244,7 +245,7 @@ proj gg p q0 qe n =
                       , qe )
         where m   = replaceState qe' qe (cfsmProd $ L.map fst mps)
               qe' = L.foldr stateProd "" (L.map snd mps)
-              mps = L.map (\g -> proj g p q0 qe n) ggs
+              mps = L.map (\g -> proj g pmap p q0 qe n) ggs
       Bra ggs     -> ( replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs) , qe )
         where (states, acts, trxs) = L.foldl
                 (\(x,y,z) m -> ( S.union x (statesOf m) ,
@@ -254,13 +255,13 @@ proj gg p q0 qe n =
                 (S.singleton qe, S.singleton taul, S.empty)
                 ms
               ggs'    = L.zip (S.toList ggs) [1..S.size ggs]
-              mps     = L.map (\(g,i) -> proj g p (q0 ++ (show i)) qe n) ggs'
+              mps     = L.map (\(g,i) -> proj g pmap p (q0 ++ (show i)) qe n) ggs'
               (ms, _) = (L.map fst mps, L.map snd mps)
       Seq ggs     -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
         where (_, qe', states, acts, trxs) =
                 L.foldl
                   (\( i , qi , x , y , z ) g ->
-                    let ( m , qf' ) = proj g p qi (qe ++ (show i)) n in
+                    let ( m , qf' ) = proj g pmap p qi (qe ++ (show i)) n in
                      (i + 1 ,
                       qf' ,
                       S.union x (statesOf m) ,
@@ -276,10 +277,10 @@ proj gg p q0 qe n =
                                  initialOf body ,
                                  S.unions [actionsOf body, actionsOf loop, actionsOf exit] ,
                                  S.unions [transitionsOf body, transitionsOf loop, transitionsOf exit] )
-              ( body , q )   = proj g p q0 (qe ++ suf) (n + 2)
-              ( loop' , ql ) = proj (helper (lpref ++ suf)) p q (q0 ++ suf) (n + 2)
+              ( body , q )   = proj g pmap p q0 (qe ++ suf) (n + 2)
+              ( loop' , ql ) = proj (helper (lpref ++ suf)) pmap p q (q0 ++ suf) (n + 2)
               loop           = replaceState ql q0 loop'
-              ( exit , qe' ) = proj (helper (epref ++ suf)) p q qe (n + 2)
+              ( exit , qe' ) = proj (helper (epref ++ suf)) pmap p q qe (n + 2)
               helper s       = Par (L.map (\p'' -> Act (p',p'') s) (S.toList $ S.delete p' repptps))
 
 --

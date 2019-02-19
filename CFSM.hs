@@ -13,7 +13,7 @@ import Data.Map.Strict as M
 import DotStuff
 
 --
--- replacing Id with some a more suitable type P
+-- replacing Id with some more suitable type P
 -- the idea is
 --    + the Ptp ps p yields the index of p in ps while
 --    + Name ps p yields the name of the p-th machine in ps 
@@ -264,8 +264,9 @@ strToAction ptps sbj (p:d:msg:xs)
   | d == "tau" = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ):(strToAction ptps sbj xs)
   | otherwise  = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ++ "unknown direction: " ++ d ):(strToAction ptps sbj xs)
 
+parseFSA :: [[String]] -> System
 --
--- parse text returns a system provided that 'text' represents a few
+-- parseFSA returns a system provided that 'text' represents a few
 -- cfsms according to the following syntax:
 --     C ::= .outputs Str    NewLine
 --           .state graph    NewLine
@@ -278,7 +279,6 @@ strToAction ptps sbj (p:d:msg:xs)
 -- Lines starting with '--' are interpreted as comments and
 -- ignored. Note that 
 --
-parseFSA :: [[String]] -> System
 parseFSA text = if L.length pairs == L.length outs &&
                    L.length pairs == L.length marks &&
                    L.length pairs == L.length sts &&
