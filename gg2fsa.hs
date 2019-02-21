@@ -31,7 +31,7 @@ main = do progargs <- getArgs
                     Data.Set.toList names
               -- TODO: fix this String -> [CFSM] -> [[String]] -> System inefficiency 
               let cfsms =
-                    L.map (minimise . fst) (L.map (\p -> proj gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
+                    L.map (minimise . fst) (L.map (\p -> proj False gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
               -- let sys =
               --       CFSM.parseFSA ((L.map (\(i,m) -> lines (CFSM.cfsm2String i m))) (L.zip ptps cfsms))
               writeToFile (dir ++ baseName ++ ".fsa") (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))

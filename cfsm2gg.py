@@ -262,6 +262,7 @@ replacements = [(st_comma,', '), # NOTE: the order is important
                 [("->" + str(i), "->" + machines[i]) for i in range(machine_number)] +\
                 [(', ', ',')]
 try:
+    bgcmd = [BG, "-d" , dir, "" if args.shh else "-v", basename + PNET]
     with open(dir + TEMP, "rt") as fin:
         lines =  fin.readlines()
         fin.close()
@@ -271,7 +272,6 @@ try:
             for l in lines: fout.write(l)
         debugMsg(args.debug, cmdname, "Generating Global Graph...")
         ggstarttime = time.time()
-        bgcmd = [BG, "-d" , dir, "" if args.shh else "-v", basename + PNET]
         subprocess.check_call(bgcmd)
         endtime = time.time()
 except:

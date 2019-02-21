@@ -215,7 +215,7 @@ enabled k (sys, _) (n, b)
           l               = L.map (\m -> (S.filter (\(_, (ch, d, msg), _) ->
                                                      (d == Send    && (length $ b!ch) < k && bs) ||
                                                      (d == Receive && (length $ b!ch) > 0 && (head $ b!ch) == msg) ||
-                                                     (d == Tau)
+                                                     (d == Tau) || (d == Break)
                                                    ) (mstep m))) rng
           mstep m         = CFSM.step (sys!!m) (n!!m)
           match m t       = [t' | i <- [m+1 .. (length n-1)], t' <- (S.toList $ mstep i), dual t t']
@@ -232,6 +232,7 @@ apply ptps c@(n, b) t@(_, (ch@(s,r), d, msg), q)
     | d == Send    = (toKEvent c ptps t, (Misc.update (findId s (M.assocs ptps)) q n, M.insert ch ((b!ch)++[msg]) b))
     | d == Receive = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, M.insert ch (tail $ b!ch) b))
     | d == Tau     = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, b))
+    | d == Break   = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, b))
     | otherwise    = error ((showDir d (M.empty)) ++ " not allowed")
 
 -- step k sys conf

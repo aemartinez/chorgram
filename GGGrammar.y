@@ -27,8 +27,7 @@
 --
 --    guard ::= P % str | P % str, guard
 --
--- where '(o)' has a special role: it is the empty graph outside
--- loops, while in loops it marks a point where the selector may exit
+-- where '(o)' has a special role: it marks a point where the selector of a loop may exit
 -- the iteration. Guards are used only for the reversible semantics
 -- and the string in them is supposed to be some valid erlang code.
 -- Likewise for the sel construct, which generalises the choice for

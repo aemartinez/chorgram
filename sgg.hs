@@ -67,13 +67,16 @@ main = do progargs <- getArgs
                       else ""
                 let output l =
                       case l of
-                        []   -> putStrLn $ msgFormat SGG "end"
-                        i:ls -> (putStrLn $ "\t" ++ (path i "") ++ " is the machine for participant " ++ (ptps!i)) >>= (\_ -> writeToFile (path i ".dot") (dottifyCfsm cfsm (ptps!i) (legend cfsm i) flines) ) >>= (\_ -> writeToFile (path i ".aut") (cfsm2bcg cfsm flines) ) >>= (\_ -> output ls)
-                          where cfsm = fst $ proj gg ptps (ptps!i) "q0" "qe" 0
+                        []   -> putStrLn $ msgFormat SGG "end" ++ (show names)
+                        i:ls -> (putStrLn $ "\t" ++ (path i "") ++ " is the machine for participant " ++ (ptps!i))
+                          >>= (\_ -> writeToFile (path i ".dot") (dottifyCfsm cfsm (ptps!i) (legend cfsm i) flines) )
+                          >>= (\_ -> writeToFile (path i ".aut") (cfsm2bcg cfsm flines) )
+                          >>= (\_ -> output ls)
+                          where cfsm = fst $ proj False gg ptps (ptps!i) "q0" "qe" 0
                 output $ range (S.size names)
                 else do
                 -- TODO: the compilation to erlang should be better integrated with the rest
-                let (rgg, names) =
+                let (rgg, _) =
                       (rgggrammar . RGGparser.lexer) ggtxt
                 writeToFile (dir ++ "in_rgg_parsed.txt") (show rgg)
                   >>=

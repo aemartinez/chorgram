@@ -27,6 +27,7 @@ type Cond    = String
 data Dir     = Send
              | Receive
              | Tau
+             | Break
              | LoopSnd
              | LoopRcv
                deriving (Eq,Ord,Show)
@@ -110,6 +111,7 @@ showDir d flines
     | d == Send    = " " ++ flines!sndm ++ " "
     | d == Receive = " " ++ flines!rcvm ++ " "
     | d == Tau     = " " ++ flines!tau ++ " "
+    | d == Break   = " " ++ flines!breakLoop ++ " "
     | otherwise    = error ("Non sense: " ++ show d ++ " is not a valid")
 
 -- 
@@ -257,12 +259,14 @@ cfsmUnion q0 l = (L.foldr (\(states, _, _,_) -> S.union states) (S.singleton q0)
 strToAction :: P -> Id -> [String] -> [Action]
 strToAction _ _ [] = []
 strToAction ptps sbj [s] = [( ((ptps!sbj), (ptps!sbj) ), Tau, "not action: " ++ s)]
+strToAction ptps sbj [s,"break"] = [( (ptps!sbj, ptps!sbj ), Break, "break: " ++ s)]
 strToAction ptps sbj [s,s'] = [( (ptps!sbj, ptps!sbj ), Tau, "not action: " ++ s ++ " - " ++ s')]
 strToAction ptps sbj (p:d:msg:xs)
-  | d == "!"   = ( (ptps!sbj, ptps!(read p :: Id)), Send,    msg ):(strToAction ptps sbj xs)
-  | d == "?"   = ( (ptps!(read p :: Id), ptps!sbj), Receive, msg ):(strToAction ptps sbj xs)
-  | d == "tau" = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ):(strToAction ptps sbj xs)
-  | otherwise  = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ++ "unknown direction: " ++ d ):(strToAction ptps sbj xs)
+  | d == "!"     = ( (ptps!sbj, ptps!(read p :: Id)), Send,    msg ):(strToAction ptps sbj xs)
+  | d == "?"     = ( (ptps!(read p :: Id), ptps!sbj), Receive, msg ):(strToAction ptps sbj xs)
+  | d == "tau"   = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ):(strToAction ptps sbj xs)
+  | d == "break" = ( (ptps!sbj, ptps!(read p :: Id)), Break,   msg ):(strToAction ptps sbj xs)
+  | otherwise    = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ++ "unknown direction: " ++ d ):(strToAction ptps sbj xs)
 
 parseFSA :: [[String]] -> System
 --
@@ -385,6 +389,7 @@ cfsm2String sbj m = ".outputs " ++ sbj ++ "\n.state graph\n" ++ (rmChar '\"' tx)
                                          Send    -> show r ++ " ! " ++ show msg
                                          Receive -> show s ++ " ? " ++ show msg
                                          Tau     -> " tau " ++ show msg
+                                         Break   -> " break " ++ show msg
                                          LoopSnd -> show s ++ show msg
                                          LoopRcv -> show r ++ show msg
 

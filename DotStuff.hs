@@ -144,6 +144,9 @@ loopcol = "loopcol"
 tau :: String
 tau = "tau"
 
+breakLoop :: String
+breakLoop = "break"
+
 sndm :: String
 sndm = "snd"
 

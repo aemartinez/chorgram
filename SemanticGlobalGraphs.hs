@@ -89,6 +89,7 @@ ptpsOf (_, Nothing)            = Nothing
 sbjOf :: E -> Maybe Ptp
 sbjOf (_, Nothing)                  = Nothing
 sbjOf (_, Just (_, Tau, _))         = Nothing
+sbjOf (_, Just (_, Break, _))       = Nothing
 sbjOf (_, Just ((s,_), Send, _))    = Just s
 sbjOf (_, Just ((_,r), Receive, _)) = Just r
 sbjOf (_, Just ((s,_), LoopSnd, _)) = Just s
