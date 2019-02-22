@@ -68,9 +68,10 @@ main = do progargs <- getArgs
                 let output l =
                       case l of
                         []   -> putStrLn $ msgFormat SGG "end" ++ (show names)
-                        i:ls -> (putStrLn $ "\t" ++ (path i "") ++ " is the machine for participant " ++ (ptps!i))
+                        i:ls -> (putStrLn $ "\t" ++ (path i "") ++ " is the machine for participant " ++ (ptps!i) ++ " in both .fsa and .aut format")
                           >>= (\_ -> writeToFile (path i ".dot") (dottifyCfsm cfsm (ptps!i) (legend cfsm i) flines) )
                           >>= (\_ -> writeToFile (path i ".aut") (cfsm2bcg cfsm flines) )
+                          >>= (\_ -> writeToFile (path i ".fsa") (cfsm2String (ptps!i) cfsm) )
                           >>= (\_ -> output ls)
                           where cfsm = fst $ proj False gg ptps (ptps!i) "q0" "qe" 0
                 output $ range (S.size names)
