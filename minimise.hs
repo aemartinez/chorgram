@@ -6,13 +6,13 @@ import System.Environment
 import System.FilePath.Posix
 
 main :: IO ()
-main = do putStrLn "minimise: parsing started"
-          progargs <- getArgs
+main = do progargs <- getArgs
           if L.null progargs
             then error $ usage(MIN)
             else do
               let flags =
                     getFlags MIN (take ((length progargs) - 1) progargs)
+              myPrint flags MIN "parsing started"
               let sourcefile =
                     last progargs
               let filename =
@@ -24,5 +24,5 @@ main = do putStrLn "minimise: parsing started"
               let sys = parseSystem ext txt
               let minSys = L.map minimise (fst sys)
               writeToFile (dir ++ "minimal_" ++ filename ++ ".txt") (show minSys)
-              putStrLn ("minimise:\tresult in " ++ dir ++ "minimal" ++ filename ++ ".txt")
-              putStrLn "minimise: done"
+              myPrint flags MIN ("\tresult in " ++ dir ++ "minimal_" ++ filename ++ ".txt")
+              myPrint flags MIN "done"

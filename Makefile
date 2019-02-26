@@ -12,7 +12,7 @@ gitmsg = "checkpoint"
 #
 # Example of usage of scripts:
 # python cfsm2gg.py -l -df png -dir <path-to-results-directory> <path-to-file>
-# python sgg.py --dot "Tpng" --dot "Gsplines=ortho" --sloppy -dir <path-to-results-directory> <path-to-file>
+# sgg.py --dot "Tpng" --dot "Gsplines=ortho" --sloppy -dir <path-to-results-directory> <path-to-file>
 #
 
 

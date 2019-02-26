@@ -47,8 +47,8 @@ parser.add_argument("--sloppy",
                     help = "Do not raise exception due to non well-formedness")
 parser.add_argument("-rg",
                     dest = "rg",
-                    action = "store_true",
-                    help = "Uses the parser for REGs")
+                    default = "",
+                    help = "Uses the parser for REGs to generate a module with the name given")
 parser.add_argument("filename",
                     help = "Specify the path to file containing the CFSMs")
 args = parser.parse_args()
@@ -61,6 +61,14 @@ mkdir(dir)
 ##################################### START HERE ###############################################
 
 debugMsg(args.debug, SGG, "\n   Generating " + bname + "\n\tResult in " + dir + "\n")
+
+starttime = time.time()
+
+callsgg = ([SGG, "-d", args.dir] +
+           (["-l"] if args.leg else []) +
+           (["--sloppy"] if args.sloppy else []) +
+           (["-rg"] if args.rg else []) +
+           [args.filename])
 
 template = """
 -module(%s).
@@ -126,19 +134,14 @@ main() ->
     gg2erl:mk_all("%s_%s", getTest(%s), M)
 .
 """
-module_name = 'xyz'
-test_ds = '[...]'
-app_name = 'app'
 
-# print(template%(module_name, module_name, test_ds, module_name, module_name, app_name, module_name, module_name, app_name, module_name))
+if args.rg:
+    with open(dir + "/reg.txt") as f:
+        test_ds = f.readlines()
+        module_name = args.rg
+        with open(dir + module_name + ".erl", "w") as f:
+            f.write(template%(module_name, module_name, test_ds[0], module_name, module_name, bname, module_name, module_name, bname, module_name))
 
-starttime = time.time()
-
-callsgg = ([SGG, "-d", args.dir] +
-           (["-l"] if args.leg else []) +
-           (["--sloppy"] if args.sloppy else []) +
-           (["-rg"] if args.rg else []) +
-           [args.filename])
 
 debugMsg(args.debug, SGG, ' '.join(callsgg))
 sggtime = time.time()

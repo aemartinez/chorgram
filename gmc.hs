@@ -47,15 +47,15 @@ printingThread system ts@(confs, _, _, _) filename flines var = do
   writeToFile (filename ++ "_toPetrify") (ts2petrify (renameNodes sigma ts) (flines!qsep))
   putMVar var True
 
-parseSystem :: String -> String -> System
-parseSystem ext txt =
-  -- if 'ext' is a valid extension (.fsa, .sys, .cms), returns the parsing of txt as a system of CFSMs 
-  case ext of
-    ".fsa" -> parseFSA (Prelude.map (\x -> words x) (lines txt))
-    ".sys" -> (sysgrammar . lexer) txt
-    ".cms" -> (sysgrammar . lexer) txt
-    ""     -> parseFSA (Prelude.map (\x -> words x) (lines txt))
-    _      -> error ("unknown extension " ++ ext)
+-- parseSystem :: String -> String -> System
+-- parseSystem ext txt =
+--   -- if 'ext' is a valid extension (.fsa, .sys, .cms), returns the parsing of txt as a system of CFSMs 
+--   case ext of
+--     ".fsa" -> parseFSA (Prelude.map (\x -> words x) (lines txt))
+--     ".sys" -> (sysgrammar . lexer) txt
+--     ".cms" -> (sysgrammar . lexer) txt
+--     ""     -> parseFSA (Prelude.map (\x -> words x) (lines txt))
+--     _      -> error ("unknown extension " ++ ext)
 
 main :: IO ()
 main =  do progargs <- getArgs
@@ -67,7 +67,7 @@ main =  do progargs <- getArgs
                let sourcefile =
                      last progargs
                cfsmFile <- readFile sourcefile
-               let ( dir, destfile, basename, ext ) =
+               let (dir, destfile, basename, ext) =
                      setFileNames sourcefile flags
                let (sys , ptps) = parseSystem ext cfsmFile
                let sys' = case (flags!"-D") of
@@ -75,13 +75,13 @@ main =  do progargs <- getArgs
                             "det" -> L.map FSA.determinise sys
                             "no"  -> sys
                             _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
-               let sigma (states, _, _, _) = M.fromList [( (S.toList states)!!i, "q" ++ show i ) | i <- range (S.size states)]
+               let sigma (states, _, _, _) = M.fromList [((S.toList states)!!i, "q" ++ show i) | i <- range (S.size states)]
                let system = (if (M.member "-sn" flags) then (L.map (\cfsm -> (grenameVertex (sigma cfsm) cfsm)) sys') else sys', ptps)
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (cfsmsIds system)) -- (L.map snd (M.assocs $ snd system)))
                let bufferSize =
                      read (flags ! "-b") :: Int
-               let ( ts0, tsb ) =
-                     ( buildTSb 0 system, if bufferSize > 0 then buildTSb bufferSize system else ts0 )
+               let (ts0, tsb) =
+                     (buildTSb 0 system, if bufferSize > 0 then buildTSb bufferSize system else ts0)
                myPrint flags GMC ("Parsing CFSMs file..." ++ sourcefile)
                myPrint flags GMC ("dir " ++ (show $ dir))
                myPrint flags GMC ("Synchronous TS:\t(nodes " ++ (show $ (S.size $ gnodes ts0)) ++ ", transitions " ++ (show $ (S.size $ gtrans ts0)) ++ ")")

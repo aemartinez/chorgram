@@ -193,7 +193,7 @@ usage cmd = "Usage: " ++ msg
                GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               SYS   -> "systemparser [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                MIN   -> "minimise [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                HGSEM -> "hgsem [-d dirpath] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
@@ -276,6 +276,7 @@ getFlags cmd args =
     SYS -> case args of
       []        -> defaultFlags(cmd)
       "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+      "-v":xs   -> M.insert "-v" "v"  (getFlags cmd xs)
       _         -> error $ usage(cmd)
     MIN -> case args of
       []        -> defaultFlags(cmd)
@@ -299,7 +300,7 @@ pClosure :: Ord vertex => Ord label => Agraph vertex label -> (label -> Bool) ->
 --  PRE:
 --  POST: returns the closure of vertexes reachable from v with transitions that satisfy the predicate lpred on labels
 pClosure g lpred v =
-  let ptrans = S.filter (\(_,l,_) -> (lpred l)) (gtrans g)
+  let ptrans = S.filter (\(_, l, _) -> (lpred l)) (gtrans g)
       aux res wl ml =
         case wl of
           []     -> S.insert v res

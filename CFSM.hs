@@ -272,16 +272,16 @@ parseFSA :: [[String]] -> System
 --
 -- parseFSA returns a system provided that 'text' represents a few
 -- cfsms according to the following syntax:
---     C ::= .outputs Str    NewLine
---           .state graph    NewLine
---           T               NewLine
---           .end
+--     C ::= '.outputs' Str    NewLine
+--           '.state graph'    NewLine
+--           T                 NewLine
+--           '.end'            NewLine
 --     T ::= .marking Str
 --        |  Str {! + ?} Str Str NewLine T
 --
 -- where Str is a string and NewLine is the end of line token.
 -- Lines starting with '--' are interpreted as comments and
--- ignored. Note that 
+-- ignored. 
 --
 parseFSA text = if L.length pairs == L.length outs &&
                    L.length pairs == L.length marks &&
@@ -295,7 +295,7 @@ parseFSA text = if L.length pairs == L.length outs &&
                             ++ "\nends\t" ++ show ends
                            )
   where ptps' = M.fromList pairs
-        pairs = [(k,names!!k) | k <- range $ L.length outs]
+        pairs = [(k, names!!k) | k <- range $ L.length outs]
         outs  = L.filter (\line -> line /= [] && (head line) == ".outputs") text
         marks = L.filter (\line -> line /= [] && (head line) == ".marking") text
         sts   = L.filter (\line -> line /= [] && (head line) == ".state") text
@@ -316,16 +316,28 @@ parseFSA text = if L.length pairs == L.length outs &&
                                                         '-':'-':_  -> parsing i xs m ms
                                                         ".end"     -> parsing (i+1) xs emptyCFSM (ms++[m])
                                                         _          -> case tail x of
+                                                                       ["break", q] -> parsing i xs (st', q0, ev', tr') ms
+                                                                         where st' = S.insert start (S.insert q st)
+                                                                               nt  = (start, str2act l i "break" "break" (-1), q) 
+                                                                               tr' = S.insert nt tr
+                                                                               ev' = S.insert (eventOf nt) ev                                                                               
+                                                                       ["tau", q] -> parsing i xs (st', q0, ev', tr') ms
+                                                                         where st' = S.insert start (S.insert q st)
+                                                                               nt  = (start, str2act l i "tau" "tau" (-1), q) 
+                                                                               tr' = S.insert nt tr
+                                                                               ev' = S.insert (eventOf nt) ev                                                                               
                                                                        [p,d,msg,q] -> parsing i xs (st', q0, ev', tr') ms
                                                                          where st' = S.insert start (S.insert q st)
                                                                                nt  = (start, str2act l i d msg (read p :: Int), q) 
                                                                                tr' = S.insert nt tr
                                                                                ev' = S.insert (eventOf nt) ev
-                                                                       _            -> error ("gmc: Line " ++ (show l) ++ ": bad CFSM")
+                                                                       _            -> error ("gmc: bad CFSM at line " ++ (show l) ++ ": " ++ (show x))
            []        -> ms
         str2act line sbj d msg p = case d of
-                                    "!" -> ( (ptps'!sbj, ptps'!p), Send,    msg )
-                                    "?" -> ( (ptps'!p, ptps'!sbj), Receive, msg )
+                                    "!"     -> ( (ptps'!sbj, ptps'!p), Send,    msg )
+                                    "?"     -> ( (ptps'!p, ptps'!sbj), Receive, msg )
+                                    "tau"   -> ( (ptps'!sbj, ptps'!sbj), Tau, msg )
+                                    "break" -> ( (ptps'!sbj, ptps'!sbj), Break, msg )
                                     _   -> error ("gmc: Line " ++ show line ++ "unrecognised communication action " ++ d)
 
 printState :: State -> String -> String

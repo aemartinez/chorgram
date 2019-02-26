@@ -33,6 +33,7 @@ action2timbuk ( chan, dir, msg ) = rmChar '\"' $
     Tau     -> error "Non minimised machine"
     LoopSnd -> (channel2timbuk chan) ++ "SEND" ++ (tokenifymsg msg)
     LoopRcv -> (channel2timbuk chan) ++ "RECEIVE" ++ (tokenifymsg msg)
+    Break   -> (channel2timbuk chan) ++ "BREAK" ++ (tokenifymsg msg)
 
 trans2timbuk :: LTrans -> String
 trans2timbuk ( q, action, q' ) =

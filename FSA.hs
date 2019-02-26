@@ -13,13 +13,13 @@ import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
 
-pTransitionsRemoval :: CFSM -> (Action -> Bool) -> CFSM
+predTrxRemoval :: CFSM -> (Action -> Bool) -> CFSM
 -- removes the transitions whose action satisfies the predicate
-pTransitionsRemoval m@(states, q0, acts, trxs) lpred = (states, q0, acts, trxs')
+predTrxRemoval m@(states, q0, acts, trxs) lpred = (states, q0, acts, trxs')
   where trxs'   = S.difference (L.foldl S.union otrxs (L.map inherit pairs)) (S.filter (\(_,l,_) -> isTau l) trxs)
-        otrxs   = S.filter (\(_,l,_) -> not(lpred l)) trxs
-        pairs   = [ (q,q') | q <- S.toList states, q' <- S.toList states, not(q==q'), S.member q' (pClosure m isTau q)]
-        inherit = \(q1,q2) -> S.map (\(_,l,q') -> (q1,l,q')) (S.intersection otrxs (goutgoing m q2))
+        otrxs   = S.filter (\(_, l, _) -> not(lpred l)) trxs
+        pairs   = [ (q,q') | q <- S.toList states, q' <- S.toList states, not(q==q'), S.member q' (pClosure m isTau q) ]
+        inherit = \(q1,q2) -> S.map (\(_, l, q') -> (q1, l, q')) (S.intersection otrxs (goutgoing m q2))
   
 
 eqClassOf :: (Ord a) => a -> [Set a] -> Set a
@@ -36,13 +36,13 @@ flatSet states = S.foldr ( \q q' -> (q ++ "__" ++ q') ) "" states
 flat :: Agraph (Set State) Action -> CFSM
 flat (states, q0, labels, trxs) = (S.map flatSet states, flatSet q0, labels, S.map (\(q,l,q') -> (flatSet q, l, flatSet q')) trxs)
 
--- PRE: the input has to be a deterministic machine
--- POST: return the minimal machine equivalent to the input machine
 determinise :: CFSM -> CFSM
 -- the subset construction on CFSMs
+-- PRE: the input has to be a deterministic machine
+-- POST: return the minimal machine equivalent to the input machine
 determinise m = flat (states, q0_, acts, trxs)
   where
-    m'@(_,q0,acts, _) = pTransitionsRemoval m isTau
+    m'@(_,q0,acts, _) = predTrxRemoval m isTau
     q0_ = S.singleton q0
     (states,trxs) = aux (S.singleton q0_) S.empty (S.singleton q0_, S.empty)
     aux todo done current =
@@ -73,10 +73,10 @@ determinise m = flat (states, q0_, acts, trxs)
                    in aux (S.delete (S.elemAt 0 todo) todo') done' (S.union newqs (fst current), S.union newtrxs (snd current))
 
         
--- PRE: the input has to be a deterministic machine
--- POST: return the minimal machine equivalent to the input machine
 minimise :: CFSM -> CFSM
 -- Variant of the partition refinement algorithm were all states are final
+-- PRE: the input has to be a deterministic machine
+-- POST: return the minimal machine equivalent to the input machine
 minimise m =
   if (S.size vs <= 1)
   then m
