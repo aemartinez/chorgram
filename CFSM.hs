@@ -33,8 +33,8 @@ data Dir     = Send
                deriving (Eq,Ord,Show)
 type Channel = ( Ptp, Ptp )
 type Action  = ( Channel, Dir, Message )
-type LTrans  = Atrans State Action
-type CFSM    = Agraph State Action
+type LTrans  = Edge State Action
+type CFSM    = Graph State Action
 
 --
 -- Given (cfsms,ptps) :: System, ptps!i is the the identity of the machine
@@ -394,7 +394,7 @@ dottifySystem flines (cfsms, ptps) =
 
 cfsm2String :: String -> CFSM -> String
 cfsm2String sbj m = ".outputs " ++ sbj ++ "\n.state graph\n" ++ (rmChar '\"' tx) ++ finish
-     where tx = L.concat $ L.map (\t -> (rmChar '\"' $ prt t) ++ "\n") (S.toList $ gtrans m)
+     where tx = L.concat $ L.map (\t -> (rmChar '\"' $ prt t) ++ "\n") (S.toList $ edgesOf m)
            finish = ".marking " ++ (rmChar '\"' $ show $ ginitialnode m) ++ "\n.end\n\n"
            prt t = (show $ gsource t) ++ " " ++ (lab $ glabel t) ++ " " ++ (show $ gtarget t)
            lab ( ( s, r ), dir, msg ) = case dir of

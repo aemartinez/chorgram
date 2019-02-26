@@ -18,7 +18,7 @@ predTrxRemoval :: CFSM -> (Action -> Bool) -> CFSM
 predTrxRemoval m@(states, q0, acts, trxs) lpred = (states, q0, acts, trxs')
   where trxs'   = S.difference (L.foldl S.union otrxs (L.map inherit pairs)) (S.filter (\(_,l,_) -> isTau l) trxs)
         otrxs   = S.filter (\(_, l, _) -> not(lpred l)) trxs
-        pairs   = [ (q,q') | q <- S.toList states, q' <- S.toList states, not(q==q'), S.member q' (pClosure m isTau q) ]
+        pairs   = [ (q,q') | q <- S.toList states, q' <- S.toList states, not(q==q'), S.member q' (pClosure m lpred q) ]
         inherit = \(q1,q2) -> S.map (\(_, l, q') -> (q1, l, q')) (S.intersection otrxs (goutgoing m q2))
   
 
@@ -33,7 +33,7 @@ flatSet :: Set State -> State
 -- turns a set of states into a state
 flatSet states = S.foldr ( \q q' -> (q ++ "__" ++ q') ) "" states 
 
-flat :: Agraph (Set State) Action -> CFSM
+flat :: Graph (Set State) Action -> CFSM
 flat (states, q0, labels, trxs) = (S.map flatSet states, flatSet q0, labels, S.map (\(q,l,q') -> (flatSet q, l, flatSet q')) trxs)
 
 determinise :: CFSM -> CFSM
@@ -42,12 +42,12 @@ determinise :: CFSM -> CFSM
 -- POST: return the minimal machine equivalent to the input machine
 determinise m = flat (states, q0_, acts, trxs)
   where
-    m'@(_,q0,acts, _) = predTrxRemoval m isTau
+    m'@(_, q0, acts, _) = predTrxRemoval m isTau
     q0_ = S.singleton q0
-    (states,trxs) = aux (S.singleton q0_) S.empty (S.singleton q0_, S.empty)
+    (states, trxs) = aux (S.singleton q0_) S.empty (S.singleton q0_, S.empty)
     aux todo done current =
       if S.null todo
-      then current
+ \     then current
       else let s = S.elemAt 0 todo
            in if S.member s done
               then aux (S.delete s todo) done current

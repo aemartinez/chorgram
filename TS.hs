@@ -21,8 +21,8 @@ type Interaction   = (Ptp, Ptp, Message)
 
 type Buffer        = Map Channel [Message]
 type Configuration = (Node, Buffer)
-type KTrans        = Atrans Configuration KEvent
-type TSb           = Agraph Configuration KEvent
+type KTrans        = Edge Configuration KEvent
+type TSb           = Graph Configuration KEvent
 type BowTie        = Set (KEvent, KEvent)
 
 data Cause vertex label = Bp Ptp vertex -- Bp p q reads: branch of state q of machine p not represented 

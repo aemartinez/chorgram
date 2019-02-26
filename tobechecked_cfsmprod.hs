@@ -50,8 +50,8 @@ main =  do progargs <- getArgs
                      ( buildTSb 0 system, if bufferSize > 0 then buildTSb bufferSize system else ts0 )
                myPrint flags PROD ("Parsing CFSMs file..." ++ sourcefile)
                myPrint flags PROD ("dir " ++ (show $ dir))
-               myPrint flags PROD ("Synchronous TS:\t(nodes " ++ (show $ (S.size $ gnodes ts0)) ++ ", transitions " ++ (show $ (S.size $ gtrans ts0)) ++ ")")
-               when (bufferSize > 0) $ myPrint flags PROD ((flags ! "-b") ++ "-bounded TS:\t(nodes " ++ (show $ (S.size $ gnodes tsb)) ++ ", transitions " ++ (show $ (S.size $ gtrans tsb)) ++")")
+               myPrint flags PROD ("Synchronous TS:\t(nodes " ++ (show $ (S.size $ gnodes ts0)) ++ ", transitions " ++ (show $ (S.size $ edgesOf ts0)) ++ ")")
+               when (bufferSize > 0) $ myPrint flags PROD ((flags ! "-b") ++ "-bounded TS:\t(nodes " ++ (show $ (S.size $ gnodes tsb)) ++ ", transitions " ++ (show $ (S.size $ edgesOf tsb)) ++")")
                if flags!"-ts" == "ts"
                  then do
                     ts2file destfile sourcefile 0 system ts0 flags [] []

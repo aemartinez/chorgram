@@ -12,8 +12,8 @@ import Data.Map.Strict as M
 import System.FilePath.Posix
 
 type Message             = String
-type Atrans vertex label = (vertex, label, vertex)
-type Agraph vertex label = (Set vertex, vertex, Set label, Set(Atrans vertex label))
+type Edge vertex label = (vertex, label, vertex)
+type Graph vertex label = (Set vertex, vertex, Set label, Set(Edge vertex label))
 
 data Command = GMC | GG | SGG | GG2FSA | SYS | MIN | PROD | HGSEM
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
@@ -298,72 +298,73 @@ getFlags cmd args =
 --
 
 
-pClosure :: Ord vertex => Ord label => Agraph vertex label -> (label -> Bool) -> vertex -> Set vertex
+pClosure :: Ord vertex => Ord label => Graph vertex label -> (label -> Bool) -> vertex -> Set vertex
 --  PRE:
---  POST: returns the closure of vertexes reachable from v with transitions that satisfy the predicate lpred on labels
+--  POST: returns the closure of vertexes reachable from v with
+--        transitions that satisfy the predicate lpred on labels
 pClosure g lpred v =
-  let ptrans = S.filter (\(_, l, _) -> (lpred l)) (gtrans g)
-      aux res wl ml =
+  let ptrans = S.filter (\(_, l, _) -> (lpred l)) (edgesOf g)
+      aux res wl visited =
         case wl of
           []     -> S.insert v res
-          v':wl' -> if v' € ml
-                    then aux res wl' ml
-                    else aux res' wl'' (v':ml)
-            where newvs = S.foldl S.union S.empty (S.map (\(q,_,q') -> if q == v' then (S.singleton q') else S.empty) ptrans)
-                  res'  = S.union res newvs
-                  wl''  = wl' ++ S.toList newvs
+          v':wl' -> if v' € visited
+                    then aux res wl' visited
+                    else aux res' wl'' (v':visited)
+            where vs'  = S.foldl S.union S.empty (S.map (\(q,_,q') -> if q == v' then (S.singleton q') else S.empty) ptrans)
+                  res' = S.union res vs'
+                  wl'' = wl' ++ S.toList vs'
   in aux S.empty [v] []
 
 
-reachableVertexes :: Ord vertex => Ord label => Agraph vertex label -> vertex -> Set vertex
+reachableVertexes :: Ord vertex => Ord label => Graph vertex label -> vertex -> Set vertex
 --  PRE:
 --  POST: returns the set of vertexes of g reachable from a given vertex
 reachableVertexes g = pClosure g (\_ -> True)
 
 
--- Projections of Agraph and Atrans components
+-- Projections of Graph and Edge components
 
-gnodes :: Agraph vertex label -> Set vertex
+gnodes :: Graph vertex label -> Set vertex
 gnodes (vertexes, _, _, _) = vertexes
 
-ginitialnode :: Agraph vertex label -> vertex
+ginitialnode :: Graph vertex label -> vertex
 ginitialnode (_, v, _, _) = v
 
-initialnode :: Agraph vertex label -> vertex
+initialnode :: Graph vertex label -> vertex
 initialnode (_, v, _, _) = v
 
-gtrans :: Agraph vertex label -> Set (Atrans vertex label)
-gtrans (_, _, _, trans) = trans
+edgesOf :: Graph vertex label -> Set (Edge vertex label)
+edgesOf (_, _, _, trans) = trans
 
-gsource :: Atrans vertex label -> vertex
+gsource :: Edge vertex label -> vertex
 gsource (v, _, _) = v
 
-glabel :: Atrans vertex label -> label
+glabel :: Edge vertex label -> label
 glabel (_, e, _) = e
 
-gtarget :: Atrans vertex label -> vertex
+gtarget :: Edge vertex label -> vertex
 gtarget (_, _, v) = v
 
 -- Some utilities
 
-grenameVertex :: Ord vertex => Ord label => Map vertex vertex -> Agraph vertex label -> Agraph vertex label
+grenameVertex :: Ord vertex => Ord label => Map vertex vertex -> Graph vertex label -> Graph vertex label
 grenameVertex sigma (nodes, n0, labels, trans) = (nodes', n0', labels, trans')
   where nodes' = S.map aux nodes
         n0'    = aux n0
         trans' = S.map (\(n, e, n') -> (aux n, e, aux n')) trans
         aux n  = if M.member n sigma then sigma!n else n
 
-isTerminal ::  Eq vertex => vertex -> Agraph vertex label -> Bool
+isTerminal ::  Eq vertex => vertex -> Graph vertex label -> Bool
 isTerminal q (_,_,_,trxs) =
   let l = S.toList trxs in q € [q_ | (_,_,q_) <- l, L.all (\(q',_,_) -> q' /= q) l]
 
-goutgoing :: Eq vertex => Agraph vertex label -> vertex -> Set (Atrans vertex label)
+goutgoing :: Eq vertex => Graph vertex label -> vertex -> Set (Edge vertex label)
 -- goutgoing gr v
 --  PRE:  v is a vertex of gr
 --  POST: returns the outgoing edges of v in gr
 goutgoing (_, _, _,trans) v = S.filter (\t -> v == (gsource t)) trans
 
-gincoming :: Eq vertex => Ord vertex => Agraph vertex label -> Map vertex (Set (Atrans vertex label))
+gincoming :: Eq vertex => Ord vertex => Graph vertex label -> Map vertex (Set (Edge vertex label))
 -- gincoming gr
 --  PRE:  
 --  POST: builds a map associating to each vertex of gr its incoming edges
@@ -371,7 +372,7 @@ gincoming (vertexes, _, _,trans) = M.fromList $ i
     where i = L.map (\v -> (v, S.filter (\t -> v == (gtarget t)) trans)) (S.toList vertexes)
 
 
-gpath :: Eq vertex => (Show label) => (Show vertex) => Agraph vertex label -> vertex -> vertex -> [vertex] -> [[Atrans vertex label]]
+gpath :: Eq vertex => (Show label) => (Show vertex) => Graph vertex label -> vertex -> vertex -> [vertex] -> [[Edge vertex label]]
 -- gpath gr s t l
 --   PRE:  s, t veterexes in gr, l list of veterexes of gr
 --   POST: returns the list of (elementary) paths in gr from s to t not passing trough veterexes in l
@@ -384,13 +385,13 @@ gpath gr s t l
           paths v = gpath gr v t ([s] ++ l)
 
 gpath_ :: Eq vertex => Ord vertex => Eq label => (Show label) => (Show vertex) =>
-          Agraph vertex label ->
-              Map vertex (Set (Atrans vertex label)) ->
-                  Map vertex [[Atrans vertex label]] ->
+          Graph vertex label ->
+              Map vertex (Set (Edge vertex label)) ->
+                  Map vertex [[Edge vertex label]] ->
                       vertex ->
                           vertex ->
-                              [Atrans vertex label] ->
-                                  Map vertex [[Atrans vertex label]]
+                              [Edge vertex label] ->
+                                  Map vertex [[Edge vertex label]]
 -- cp current paths
 gpath_ gr incoming cp s t l
     | s == t    = cp
@@ -412,13 +413,13 @@ gpath_ gr incoming cp s t l
                     cp'' = addtr trs (tr:l') (addpath t tot tov)
 
 gpath' :: Eq vertex => Ord vertex => Eq label => (Show label) => (Show vertex) =>
-          Agraph vertex label ->
-              Map vertex (Set (Atrans vertex label)) ->
-                  Map vertex [[Atrans vertex label]] ->
+          Graph vertex label ->
+              Map vertex (Set (Edge vertex label)) ->
+                  Map vertex [[Edge vertex label]] ->
                       vertex ->
                           [vertex] ->
-                              [Atrans vertex label] ->
-                                  Map vertex [[Atrans vertex label]]
+                              [Edge vertex label] ->
+                                  Map vertex [[Edge vertex label]]
 gpath' gr incoming cp s trs l
     | L.null trs = cp
     | s == t     = gpath' gr incoming cp s (tail trs) l
