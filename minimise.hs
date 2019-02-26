@@ -2,6 +2,7 @@ import Misc
 import FSA
 import SystemParser
 import Data.List as L
+import Data.Map.Strict as M
 import System.Environment
 import System.FilePath.Posix
 
@@ -12,7 +13,7 @@ main = do progargs <- getArgs
             else do
               let flags =
                     getFlags MIN (take ((length progargs) - 1) progargs)
-              myPrint flags MIN "parsing started"
+              myPrint flags MIN "minimisation started"
               let sourcefile =
                     last progargs
               let filename =
@@ -21,8 +22,12 @@ main = do progargs <- getArgs
               let (dir, _, _, ext) =
                     setFileNames filename flags
               let _ = lexer txt
-              let sys = parseSystem ext txt
-              let minSys = L.map minimise (fst sys)
-              writeToFile (dir ++ "minimal_" ++ filename ++ ".txt") (show minSys)
-              myPrint flags MIN ("\tresult in " ++ dir ++ "minimal_" ++ filename ++ ".txt")
+              let (sys, _) = parseSystem ext txt
+              let (sys', f) = case (flags!"-D") of
+                                "min" -> (L.map FSA.minimise sys, dir ++ filename ++ ".min")
+                                "det" -> (L.map FSA.determinise sys, dir ++ filename ++ ".det")
+                                "no"  -> (sys, dir ++ filename ++ ".txt")
+                                _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
+              writeToFile f (show sys')
+              myPrint flags MIN ("\tresult in " ++ f)
               myPrint flags MIN "done"

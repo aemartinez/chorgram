@@ -189,12 +189,12 @@ usage :: Command -> String
 -- Message on how to use a command
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
-               GMC   -> "gmc [-b | --bound number] [-l] [-m | --multiplicity number] [--minimise] [-sn] [--determinise] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n"
+               GMC   -> "gmc [-b | --bound number] [-l] [-m | --multiplicity number] [--minimise] [-sn] [--determinise] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
                GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               MIN   -> "minimise [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t detmode = det\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                HGSEM -> "hgsem [-d dirpath] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
 
@@ -233,7 +233,7 @@ defaultFlags cmd = case cmd of
                      SGG   -> M.fromList [("-d",dirpath), ("-v","")]
                      GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
                      SYS   -> M.fromList [("-d",dirpath), ("-v","")]
-                     MIN   -> M.fromList [("-d",dirpath), ("-v","")]
+                     MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D", "det")]
                      PROD  -> M.fromList [("-d",dirpath), ("-v","")]
                      HGSEM -> M.fromList [("-d",dirpath), ("-v","")]
 
@@ -265,8 +265,8 @@ getFlags cmd args =
       _         -> error $ usage(cmd)
     SGG -> case args of
       []            -> defaultFlags(cmd)
-      "-d":y:xs     -> M.insert "-d"  y    (getFlags cmd xs)
-      "-rg":xs      -> M.insert "-rg" "yes" (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d"  y          (getFlags cmd xs)
+      "-rg":xs      -> M.insert "-rg" "yes"      (getFlags cmd xs)
       "--sloppy":xs -> M.insert "--sloppy" "yes" (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GG2FSA -> case args of
@@ -275,12 +275,14 @@ getFlags cmd args =
       _             -> error $ usage(cmd)
     SYS -> case args of
       []        -> defaultFlags(cmd)
-      "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+      "-d":y:xs -> M.insert "-d"  y   (getFlags cmd xs)
       "-v":xs   -> M.insert "-v" "v"  (getFlags cmd xs)
       _         -> error $ usage(cmd)
     MIN -> case args of
       []        -> defaultFlags(cmd)
-      "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+      "-d":y:xs -> M.insert "-d"  y   (getFlags cmd xs)
+      "-v":xs   -> M.insert "-v" "v"  (getFlags cmd xs)
+      "-D":y:xs -> M.insert "-D"  y   (getFlags cmd xs)
       _         -> error $ usage(cmd)
     PROD -> case args of
       []        -> defaultFlags(cmd)
@@ -288,7 +290,7 @@ getFlags cmd args =
     HGSEM -> case args of
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" "yes" (getFlags cmd xs)
-      "-d":y:xs     -> M.insert "-d"  y    (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d"  y          (getFlags cmd xs)
       _         -> error $ usage(cmd)
 
 --
