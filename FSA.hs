@@ -47,12 +47,11 @@ determinise m = flat (states, q0_, acts, trxs)
     (states, trxs) = aux (S.singleton q0_) S.empty (S.singleton q0_, S.empty)
     aux todo done current =
       if S.null todo
- \     then current
+      then current
       else let s = S.elemAt 0 todo
            in if S.member s done
               then aux (S.delete s todo) done current
-              else let done' = S.insert s done
-                       actMap qqs amap =
+              else let actMap qqs amap =
                          if S.null qqs
                          then amap
                          else
@@ -60,17 +59,16 @@ determinise m = flat (states, q0_, acts, trxs)
                                mapIns :: Map Action (Set State) -> [LTrans] -> Map Action (Set State)
                                mapIns amap_ trxs_  =
                                  case trxs_ of
-                                   []                -> amap_
-                                   (_,act,q'):trsx_' -> if M.member act amap_
-                                                        then mapIns (M.insert act (S.insert q' (amap_!act)) amap_) trsx_'
-                                                        else mapIns (M.insert act (S.singleton q') amap_) trsx_'
+                                   []                  -> amap_
+                                   (_, act, q'):trsx_' -> if M.member act amap_
+                                                          then mapIns (M.insert act (S.insert q' (amap_!act)) amap_) trsx_'
+                                                          else mapIns (M.insert act (S.singleton q') amap_) trsx_'
                                amap' = mapIns amap (S.toList $ step m' q)
                            in actMap (S.delete q qqs) amap'
                        rset  = actMap s M.empty
                        strxs = S.map (\(act, _) -> (s, act, rset!act)) (S.foldr S.union S.empty (S.map (\q -> (succs m' q)) s))
-                       (newqs , newtrxs) = (S.fromList $ M.elems rset, strxs)
-                       todo' = S.union todo newqs
-                   in aux (S.delete (S.elemAt 0 todo) todo') done' (S.union newqs (fst current), S.union newtrxs (snd current))
+                       (newqs, newtrxs) = (S.fromList $ M.elems rset, strxs)
+                   in aux (S.delete s (S.union todo newqs)) (S.insert s done) (S.union newqs (fst current), S.union newtrxs (snd current))
 
         
 minimise :: CFSM -> CFSM
