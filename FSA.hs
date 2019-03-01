@@ -34,7 +34,8 @@ flatSet :: Set State -> State
 flatSet states = S.foldr ( \q q' -> (q ++ "__" ++ q') ) "" states 
 
 flat :: Graph (Set State) Action -> CFSM
-flat (states, q0, labels, trxs) = (S.map flatSet states, flatSet q0, labels, S.map (\(q,l,q') -> (flatSet q, l, flatSet q')) trxs)
+flat (states, q0, labels, trxs) =
+  (S.map flatSet states, flatSet q0, labels, S.map (\(q, l, q') -> (flatSet q, l, flatSet q')) trxs)
 
 determinise :: CFSM -> CFSM
 -- the subset construction on CFSMs
@@ -51,24 +52,26 @@ determinise m = flat (states, q0_, acts, trxs)
       else let s = S.elemAt 0 todo
            in if S.member s done
               then aux (S.delete s todo) done current
-              else let actMap qqs amap =
-                         if S.null qqs
-                         then amap
-                         else
-                           let q = S.elemAt 0 qqs
-                               mapIns :: Map Action (Set State) -> [LTrans] -> Map Action (Set State)
-                               mapIns amap_ trxs_  =
-                                 case trxs_ of
-                                   []                  -> amap_
-                                   (_, act, q'):trsx_' -> if M.member act amap_
-                                                          then mapIns (M.insert act (S.insert q' (amap_!act)) amap_) trsx_'
-                                                          else mapIns (M.insert act (S.singleton q') amap_) trsx_'
-                               amap' = mapIns amap (S.toList $ step m' q)
-                           in actMap (S.delete q qqs) amap'
-                       rset  = actMap s M.empty
-                       strxs = S.map (\(act, _) -> (s, act, rset!act)) (S.foldr S.union S.empty (S.map (\q -> (succs m' q)) s))
-                       (newqs, newtrxs) = (S.fromList $ M.elems rset, strxs)
-                   in aux (S.delete s (S.union todo newqs)) (S.insert s done) (S.union newqs (fst current), S.union newtrxs (snd current))
+              else
+                let actMap =
+                      \qqs amap ->
+                        if S.null qqs
+                        then amap
+                        else
+                          let q = S.elemAt 0 qqs
+                              mapIns :: Map Action (Set State) -> [LTrans] -> Map Action (Set State)
+                              mapIns amap_ trxs_ =
+                                case trxs_ of
+                                  []                  -> amap_
+                                  (_, act, q'):trsx_' -> if M.member act amap_
+                                                         then mapIns (M.insert act (S.insert q' (amap_!act)) amap_) trsx_'
+                                                         else mapIns (M.insert act (S.singleton q') amap_) trsx_'
+                              amap' = mapIns amap (S.toList $ step m' q)
+                          in actMap (S.delete q qqs) amap'
+                    rset  = actMap s M.empty
+                    strxs = S.map (\(act, _) -> (s, act, rset!act)) (S.foldr S.union S.empty (S.map (\q -> (succs m' q)) s))
+                    (newqs, newtrxs) = (S.fromList $ M.elems rset, strxs)
+                in aux (S.delete s (S.union todo newqs)) (S.insert s done) (S.union newqs (fst current), S.union newtrxs (snd current))
 
         
 minimise :: CFSM -> CFSM

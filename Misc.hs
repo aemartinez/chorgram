@@ -287,6 +287,7 @@ getFlags cmd args =
     PROD -> case args of
       []        -> defaultFlags(cmd)
       "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
+      _         -> error $ usage(cmd)
     HGSEM -> case args of
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" "yes" (getFlags cmd xs)
@@ -314,6 +315,14 @@ pClosure g lpred v =
                   res' = S.union res vs'
                   wl'' = wl' ++ S.toList vs'
   in aux S.empty [v] []
+
+pRemoval :: Ord vertex => Ord label => Graph vertex label -> (label -> Bool) -> Graph vertex label
+-- Generalisation of the epsilon-removal in NFA to p-removal for a predicate lpred on labels
+pRemoval g@(vs, v0, labels, trxs) lpred = (vs, v0, labels, trxs)
+  where
+    -- TODO: computing vmap like this is quite inefficient and should be optimised
+    vmap = M.fromList $ L.zip (L.map (pClosure g lpred) (S.toList vs)) (S.toList vs)
+    (lpred_trxs, other_trxs) = S.partition (\(_, l, _) -> lpred l) trxs
 
 
 reachableVertexes :: Ord vertex => Ord label => Graph vertex label -> vertex -> Set vertex
