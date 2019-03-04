@@ -128,8 +128,8 @@ succ m q e = head $ S.toList $ S.map (\(_,_,q') -> q') (S.filter (\(_,e',_) -> e
 succs :: CFSM -> State -> Set (Action, State)
 succs m q = S.map (\( _, e, q' ) -> ( e, q' )) (step m q)
 
--- replaceState q q' m replaces q with q' in m
 replaceState :: State -> State -> CFSM -> CFSM
+-- replaceState q q' m replaces q with q' in m (substitution q |--> q')
 replaceState q q' m@(states, q0, acts, trxs) =
   if q == q'
   then m
@@ -139,6 +139,7 @@ replaceState q q' m@(states, q0, acts, trxs) =
 
 replaceStates :: (State -> Bool) -> State -> CFSM -> CFSM
 replaceStates cond q m@( states, _, _, _ ) =
+  -- TODO: change this with a fold
   aux (S.toList $ S.filter cond states) m
   where aux l m' =
           case l of

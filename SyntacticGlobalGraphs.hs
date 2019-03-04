@@ -321,7 +321,7 @@ proj loopFlag gg pmap p q0 qe n =
         where m   = replaceState qe' qe (cfsmProd $ L.map fst mps)
               qe' = L.foldr stateProd "" (L.map snd mps)
               mps = L.map (\g -> proj loopFlag g pmap p q0 qe n) ggs
-      Bra ggs     -> (replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs), qe)
+      Bra ggs     -> (replaceStates (\q -> q € [qe ++ (show i) | i <- [1 .. (length mps)]]) qe (replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs)), qe)
         where (states, acts, trxs) = L.foldl
                 (\(x,y,z) m -> (S.union x (statesOf m),
                                 S.union y (actionsOf m),
@@ -329,8 +329,8 @@ proj loopFlag gg pmap p q0 qe n =
                 )
                 (S.singleton qe, S.singleton $ taul Tau, S.empty)
                 (L.map fst mps)
-              ggs' = L.zip (S.toList ggs) [1..S.size ggs]
-              mps  = L.map (\(g,i) -> proj loopFlag g pmap p (q0 ++ (show i)) qe n) ggs'
+              ggs' = L.zip (S.toList ggs) [1 .. S.size ggs]
+              mps  = L.map (\(g,i) -> proj loopFlag g pmap p (q0 ++ (show i)) (qe ++ (show i)) n) ggs'
       Seq ggs     -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
         where (_, qe', states, acts, trxs) =
                 L.foldl
