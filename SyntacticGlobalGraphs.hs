@@ -218,7 +218,6 @@ ggptp ptps g = case g of
                 Seq gs      -> S.union ptps (S.unions (L.map (ggptp S.empty) gs))
                 Rep g' p    -> S.union ptps (ggptp (S.singleton p) g')
 {-
-
 proj :: GG -> P -> Ptp -> State -> State -> Int -> (CFSM, State)
 --
 -- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
@@ -300,65 +299,67 @@ proj :: Bool -> GG -> P -> Ptp -> State -> State -> Int -> (CFSM, State)
 -- and to false otherwise.
 --
 proj loopFlag gg pmap p q0 qe n =
-  let inverse = M.fromList $ (L.zip (M.elems pmap) (M.keys pmap))
-      suf  = show n
-      taul l = ((show $ inverse!p, show $ inverse!p), l, "")
-      dm q l = ( (S.fromList [q0, q], q0, S.singleton (taul l), tautrx q0 q l) , q )
-      tautrx q1 q2 l = if q1==q2 then S.empty else S.singleton (q1, taul l, q2)
+  let inverse        = M.fromList $ (L.zip (M.elems pmap) (M.keys pmap))
+      taul l         = ((show $ inverse!p, show $ inverse!p), l, "")
+      tautrx q1 q2 l = S.singleton (q1, taul l, q2)
+      dm q l         = ((S.fromList [q0, q], q0, S.singleton (taul l), tautrx q0 q l), q)
   in case gg of
       Emp         -> dm (qe ++ if loopFlag then "Break" else "") (if loopFlag then Break else Tau)
       Act (s,r) m -> if (p/=s && p/=r)
                      then dm qe Tau
-                     else ( ((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0,c,qe))) , qe )
-        where c = if (p == s) then ((show $ inverse!p, show $ inverse!r), Send, m) else ((show $ inverse!s, show $ inverse!p), Receive, m)
-      Par ggs     -> ( replaceState (initialOf m) q0 ( S.union (S.singleton qe) (statesOf m ) ,
-                                                       initialOf m ,
-                                                       S.union (actionsOf m) (S.singleton $ taul Tau) ,
-                                                       (transitionsOf m)
-                                                     )
-                      , qe )
+                     else (((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0, c, qe))), qe)
+        where c = if (p == s)
+                  then ((show $ inverse!p, show $ inverse!r), Send, m)
+                  else ((show $ inverse!s, show $ inverse!p), Receive, m)
+      Par ggs     -> (replaceState (initialOf m) q0 (S.union (S.singleton qe) (statesOf m),
+                                                     initialOf m,
+                                                     S.union (actionsOf m) (S.singleton $ taul Tau),
+                                                     (transitionsOf m)
+                                                    ),
+                       qe
+                     )
         where m   = replaceState qe' qe (cfsmProd $ L.map fst mps)
               qe' = L.foldr stateProd "" (L.map snd mps)
               mps = L.map (\g -> proj loopFlag g pmap p q0 qe n) ggs
-      Bra ggs     -> ( replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs) , qe )
+      Bra ggs     -> (replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs), qe)
         where (states, acts, trxs) = L.foldl
-                (\(x,y,z) m -> ( S.union x (statesOf m) ,
-                                 S.union y (actionsOf m) ,
-                                 S.union z (transitionsOf m) )
+                (\(x,y,z) m -> (S.union x (statesOf m),
+                                S.union y (actionsOf m),
+                                S.union z (transitionsOf m) )
                 )
                 (S.singleton qe, S.singleton $ taul Tau, S.empty)
-                ms
-              ggs'    = L.zip (S.toList ggs) [1..S.size ggs]
-              mps     = L.map (\(g,i) -> proj loopFlag g pmap p (q0 ++ (show i)) qe n) ggs'
-              (ms, _) = (L.map fst mps, L.map snd mps)
+                (L.map fst mps)
+              ggs' = L.zip (S.toList ggs) [1..S.size ggs]
+              mps  = L.map (\(g,i) -> proj loopFlag g pmap p (q0 ++ (show i)) qe n) ggs'
       Seq ggs     -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
         where (_, qe', states, acts, trxs) =
                 L.foldl
-                  (\( i , qi , x , y , z ) g ->
-                    let ( m , qf' ) = proj loopFlag g pmap p qi (qe ++ (show i)) n in
-                     (i + 1 ,
-                      qf' ,
-                      S.union x (statesOf m) ,
-                      S.union y (actionsOf m) ,
+                  (\(i, qi, x, y, z) g ->
+                    let (m, qf') = proj loopFlag g pmap p qi (qe ++ (show i)) n in
+                     (i + 1,
+                      qf',
+                      S.union x (statesOf m),
+                      S.union y (actionsOf m),
                       S.union z (transitionsOf m)
                      )
                   )
                   (0, q0, S.empty, S.empty, S.empty)
                   ggs
-      Rep g p'    -> if (S.member p repptps) then (ggrep, qe') else (dm qe' Tau)
-        where repptps     = ggptp S.empty g
+      Rep g p'    -> if (S.member p bodyptps) then (ggrep, qe') else (dm qe' Tau)
+        where bodyptps    = ggptp S.empty g
               ggrep       = (S.unions [statesOf body, statesOf loop, statesOf exit],
                              initialOf body,
                              S.unions [actionsOf body, actionsOf loop, actionsOf exit],
                              S.unions [transitionsOf body, transitionsOf loop, transitionsOf exit]
                             )
+              suf         = show n
               (body', q)  = proj True g pmap p q0 (qe ++ suf) (n + 2)
-              breakPoints = [q | q <- S.toList $ S.map (\(_,_,q) -> q) (S.filter (\(_,(_, l, _),_) -> l == Break) (transitionsOf body')) ]
-              body        = replaceStates (\q -> q € breakPoints) qe' body'
+              breakPoints = S.map (\(_, _, q) -> q) (S.filter (\(_, (_, l, _), _) -> l == Break) (transitionsOf body'))
+              body        = replaceStates (\q -> q € S.toList breakPoints) (qe ++ suf) body'
               (loop', ql) = proj False (helper (lpref ++ suf)) pmap p q (q0 ++ suf) (n + 2)
               loop        = replaceState ql q0 loop'
               (exit, qe') = proj False (helper (epref ++ suf)) pmap p q qe (n + 2)
-              helper s    = Par (L.map (\p'' -> Act (p',p'') s) (S.toList $ S.delete p' repptps))
+              helper s    = Par (L.map (\p'' -> Act (p',p'') s) (S.toList $ S.delete p' bodyptps))
 
 --
 -- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ ps are all the participants of gg

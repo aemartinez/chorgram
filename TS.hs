@@ -215,6 +215,8 @@ enabled k (sys, _) (n, b)
           l               = L.map (\m -> (S.filter (\(_, (ch, d, msg), _) ->
                                                      (d == Send    && (length $ b!ch) < k && bs) ||
                                                      (d == Receive && (length $ b!ch) > 0 && (head $ b!ch) == msg) ||
+                                                     (d == LoopSnd && (length $ b!ch) < k && bs) ||
+                                                     (d == LoopRcv && (length $ b!ch) > 0 && (head $ b!ch) == msg) ||
                                                      (d == Tau) || (d == Break)
                                                    ) (mstep m))) rng
           mstep m         = CFSM.step (sys!!m) (n!!m)

@@ -1,6 +1,6 @@
 # Author: Emilio Tuosto <emilio@le.ac.uk>
 #
-# This python script combines the parts of the tool
+# Some utilities for python scripts
 
 import os
 import os.path
@@ -8,8 +8,8 @@ import os.path
 def debugMsg(debug, cmd, msg, force = False):
     """Prints debugging messages"""
     if (debug or force):
-        s1 = (": {---" if not(force) else ": ")
-        s2 = ("---}" if not(force) else "")
+        s1 = ": " + ("{--- " if not(force) else "")
+        s2 = (" ---}" if not(force) else "")
         print(cmd + s1 + msg + s2)
 
 def mkdir(dir):

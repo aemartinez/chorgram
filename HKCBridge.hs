@@ -42,7 +42,7 @@ trans2timbuk ( q, action, q' ) =
 cfsm2timbuk :: CFSM -> Ptp -> String
 cfsm2timbuk (states, initstate, actions, trans) ptp =
   let stactions = S.fold (++) "" (S.map (\x -> (action2timbuk x) ++ ":1 ") actions)
-      liststates = S.fold (++) "" (S.map (\x -> (state2timbuk x) ++ " ") states)
+      liststates = S.fold (++) (if S.null states then state2timbuk initstate else "") (S.map (\x -> (state2timbuk x) ++ " ") states)
       header = "Ops xxxx:0 " ++ stactions ++ "\n \n"
       name = "Automaton " ++ ptp ++ "\n"
       ststates = "States " ++ liststates ++ "\n"

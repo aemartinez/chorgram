@@ -43,7 +43,7 @@ determinise :: CFSM -> CFSM
 -- POST: return the minimal machine equivalent to the input machine
 determinise m = flat (states, q0_, acts, trxs)
   where
-    m'@(_, q0, acts, _) = predTrxRemoval m isTau
+    m'@(_, q0, acts, _) = pRemoval m isTau
     q0_ = S.singleton q0
     (states, trxs) = aux (S.singleton q0_) S.empty (S.singleton q0_, S.empty)
     aux todo done current =
@@ -78,10 +78,7 @@ minimise :: CFSM -> CFSM
 -- Variant of the partition refinement algorithm were all states are final
 -- PRE: the input has to be a deterministic machine
 -- POST: return the minimal machine equivalent to the input machine
-minimise m =
-  if (S.size vs <= 1)
-  then m
-  else flat (S.fromList states, q0, acts, trs')
+minimise m = flat (S.fromList states, q0, acts, trs')
   where m'@(vs,q0',acts, trxs) = determinise m
         -- initially all states are equivalent
         states = getPartitions [vs]

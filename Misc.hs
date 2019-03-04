@@ -194,7 +194,7 @@ usage cmd = "Usage: " ++ msg
                SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t detmode = det\n"
+               MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t detmode = min\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                HGSEM -> "hgsem [-d dirpath] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
 
@@ -233,7 +233,7 @@ defaultFlags cmd = case cmd of
                      SGG   -> M.fromList [("-d",dirpath), ("-v","")]
                      GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
                      SYS   -> M.fromList [("-d",dirpath), ("-v","")]
-                     MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D", "det")]
+                     MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D", "min")]
                      PROD  -> M.fromList [("-d",dirpath), ("-v","")]
                      HGSEM -> M.fromList [("-d",dirpath), ("-v","")]
 
@@ -316,13 +316,17 @@ pClosure g lpred v =
                   wl'' = wl' ++ S.toList vs'
   in aux S.empty [v] []
 
+
 pRemoval :: Ord vertex => Ord label => Graph vertex label -> (label -> Bool) -> Graph vertex label
 -- Generalisation of the epsilon-removal in NFA to p-removal for a predicate lpred on labels
-pRemoval g@(vs, v0, labels, trxs) lpred = (vs, v0, labels, trxs)
+pRemoval g@(vs, v0, labels, trxs) lpred = (vs, v0, S.map glabel trxs', trxs')
   where
     -- TODO: computing vmap like this is quite inefficient and should be optimised
-    vmap = M.fromList $ L.zip (L.map (pClosure g lpred) (S.toList vs)) (S.toList vs)
+    vmap = M.fromList $ L.zip (S.toList vs) (L.map (pClosure g lpred) (S.toList vs))
     (lpred_trxs, other_trxs) = S.partition (\(_, l, _) -> lpred l) trxs
+    aux = \(s, l, t) -> S.map (\q -> (q, l, t)) (vmap!s)
+    new_trxs = S.unions $ S.toList $ S.map aux other_trxs
+    trxs' = S.difference new_trxs lpred_trxs
 
 
 reachableVertexes :: Ord vertex => Ord label => Graph vertex label -> vertex -> Set vertex
@@ -349,7 +353,7 @@ gsource :: Edge vertex label -> vertex
 gsource (v, _, _) = v
 
 glabel :: Edge vertex label -> label
-glabel (_, e, _) = e
+glabel (_, l, _) = l
 
 gtarget :: Edge vertex label -> vertex
 gtarget (_, _, v) = v
@@ -641,7 +645,7 @@ mkFileName suf dir fname ext =
 -- Some strings and an auxiliary function to handle node creation
 lpref :: String
 epref :: String
-( lpref , epref ) = ( "*<" , ">*" )
+(lpref, epref) = ( "*<" , ">*" )
 
 newNode :: (Int -> Bool) -> Int -> Int -> Int
 newNode excluded n j = if (excluded n) then n else (if n > 0 then n + j else n - j)

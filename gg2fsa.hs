@@ -35,3 +35,4 @@ main = do progargs <- getArgs
               -- let sys =
               --       CFSM.parseFSA ((L.map (\(i,m) -> lines (CFSM.cfsm2String i m))) (L.zip ptps cfsms))
               writeToFile (dir ++ baseName ++ ".fsa") (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))
+              writeToFile (dir ++ baseName ++ ".hs")  (L.concat $ L.map (\(p, m) -> "m_" ++ p ++ " = " ++ (show m) ++ "\n\n")    (L.zip ptps cfsms))

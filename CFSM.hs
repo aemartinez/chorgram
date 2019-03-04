@@ -112,6 +112,8 @@ showDir d flines
     | d == Receive = " " ++ flines!rcvm ++ " "
     | d == Tau     = " " ++ flines!tau ++ " "
     | d == Break   = " " ++ flines!breakLoop ++ " "
+    | d == LoopSnd = " " ++ flines!sndm ++ " "
+    | d == LoopRcv = " " ++ flines!rcvm ++ " "
     | otherwise    = error ("Non sense: " ++ show d ++ " is not a valid")
 
 -- 
@@ -402,8 +404,8 @@ cfsm2String sbj m = ".outputs " ++ sbj ++ "\n.state graph\n" ++ (rmChar '\"' tx)
                                          Receive -> show s ++ " ? " ++ show msg
                                          Tau     -> " tau " ++ show msg
                                          Break   -> " break " ++ show msg
-                                         LoopSnd -> show s ++ show msg
-                                         LoopRcv -> show r ++ show msg
+                                         LoopSnd -> show r ++ " ! " ++ show msg
+                                         LoopRcv -> show s ++ " ? " ++ show msg
 
 cfsm2fsm :: Map String String -> CFSM -> (String, Map State Int)
 cfsm2fsm flines (states, initn, _, trans) =
