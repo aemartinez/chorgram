@@ -23,6 +23,9 @@ state2timbuk s = rmChar '\"' $ aux (show s)
   where aux = \s -> case s of
                      []     -> []
                      '_':s' -> "UUU" ++ (aux s')
+                     '*':s' -> "STAR" ++ (aux s')
+                     '>':s' -> "GT" ++ (aux s')
+                     '<':s' -> "LT" ++ (aux s')
                      x:s'   -> x:(aux s')
 
 action2timbuk :: Action -> String

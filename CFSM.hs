@@ -75,13 +75,15 @@ stateNumbers :: System -> [Int]
 stateNumbers ( sys, _ ) = L.map stateNumber sys
 
 existSend :: Set Action -> Bool
-existSend set = F.or $ S.map (\( _, dir, _ ) -> dir == Send) set
+existSend set = F.or $ S.map (\( _, dir, _ ) -> dir == Send || dir == LoopSnd) set
 
 dualAction :: Action -> Action
 dualAction (ch, d, msg) =
   case d of
    Send    -> ( ch, Receive, msg )
    Receive -> ( ch, Send, msg )
+   LoopSnd -> ( ch, LoopRcv, msg )
+   LoopRcv -> ( ch, LoopSnd, msg )
    _       -> ( ch, d, msg )
 
 dualCFSM :: CFSM -> CFSM
@@ -94,7 +96,9 @@ msgOf ( _, _, msg ) = msg
 subjectOf :: Action -> Ptp
 subjectOf ( ( s, r ), d, _ ) = case d of
                                 Send    -> s
+                                LoopSnd -> s
                                 Receive -> r
+                                LoopRcv -> r
                                 _       -> s
 
 eventOf :: LTrans -> Action
@@ -153,14 +157,14 @@ renamePtp old new ( states, q0, acts, trxs ) = ( states, q0, acts', trxs' )
         trxs' = S.map (\(q, act ,q') -> ( q, ract act, q' )) trxs
         aux p = if p == old then new else p
 
-dActions :: CFSM -> State -> Dir -> Set LTrans
-dActions m q d = (S.filter (\( _, ( _, d', _ ), _ ) -> d == d') (step m q))
+-- dActions :: CFSM -> State -> Dir -> Set LTrans
+-- dActions m q d = (S.filter (\( _, ( _, d', _ ), _ ) -> d == d') (step m q))
 
-sndActions :: CFSM -> State -> Set (Action, State)
-sndActions m q = S.map (\( _, e , q' ) -> ( e, q' )) (dActions m q Send)
+-- sndActions :: CFSM -> State -> Set (Action, State)
+-- sndActions m q = S.map (\( _, e , q' ) -> ( e, q' )) (dActions m q Send)
 
-rcvActions :: CFSM -> State -> Set (Action, State)
-rcvActions m q = S.map (\( _, e , q' ) -> (e, q')) (dActions m q Receive)
+-- rcvActions :: CFSM -> State -> Set (Action, State)
+-- rcvActions m q = S.map (\( _, e , q' ) -> (e, q')) (dActions m q Receive)
 
 --
 -- Diamond Computations
@@ -265,6 +269,7 @@ strToAction ptps sbj [s] = [( ((ptps!sbj), (ptps!sbj) ), Tau, "not action: " ++ 
 strToAction ptps sbj [s,"break"] = [( (ptps!sbj, ptps!sbj ), Break, "break: " ++ s)]
 strToAction ptps sbj [s,s'] = [( (ptps!sbj, ptps!sbj ), Tau, "not action: " ++ s ++ " - " ++ s')]
 strToAction ptps sbj (p:d:msg:xs)
+-- TODO: what about LoopSnd and LoopRcv?
   | d == "!"     = ( (ptps!sbj, ptps!(read p :: Id)), Send,    msg ):(strToAction ptps sbj xs)
   | d == "?"     = ( (ptps!(read p :: Id), ptps!sbj), Receive, msg ):(strToAction ptps sbj xs)
   | d == "tau"   = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ):(strToAction ptps sbj xs)
@@ -337,6 +342,7 @@ parseFSA text = if L.length pairs == L.length outs &&
                                                                        _            -> error ("gmc: bad CFSM at line " ++ (show l) ++ ": " ++ (show x))
            []        -> ms
         str2act line sbj d msg p = case d of
+                                    -- TODO: what about LoopSnd and LoopRcv?
                                     "!"     -> ( (ptps'!sbj, ptps'!p), Send,    msg )
                                     "?"     -> ( (ptps'!p, ptps'!sbj), Receive, msg )
                                     "tau"   -> ( (ptps'!sbj, ptps'!sbj), Tau, msg )

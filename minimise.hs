@@ -13,21 +13,22 @@ main = do progargs <- getArgs
             else do
               let flags =
                     getFlags MIN (take ((length progargs) - 1) progargs)
-              myPrint flags MIN "minimisation started"
+              myPrint flags MIN "started"
               let sourcefile =
                     last progargs
               let filename =
                     takeFileName sourcefile
               txt <- readFile sourcefile
-              let (dir, _, _, ext) =
+              let (_, _, b, ext) =
                     setFileNames filename flags
               let _ = lexer txt
-              let (sys, _) = parseSystem ext txt
+              let (sys,  _) = parseSystem ext txt
               let (sys', f) = case (flags!"-D") of
-                                "min" -> (L.map FSA.minimise sys, dir ++ filename ++ ".min")
-                                "det" -> (L.map FSA.determinise sys, dir ++ filename ++ ".det")
-                                "no"  -> (sys, dir ++ filename ++ ".txt")
+                                "min" -> (L.map FSA.minimise sys, filename ++ ".min")
+                                "det" -> (L.map FSA.determinise sys, filename ++ ".det")
+                                "no"  -> (sys, filename ++ ".txt")
                                 _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
+              myPrint flags MIN (show sys')
               writeToFile f (show sys')
               myPrint flags MIN ("\tresult in " ++ f)
               myPrint flags MIN "done"
