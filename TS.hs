@@ -203,11 +203,11 @@ projectUnSafe (_,_,s,r,_,msg) p = if s == p
 -- Building the transition system
 --
 
+enabled :: Int -> System -> Configuration -> Map (Id,LTrans) [LTrans]
 -- enabled k (sys,_) (n,b)
 --   PRE:  machines m in sys epsilon-free ^ m in n ^ |n| = |dom sys|
 --   POST: returns the map l such that l!(i,t) is the list of transitions
---         of machine i enabled at n given the configuration
-enabled :: Int -> System -> Configuration -> Map (Id,LTrans) [LTrans]
+--         of machine i enabled at n, local states of the configuration (n,b)
 enabled k (sys, _) (n, b)
     | k == 0    =  M.fromList $ L.concat pairs
     | otherwise = helper 0 (L.concat $ L.map S.toList l)
