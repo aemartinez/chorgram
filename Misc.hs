@@ -214,7 +214,7 @@ msgFormat cmd msg =
 
 
 myPrint :: Map String String -> Command -> String -> IO ()
-myPrint flags cmd msg = if (flags!"-v" == "v") then putStrLn $ msgFormat cmd msg else return ()
+myPrint flags cmd msg = if (flags!"-v" == "v ") then putStrLn $ msgFormat cmd msg else return ()
 
 defaultFlags :: Command -> Map String String
 -- The default argument of each command
