@@ -214,7 +214,7 @@ msgFormat cmd msg =
 
 
 myPrint :: Map String String -> Command -> String -> IO ()
-myPrint flags cmd msg = if (flags!"-v" == "v ") then putStrLn $ msgFormat cmd msg else return ()
+myPrint flags cmd msg = if not(flags!"-v" == "") then putStrLn $ msgFormat cmd msg else return ()
 
 defaultFlags :: Command -> Map String String
 -- The default argument of each command
@@ -239,6 +239,7 @@ defaultFlags cmd = case cmd of
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
+  let yes = "yes" in
   case cmd of
     GMC -> case args of
       []                 -> defaultFlags(cmd)
@@ -256,33 +257,34 @@ getFlags cmd args =
       "-cp":y:xs         -> M.insert "-cp" y      (getFlags cmd xs)
       "-tp":y:xs         -> M.insert "-tp" y      (getFlags cmd xs)
       "-p":y:xs          -> M.insert "-p"  y      (getFlags cmd xs)
-      "-v":xs            -> M.insert "-v"  "v"    (getFlags cmd xs)
+      "-v":xs            -> M.insert "-v"  yes    (getFlags cmd xs)
       _                  -> error $ usage(cmd)
     GG  ->  case args of
       []        -> defaultFlags(cmd)
-      "-d":y:xs -> M.insert "-d" y    (getFlags cmd xs)
-      "-v":xs   -> M.insert "-v" "v"  (getFlags cmd xs)
+      "-d":y:xs -> M.insert "-d" y   (getFlags cmd xs)
+      "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
       _         -> error $ usage(cmd)
     SGG -> case args of
       []            -> defaultFlags(cmd)
-      "-d":y:xs     -> M.insert "-d"  y          (getFlags cmd xs)
-      "-rg":xs      -> M.insert "-rg" "yes"      (getFlags cmd xs)
-      "--sloppy":xs -> M.insert "--sloppy" "yes" (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+      "-rg":xs      -> M.insert "-rg" yes      (getFlags cmd xs)
+      "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GG2FSA -> case args of
       []            -> defaultFlags(cmd)
-      "-d":y:xs     -> M.insert "-d"  y    (getFlags cmd xs)
+      "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
     SYS -> case args of
       []        -> defaultFlags(cmd)
-      "-d":y:xs -> M.insert "-d"  y   (getFlags cmd xs)
-      "-v":xs   -> M.insert "-v" "v"  (getFlags cmd xs)
+      "-d":y:xs -> M.insert "-d" y    (getFlags cmd xs)
+      "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
       _         -> error $ usage(cmd)
     MIN -> case args of
       []        -> defaultFlags(cmd)
-      "-d":y:xs -> M.insert "-d"  y   (getFlags cmd xs)
-      "-v":xs   -> M.insert "-v" "v"  (getFlags cmd xs)
-      "-D":y:xs -> M.insert "-D"  y   (getFlags cmd xs)
+      "-d":y:xs -> M.insert "-d" y   (getFlags cmd xs)
+      "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
+      "-D":y:xs -> M.insert "-D" y   (getFlags cmd xs)
       _         -> error $ usage(cmd)
     PROD -> case args of
       []        -> defaultFlags(cmd)
@@ -290,8 +292,8 @@ getFlags cmd args =
       _         -> error $ usage(cmd)
     HGSEM -> case args of
       []            -> defaultFlags(cmd)
-      "--sloppy":xs -> M.insert "--sloppy" "yes" (getFlags cmd xs)
-      "-d":y:xs     -> M.insert "-d"  y          (getFlags cmd xs)
+      "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
       _         -> error $ usage(cmd)
 
 --

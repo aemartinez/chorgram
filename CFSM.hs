@@ -424,8 +424,8 @@ cfsm2fsm flines (states, initn, _, trans) =
                                      ++" "++(show $ env!z)++" \""++(printAction y flines)++"\"") (S.toList trans)
   in ("n(0)\n---\n"++liststates++"\n---\n"++listtrans++"\n" , env)
 
-system2String :: System -> String -> String
-system2String ( cfsms, ptps ) _ =
+system2String :: System -> String
+system2String (cfsms, ptps) =
   L.concat [ cfsm2String (ptps!i) (cfsms!!i) | i <- [ 0 .. (L.length cfsms) - 1 ] ]
 
 system2file :: FilePath -> String -> Map String String -> System -> IO()
@@ -433,6 +433,6 @@ system2file file ext flines sys =
   writeToFile (file ++ "_machines" ++ ext) str
   where str = case ext of
                ".dot" -> dottifySystem flines sys
-               ""     -> system2String sys ""
+               ""     -> system2String sys
                _      -> error "Unknown extension"
 

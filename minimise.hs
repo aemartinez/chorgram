@@ -19,7 +19,7 @@ main = do progargs <- getArgs
               let filename =
                     takeFileName sourcefile
               txt <- readFile sourcefile
-              let (_, _, b, ext) =
+              let (_, _, _, ext) =
                     setFileNames filename flags
               let _ = lexer txt
               let (sys,  _) = parseSystem ext txt
@@ -28,7 +28,5 @@ main = do progargs <- getArgs
                                 "det" -> (L.map FSA.determinise sys, filename ++ ".det")
                                 "no"  -> (sys, filename ++ ".txt")
                                 _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
-              myPrint flags MIN (show sys')
-              writeToFile f (show sys')
               myPrint flags MIN ("\tresult in " ++ f)
               myPrint flags MIN "done"
