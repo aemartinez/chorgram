@@ -5,7 +5,8 @@
 --
 import Misc
 import FSA
-import CFSM (system2String)
+import CFSM (system2String,dottifySystem)
+import DotStuff
 import SystemParser
 import Data.List as L
 import Data.Map.Strict as M
@@ -17,9 +18,10 @@ main = do progargs <- getArgs
           if L.null progargs
             then error $ usage(MIN)
             else do
-              myPrint flags MIN "started"
               let flags =
                     getFlags MIN (take ((length progargs) - 1) progargs)
+              flines <- getDotConf
+              myPrint flags MIN "started"
               let sourcefile =
                     last progargs
               let filename =
@@ -36,5 +38,6 @@ main = do progargs <- getArgs
                                 _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
               writeToFile f (show sys')
               writeToFile (filename ++ ".fsa") (system2String (sys', ptps))
+              writeToFile (filename ++ ".dot") (dottifySystem flines (sys, ptps))
               myPrint flags MIN ("\tresult in " ++ f ++ " and in " ++ filename ++ ".fsa")
               myPrint flags MIN "done"
