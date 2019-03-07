@@ -1,8 +1,8 @@
 --
 -- Authors: Emilio Tuosto <emilio@le.ac.uk>
 --
--- This main returns a file with the .fsa format of the CFSMs of a
--- global graph.
+-- This main returns a file with the .fsa format of the minimised
+-- CFSMs of a global graph.
 --
 
 import Misc
