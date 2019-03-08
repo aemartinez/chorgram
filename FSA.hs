@@ -63,9 +63,11 @@ determinise m = flat (states, q0_, acts, trxs)
                               mapIns amap_ trxs_ =
                                 case trxs_ of
                                   []                  -> amap_
-                                  (_, act, q'):trsx_' -> if M.member act amap_
-                                                         then mapIns (M.insert act (S.insert q' (amap_!act)) amap_) trsx_'
-                                                         else mapIns (M.insert act (S.singleton q') amap_) trsx_'
+                                  (_, act, q'):trsx_' ->
+                                    let x = if M.member act amap_
+                                            then S.insert q' (amap_!act)
+                                            else S.singleton q'
+                                    in mapIns (M.insert act x amap_) trsx_'
                               amap' = mapIns amap (S.toList $ step m' q)
                           in actMap (S.delete q qqs) amap'
                     rset  = actMap s M.empty
