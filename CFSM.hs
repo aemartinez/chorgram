@@ -296,7 +296,7 @@ parseFSA text = if L.length pairs == L.length outs &&
                    L.length pairs == L.length sts &&
                    L.length pairs == L.length ends
                 then (sys',ptps')
-                else error ("gmc: malformed file of CFSM (some the numbers of lines starting with .outputs, .markings, .states, .end do not match)"
+                else error ("malformed file of CFSM (some the numbers of lines starting with .outputs, .markings, .states, .end do not match)"
                             ++ "\nouts\t" ++ show outs
                             ++ "\nmarks\t" ++ show marks
                             ++ "\nstarts\t" ++ show sts
@@ -341,13 +341,14 @@ parseFSA text = if L.length pairs == L.length outs &&
                                                                                ev' = S.insert (eventOf nt) ev
                                                                        _            -> error ("gmc: bad CFSM at line " ++ (show l) ++ ": " ++ (show x))
            []        -> ms
-        str2act line sbj d msg p = case d of
-                                    -- TODO: what about LoopSnd and LoopRcv?
-                                    "!"     -> ( (ptps'!sbj, ptps'!p), Send,    msg )
-                                    "?"     -> ( (ptps'!p, ptps'!sbj), Receive, msg )
-                                    "tau"   -> ( (ptps'!sbj, ptps'!sbj), Tau, msg )
-                                    "break" -> ( (ptps'!sbj, ptps'!sbj), Break, msg )
-                                    _   -> error ("gmc: Line " ++ show line ++ "unrecognised communication action " ++ d)
+        str2act line sbj d msg p =
+          let noLoop = (head msg /= '*') || ((head $ tail msg) /= '<') && ((head $ tail msg) /= '>')
+          in case d of
+               "!"     -> ( (ptps'!sbj, ptps'!p), (if noLoop then Send else LoopSnd), msg )
+               "?"     -> ( (ptps'!p, ptps'!sbj), (if noLoop then Receive else LoopRcv), msg )
+               "tau"   -> ( (ptps'!sbj, ptps'!sbj), Tau, msg )
+               "break" -> ( (ptps'!sbj, ptps'!sbj), Break, msg )
+               _   -> error ("Line " ++ show line ++ "unrecognised communication action " ++ d)
 
 printState :: State -> String -> String
 printState s sbj = sbj ++ (rmChars ['*','\"'] (show s))

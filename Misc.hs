@@ -326,7 +326,7 @@ pRemoval g@(vs, v0, labels, trxs) lpred = (vs, v0, S.map glabel trxs', trxs')
     -- TODO: computing vmap like this is quite inefficient and should be optimised
     vmap = M.fromList $ L.zip (S.toList vs) (L.map (pClosure g lpred) (S.toList vs))
     (lpred_trxs, other_trxs) = S.partition (\(_, l, _) -> lpred l) trxs
-    aux = \(s, l, t) -> S.map (\q -> (q, l, t)) (vmap!s)
+    aux = \(s, l, t) -> S.map (\q -> (s, l, q)) (S.delete s (vmap!s))
     new_trxs = S.unions $ S.toList $ S.map aux other_trxs
     trxs' = S.difference new_trxs lpred_trxs
 
