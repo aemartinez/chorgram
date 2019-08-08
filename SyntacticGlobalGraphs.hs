@@ -10,8 +10,6 @@ module SyntacticGlobalGraphs where
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
---import Data.Char
---import Data.Ord as O
 import Misc
 import CFSM
 import DotStuff

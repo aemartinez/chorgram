@@ -35,11 +35,11 @@ pomsetsOf sloppy e gg =
        where lab = M.fromList [(e, ((s,r), Send, m)), (e+1, ((s,r), Receive, m) )]
    Par ggs     -> (S.singleton $ S.foldr pUnion (S.empty, S.empty, M.empty) pomsets, e'')
      where (pomsets, e'') = L.foldl aux (emptyPom e) ggs
-           aux = \(gs, e') g -> let (p,_) = pomsetsOf sloppy e' g in (S.union gs p, e'')
+           aux = \(gs, e') g -> let (p, e_) = pomsetsOf sloppy e' g in (S.union gs p, e_)
            pUnion = \(events, rel, lab) (events', rel', lab') -> (S.union events events', S.union rel rel', M.union lab lab')
    Bra ggs     -> (pomsets, e'')
      where (pomsets, e'') = L.foldl aux (emptyPom e) ggs
-           aux = \(gs, e') g -> let (p, _) = pomsetsOf sloppy e' g in (S.union p gs, e'')
+           aux = \(gs, e') g -> let (p, e_) = pomsetsOf sloppy e' g in (S.union p gs, e_)
    Seq ggs     -> case ggs of
                    []            -> emptyPom e
                    [g']          -> pomsetsOf sloppy e g'
@@ -59,20 +59,24 @@ pomsetsOf sloppy e gg =
 pomset2GML :: Pomset -> String
 pomset2GML (events, rel, lab) =
   -- returns the graphML representation of the pomset
-  let mlpref = "<?xml version='1.0' encoding='utf-8'?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n  <key attr.name=\"in\" attr.type=\"string\" for=\"node\" id=\"d0\" />\n  <key attr.name=\"out\" attr.type=\"string\" for=\"node\" id=\"d1\" />\n  <key attr.name=\"subject\" attr.type=\"string\" for=\"node\" id=\"d2\" />\n  <key attr.name=\"other\" attr.type=\"string\" for=\"node\" id=\"d3\" />\n  <graph edgedefault=\"directed\">\n"
-      mlsuff = "  </graph>\n</graphml>\n"
-      snodetag nid = "    <node id=\"" ++ nid ++ "\">\n"
-      datatag key v = "      <data key=\"" ++ key ++ "\">" ++ v ++ "</data>\n"
+  let mlpref =          "<?xml version='1.0' encoding='utf-8'?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n  <key attr.name=\"in\" attr.type=\"string\" for=\"node\" id=\"d0\" />\n  <key attr.name=\"out\" attr.type=\"string\" for=\"node\" id=\"d1\" />\n  <key attr.name=\"subject\" attr.type=\"string\" for=\"node\" id=\"d2\" />\n  <key attr.name=\"other\" attr.type=\"string\" for=\"node\" id=\"d3\" />\n  <graph edgedefault=\"directed\">\n"
+      snodetag nodeid = "    <node id=\"" ++ nodeid ++ "\">\n"
+      datatag key v =   "      <data key=\"" ++ key ++ "\">" ++ v ++ "</data>\n"
+      enodetag =        "    </node>\n"
       edgetab src tgt = "    <edge source=\"" ++ src ++ "\" target=\"" ++ tgt ++ "\" />\n"
-      enodetag = "    </node>\n"
+      mlsuff =          "  </graph>\n</graphml>\n"
+      (inkey, outkey, subjkey, othkey) = ("d0", "d1", "d2", "d3") 
       nodeGL e = (snodetag $ show e) ++ labGL e ++ enodetag
       edgeGL (e,e') = edgetab (show e) (show e')
       labGL e = case M.lookup e lab of
-                  Just ((s,r), Receive, m) -> datatag "d2" (r) ++ datatag "d3" (s) ++ datatag "d0" (m)
-                  Just ((s,r), Send,    m) -> datatag "d2" (s) ++ datatag "d3" (r) ++ datatag "d1" (m)
-                  Just ((s,_), Tau, _)       -> datatag "d2" (s)
+                  Just ((s,r), Receive, m) -> (datatag subjkey r) ++ (datatag othkey s) ++ (datatag inkey m)
+                  Just ((s,r), Send,    m) -> (datatag subjkey s) ++ (datatag othkey r) ++ (datatag outkey m)
+                  Just ((s,_), Tau, _)     -> (datatag subjkey s)
                   _                        -> error (msgFormat SGG "Unknown action: " ++ (show (M.lookup e lab)))
   in mlpref ++ (L.foldr (++) "" (S.map nodeGL events)) ++ (L.foldr (++) "" (S.map edgeGL rel)) ++ mlsuff
+
+
+
 
   
 --------------------- HyperGraphs-based semantics ---------------------
