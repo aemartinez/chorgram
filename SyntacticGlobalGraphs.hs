@@ -436,7 +436,7 @@ gg2dot gg name nodeSize =
 labelOf :: GG -> DotString
 labelOf gg = case gg of
               Emp         -> sourceV
-              Act (s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]"
+              Act (s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]\n"
               Par _       -> forkV
               Bra _       -> branchV
               Seq _       -> ""

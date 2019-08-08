@@ -17,6 +17,69 @@ import CFSM
 import DotStuff
 import Data.Map.Strict as M
 
+--------------------- Pomset semantics ---------------------
+
+type Event = Int
+type Lab   = Map Event Action
+type Pomset = (Set Event, Set (Event, Event), Lab)
+
+emptyPom e = (S.singleton (S.singleton e, S.empty, M.empty), e+1)
+
+pomsetsOf :: Bool -> Event -> GG -> (Set Pomset, Event)
+pomsetsOf sloppy e gg =
+-- For the moment ignores 'sloopy' and ignore loops; assumes that gg is well-formed; returns the set of pomsets [[gg]]  
+  case gg of    -- Note: no longer normalisation and factorisation...factorise $ normGG gg
+   Emp         -> emptyPom e
+   Act (s,r) m -> (S.fromList [ (S.fromList [e, e+1], (S.singleton (e,e+1)), lab )], e+2)
+       where lab = M.fromList [(e, ((s,r), Send, m)), (e+1, ((s,r), Receive, m) )]
+   Par ggs     -> (S.singleton $ S.foldr pUnion (S.empty, S.empty, M.empty) pomsets, e'')
+     where (pomsets, e'') = L.foldl aux (emptyPom e) ggs
+           aux = \(gs, e') g -> let (p,e'') = pomsetsOf sloppy e' g in (S.union gs p, e'')
+           pUnion = \(events, rel, lab) (events', rel', lab') -> (S.union events events', S.union rel rel', M.union lab lab')
+   Bra ggs     -> (pomsets, e'')
+     where (pomsets, e'') = L.foldl aux (emptyPom e) ggs
+           aux = \(gs, e') g -> let (p, e'') = pomsetsOf sloppy e' g in (S.union p gs, e'')
+   Seq ggs     -> case ggs of
+                   []            -> emptyPom e
+                   [g']          -> pomsetsOf sloppy e g'
+                   g':g'':ggs' -> (S.map pseq (sprod (S.map pseq (sprod p' p'')) p'''), e''')
+                     where (p', e') = pomsetsOf sloppy e g'
+                           (p'', e'') = pomsetsOf sloppy e' g''
+                           (p''', e''') = pomsetsOf sloppy e'' (Seq ggs')
+                           pseq (p@(events, rel, lab), p'@(events', rel', lab')) = (S.union events events', S.union (seqrel p p') (S.union rel rel'), M.union lab lab')
+                           sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
+                           seqrel (events, _, lab) (events', _, lab') =
+                             S.filter (\(e,e') -> case (M.lookup e lab, M.lookup e' lab') of
+                                                    (Just x, Just y) -> subjectOf x == subjectOf y
+                                                    _                -> False
+                                      ) (sprod events events')
+   Rep gg' p -> pomsetsOf sloppy e gg'
+   _ -> emptyPom e
+
+
+pomset2GML :: Pomset -> String
+pomset2GML (events, rel, lab) =
+  -- returns the graphML representation of the pomset
+  let mlpref = "<?xml version='1.0' encoding='utf-8'?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n  <key attr.name=\"in\" attr.type=\"string\" for=\"node\" id=\"d0\" />\n  <key attr.name=\"out\" attr.type=\"string\" for=\"node\" id=\"d1\" />\n  <key attr.name=\"subject\" attr.type=\"string\" for=\"node\" id=\"d2\" />\n  <key attr.name=\"other\" attr.type=\"string\" for=\"node\" id=\"d3\" />\n  <graph edgedefault=\"directed\">\n"
+      mlsuff = "  </graph>\n</graphml>\n"
+      snodetag id = "    <node id=\"" ++ id ++ "\">\n"
+      datatag key v = "      <data key=\"" ++ key ++ "\">" ++ v ++ "</data>\n"
+      edgetab src tgt = "    <edge source=\"" ++ src ++ "\" target=\"" ++ tgt ++ "\" />\n"
+      enodetag = "    </node>\n"
+      nodeGL e = (snodetag $ show e) ++ labGL e ++ enodetag
+      edgeGL (e,e') = edgetab (show e) (show e')
+      labGL e = case M.lookup e lab of
+                  Just ((s,r), Receive, m) -> datatag "d0" (m) ++ datatag "d2" (r) ++ datatag "d3" (s)
+                  Just ((s,r), Send,    m) -> datatag "d1" (m) ++ datatag "d2" (s) ++ datatag "d3" (s)
+                  Just ((s,_), _, _)       -> datatag "d2" (s)
+                  _                        -> error (msgFormat SGG "Unknown action: " ++ (show (M.lookup e lab)))
+  in mlpref ++ (L.foldr (++) "" (S.map nodeGL events)) ++ (L.foldr (++) "" (S.map edgeGL rel)) ++ mlsuff
+
+  
+--------------------- HyperGraphs-based semantics ---------------------
+----------------------------- to be revised ---------------------------
+
+
 -- TODO: 
 
 --

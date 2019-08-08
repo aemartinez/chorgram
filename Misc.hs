@@ -15,7 +15,7 @@ type Message             = String
 type Edge vertex label = (vertex, label, vertex)
 type Graph vertex label = (Set vertex, vertex, Set label, Set(Edge vertex label))
 
-data Command = GMC | GG | SGG | GG2FSA | SYS | MIN | PROD | HGSEM
+data Command = GMC | GG | SGG | GG2FSA | GG2GML | SYS | MIN | PROD | HGSEM
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
 
 -- Some useful functions
@@ -193,6 +193,7 @@ usage cmd = "Usage: " ++ msg
                GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               GG2FSA-> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
@@ -205,6 +206,7 @@ msgFormat cmd msg =
               GG    -> "gg:\t"
               SGG   -> "sgg:\t"
               GG2FSA-> "gg2fsa:\t"
+              GG2GML-> "gg2gml:\t"
               SYS   -> "systemparser:\t"
               MIN   -> "minimise:\t"
               PROD  -> "cfsmprod:\t"
@@ -232,6 +234,7 @@ defaultFlags cmd = case cmd of
                      GG    -> M.fromList [("-d",dirpath), ("-v","")]
                      SGG   -> M.fromList [("-d",dirpath), ("-v","")]
                      GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
+                     GG2GML-> M.fromList [("-d",dirpath), ("-v","")]
                      SYS   -> M.fromList [("-d",dirpath), ("-v","")]
                      MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
                      PROD  -> M.fromList [("-d",dirpath), ("-v","")]
@@ -271,6 +274,11 @@ getFlags cmd args =
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GG2FSA -> case args of
+      []            -> defaultFlags(cmd)
+      "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
+      _             -> error $ usage(cmd)
+    GG2GML -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
