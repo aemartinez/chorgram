@@ -23,7 +23,7 @@ type Event = Int
 type Lab   = Map Event Action
 type Pomset = (Set Event, Set (Event, Event), Lab)
 
-emptyPom e = (S.singleton (S.singleton e, S.empty, M.empty), e+1)
+emptyPom e = (S.singleton (S.singleton e, S.empty, M.fromList [(e, (("?","?"), Tau, "?"))]), e+1)
 
 pomsetsOf :: Bool -> Event -> GG -> (Set Pomset, Event)
 pomsetsOf sloppy e gg =
@@ -69,9 +69,10 @@ pomset2GML (events, rel, lab) =
       nodeGL e = (snodetag $ show e) ++ labGL e ++ enodetag
       edgeGL (e,e') = edgetab (show e) (show e')
       labGL e = case M.lookup e lab of
-                  Just ((s,r), Receive, m) -> datatag "d0" (m) ++ datatag "d2" (r) ++ datatag "d3" (s)
-                  Just ((s,r), Send,    m) -> datatag "d1" (m) ++ datatag "d2" (s) ++ datatag "d3" (s)
+                  Just ((s,r), Receive, m) -> datatag "d2" (r) ++ datatag "d3" (s) ++ datatag "d0" (m)
+                  Just ((s,r), Send,    m) -> datatag "d2" (s) ++ datatag "d3" (s) ++ datatag "d1" (m)
                   Just ((s,_), _, _)       -> datatag "d2" (s)
+                  Just (_, Tau, _)         -> ""
                   _                        -> error (msgFormat SGG "Unknown action: " ++ (show (M.lookup e lab)))
   in mlpref ++ (L.foldr (++) "" (S.map nodeGL events)) ++ (L.foldr (++) "" (S.map edgeGL rel)) ++ mlsuff
 
