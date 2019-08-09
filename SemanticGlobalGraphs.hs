@@ -2,8 +2,9 @@
 --
 -- Author: Emilio Tuosto <emilio@le.ac.uk>
 --
--- This module would like to implement the semantics defined in
--- ICE16...but it does not do it yet
+-- This module implements the pomset semantics of JLAMP 17 (but for
+-- the well-formedness checking) and should eventually implement the
+-- HG semantics of ICE16 + JLAMP 17
 --
 
 module SemanticGlobalGraphs where
@@ -26,35 +27,41 @@ type Pomset = (Set Event, Set (Event, Event), Lab)
 emptyPom :: Event -> (Set Pomset, Event)
 emptyPom e = (S.singleton (S.singleton e, S.empty, M.fromList [(e, (("?","?"), Tau, "?"))]), e+1)
 
-pomsetsOf :: Bool -> Event -> GG -> (Set Pomset, Event)
-pomsetsOf sloppy e gg =
--- For the moment ignores 'sloopy' and ignore loops; assumes that gg is well-formed; returns the set of pomsets [[gg]]  
-  case gg of    -- Note: no longer normalisation and factorisation...factorise $ normGG gg
-   Emp         -> emptyPom e
-   Act (s,r) m -> (S.fromList [ (S.fromList [e, e+1], (S.singleton (e,e+1)), lab )], e+2)
-       where lab = M.fromList [(e, ((s,r), Send, m)), (e+1, ((s,r), Receive, m) )]
-   Par ggs     -> (S.singleton $ S.foldr pUnion (S.empty, S.empty, M.empty) pomsets, e'')
-     where (pomsets, e'') = L.foldl aux (emptyPom e) ggs
-           aux = \(gs, e') g -> let (p, e_) = pomsetsOf sloppy e' g in (S.union gs p, e_)
-           pUnion = \(events, rel, lab) (events', rel', lab') -> (S.union events events', S.union rel rel', M.union lab lab')
-   Bra ggs     -> (pomsets, e'')
-     where (pomsets, e'') = L.foldl aux (emptyPom e) ggs
-           aux = \(gs, e') g -> let (p, e_) = pomsetsOf sloppy e' g in (S.union p gs, e_)
-   Seq ggs     -> case ggs of
-                   []            -> emptyPom e
-                   [g']          -> pomsetsOf sloppy e g'
-                   g':g'':ggs' -> (S.map pseq (sprod (S.map pseq (sprod p' p'')) p'''), e''')
-                     where (p', e') = pomsetsOf sloppy e g'
-                           (p'', e'') = pomsetsOf sloppy e' g''
-                           (p''', e''') = pomsetsOf sloppy e'' (Seq ggs')
-                           pseq (pom@(events, rel, lab), pom'@(events', rel', lab')) = (S.union events events', S.union (seqrel pom pom') (S.union rel rel'), M.union lab lab')
-                           sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
-                           seqrel (events, _, lab) (events', _, lab') =
-                             S.filter (\(e1,e2) -> case (M.lookup e1 lab, M.lookup e2 lab') of
-                                                     (Just x, Just y) -> subjectOf x == subjectOf y
-                                                     _                -> False
-                                      ) (sprod events events')
-   Rep gg' _ -> pomsetsOf sloppy e gg'
+pomsetsOf :: GG -> Int -> Event -> (Set Pomset, Event)
+pomsetsOf gg iter e =
+  -- PRE: gg is well-formed
+  -- POST: returns the set of pomsets [[gg]] with n-unfolds of each loop for n = |iter|
+  --       (eventually) well-formedness is checked iff iter >= 0
+  -- e is the 'counter' of the events
+  let unfold g n = Seq (L.replicate (abs n) g)
+      -- TODO: uniform unfoldind for the moment. Eventually to generate random numbers between 0 and iter.
+  in
+    case gg of
+      Emp         -> emptyPom e
+      Act (s,r) m -> (S.fromList [ (S.fromList [e, e+1], (S.singleton (e,e+1)), lab )], e+2)
+        where lab = M.fromList [(e, ((s,r), Send, m)), (e+1, ((s,r), Receive, m) )]
+      Par ggs     -> (S.singleton $ S.foldr pUnion (S.empty, S.empty, M.empty) pomsets, e'')
+        where (pomsets, e'') = L.foldl aux (emptyPom e) ggs
+              aux = \(gs, e') g -> let (p, e_) = pomsetsOf g iter e' in (S.union gs p, e_)
+              pUnion = \(events, rel, lab) (events', rel', lab') -> (S.union events events', S.union rel rel', M.union lab lab')
+      Bra ggs     -> L.foldl aux (emptyPom e) ggs
+        where aux = \(gs, e') g -> let (p, e'') = pomsetsOf g iter e' in (S.union p gs, e'')
+      Seq ggs     ->
+        case ggs of
+          []            -> emptyPom e
+          [g']          -> pomsetsOf g' iter e
+          g':g'':ggs' -> (S.map pseq (sprod (S.map pseq (sprod p' p'')) p'''), e''')
+            where (p', e') = pomsetsOf g' iter e
+                  (p'', e'') = pomsetsOf g'' iter e'
+                  (p''', e''') = pomsetsOf (Seq ggs') iter e''
+                  pseq (pom@(events, rel, lab), pom'@(events', rel', lab')) = (S.union events events', S.union (seqrel pom pom') (S.union rel rel'), M.union lab lab')
+                  sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
+                  seqrel (events, _, lab) (events', _, lab') =
+                    S.filter (\(e1,e2) -> case (M.lookup e1 lab, M.lookup e2 lab') of
+                                            (Just x, Just y) -> subjectOf x == subjectOf y
+                                            _                -> False
+                             ) (sprod events events')
+      Rep gg' _ -> pomsetsOf (unfold gg' iter) iter e
 
 pomset2GML :: Pomset -> String
 pomset2GML (events, rel, lab) =
@@ -275,11 +282,11 @@ unionsHG (hg:hgs) = if (isJust hg) && (isJust hg') then unionHG hg hg' else Noth
   where hg' = unionsHG hgs
 
 semList :: Bool -> Mu -> [GG] -> P -> (Mu,[Maybe HG])
-semList sloppy mu ggs ptps = case ggs of
+semList iter mu ggs ptps = case ggs of
                        []        -> (mu,[])
                        (gg:ggs') -> (mu'', ([Just hg'] ++ rest))
-                           where ( mu', hg' )   = sem sloppy mu gg ptps
-                                 ( mu'', rest ) = semList sloppy mu' ggs' ptps
+                           where ( mu', hg' )   = sem iter mu gg ptps
+                                 ( mu'', rest ) = semList iter mu' ggs' ptps
 
 --
 -- The semantic function [[_]] of ICE16; it is assumed that some
@@ -289,7 +296,7 @@ semList sloppy mu ggs ptps = case ggs of
 -- this is the case for iteration)
 --
 sem :: Bool -> Mu -> GG -> P -> (Mu, HG)
-sem sloppy mu gg ptps =
+sem iter mu gg ptps =
   case gg of    -- Note: no longer normalisation and factorisation...factorise $ normGG gg
    Emp         -> ( mu, emptyHG )
    Act (s,r) m -> ( i, ( rel, S.singleton e, S.singleton e', rel, rel ) )
@@ -298,7 +305,7 @@ sem sloppy mu gg ptps =
              e'  = ( i, Just ( ( s, r ), Receive, m ) )
              rel = S.singleton ( S.singleton e, S.singleton e' )
    Par ggs     -> (i, hgu)
-     where ( mu', l ) = semList sloppy mu ggs ptps
+     where ( mu', l ) = semList iter mu ggs ptps
            i          = 1 + mu'
            hgu_       = unionsHG l
            (e1,e2)    = ((S.singleton (i,Nothing), minOf $ fromJust hgu_), (maxOf $ fromJust hgu_, S.singleton ((-i), Nothing)))
@@ -311,10 +318,10 @@ sem sloppy mu gg ptps =
                              )
                         else error (msgFormat SGG "Something wrong in a fork: " ++ (show (Par ggs)))
    Bra ggs     -> (i, fromJust hg')
-     where ( mu', l )  = semList sloppy mu (S.toList ggs) ptps
+     where ( mu', l )  = semList iter mu (S.toList ggs) ptps
            i   = 1 + mu'
            hgu = unionsHG l
-           hg' = if sloppy || (wb ggs && isJust hgu)
+           hg' = if iter || (wb ggs && isJust hgu)
                  then unionHG hgu
                       (Just ( S.fromList $ L.concat $ L.map aux l, e, e', fstOf $ fromJust hgu, lstOf $ fromJust hgu ))
                  else error (msgFormat SGG "Violation of well-branchedness: " ++ show (Bra ggs))
@@ -323,17 +330,17 @@ sem sloppy mu gg ptps =
            aux = \x -> if isJust x then let x' = fromJust x in [(e, minOf x')] ++ [(maxOf x', e')] else error (msgFormat SGG "ERROR ...")
    Seq ggs     -> case ggs of
                    []            -> ( mu, emptyHG )
-                   [g']          -> sem sloppy mu g' ptps
-                   gg':gg'':ggs' -> if sloppy || (ws pg pg')
+                   [g']          -> sem iter mu g' ptps
+                   gg':gg'':ggs' -> if iter || (ws pg pg')
                                     then hgs
                                     else error (msgFormat SGG "Violation of well-sequencedness: " ++ show (Seq ggs))
                      where hgs           = (mu'', (seqHG pg pg'))
-                           ( mu', pg )   = sem sloppy mu gg' ptps
-                           ( mu'', pg' ) = sem sloppy mu' (Seq (gg'':ggs')) ptps
+                           ( mu', pg )   = sem iter mu gg' ptps
+                           ( mu'', pg' ) = sem iter mu' (Seq (gg'':ggs')) ptps
    Rep gg' p -> ( mu', hgr )
      where ps                = ggptp S.empty gg'
-           ( mu', hgb )     = if sloppy || S.member p ps
-                              then sem sloppy mu gg' ptps
+           ( mu', hgb )     = if iter || S.member p ps
+                              then sem iter mu gg' ptps
                               else error (msgFormat SGG "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
            ( i, suf )       = ( 1+mu' , show i )
            ( eL, eE )       = (S.singleton (i, Just ( ( p , p ) , LoopSnd , lpref ++ suf )), S.singleton ((-i), Just ( ( p , p ) , LoopRcv , epref ++ suf )))

@@ -193,7 +193,7 @@ usage cmd = "Usage: " ++ msg
                GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               GG2FSA-> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               GG2GML-> "gg2gml [-d dirpath] [-l iter] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
                SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
@@ -234,7 +234,7 @@ defaultFlags cmd = case cmd of
                      GG    -> M.fromList [("-d",dirpath), ("-v","")]
                      SGG   -> M.fromList [("-d",dirpath), ("-v","")]
                      GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2GML-> M.fromList [("-d",dirpath), ("-v","")]
+                     GG2GML-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
                      SYS   -> M.fromList [("-d",dirpath), ("-v","")]
                      MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
                      PROD  -> M.fromList [("-d",dirpath), ("-v","")]
@@ -281,6 +281,7 @@ getFlags cmd args =
     GG2GML -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "-l":y:xs     -> M.insert "-l" y   (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
     SYS -> case args of
