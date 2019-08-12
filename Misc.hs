@@ -322,22 +322,24 @@ pClosure g lpred v =
           v':wl' -> if v' € visited
                     then aux res wl' visited
                     else aux res' wl'' (v':visited)
-            where vs'  = S.foldl S.union S.empty (S.map (\(q,_,q') -> if q == v' then (S.singleton q') else S.empty) ptrans)
+            where vs'  = S.foldl S.union S.empty
+                         (S.map (\(q,_,q') -> if q == v' then (S.singleton q') else S.empty) ptrans)
                   res' = S.union res vs'
                   wl'' = wl' ++ S.toList vs'
   in aux S.empty [v] []
 
 
 pRemoval :: Ord vertex => Ord label => Graph vertex label -> (label -> Bool) -> Graph vertex label
--- Generalisation of the epsilon-removal in NFA to p-removal for a predicate lpred on labels
-pRemoval g@(vs, v0, labels, trxs) lpred = (vs, v0, S.map glabel trxs', trxs')
+-- Generalisation of the epsilon-removal in NFA to p-removal for a
+-- predicate lpred on labels
+pRemoval g@(vs, v0, _, trxs) lpred = (vs, v0, S.map glabel trxs', trxs')
   where
-    -- TODO: computing vmap like this is quite inefficient and should be optimised
-    vmap = M.fromList $ L.zip (S.toList vs) (L.map (pClosure g lpred) (S.toList vs))
-    (lpred_trxs, other_trxs) = S.partition (\(_, l, _) -> lpred l) trxs
-    aux = \(s, l, t) -> S.map (\q -> (s, l, q)) (S.delete s (vmap!s))
-    new_trxs = S.unions $ S.toList $ S.map aux other_trxs
-    trxs' = S.difference new_trxs lpred_trxs
+    (_, other_trxs) = S.partition (\t -> (lpred $ glabel t)) trxs
+    aux (s, l, s') = case lpred l of
+                       True  -> S.fromList $ L.map (\(l', q) -> (s, l', q)) [(glabel t, gtarget t) | t <- (S.toList other_trxs), gsource t == s']
+                       False -> S.map (\q -> (s, l, q)) (S.delete s' (pClosure g lpred s'))
+    new_trxs = S.unions $ S.toList $ S.map aux trxs
+    trxs' = S.union other_trxs new_trxs
 
 
 reachableVertexes :: Ord vertex => Ord label => Graph vertex label -> vertex -> Set vertex

@@ -50,6 +50,9 @@ type Diamond = Set ( ( State, Action ), ( State, Action ) )
 cfsmsIds :: System -> [Ptp]
 cfsmsIds (_,ptps) = L.map snd (M.assocs ptps)
 
+isCommunication :: Action -> Bool
+isCommunication (_, d, _) = (d == Send) || (d == Receive)
+
 isTau :: Action -> Bool
 isTau (_, d, _) = (d == Tau)
 
@@ -349,6 +352,7 @@ parseFSA text = if L.length pairs == L.length outs &&
                "tau"   -> ( (ptps'!sbj, ptps'!sbj), Tau, msg )
                "break" -> ( (ptps'!sbj, ptps'!sbj), Break, msg )
                _   -> error ("Line " ++ show line ++ "unrecognised communication action " ++ d)
+
 
 printState :: State -> String -> String
 printState s sbj = sbj ++ (rmChars ['*','\"'] (show s))
