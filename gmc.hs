@@ -21,6 +21,7 @@ import PetrifyBridge
 import Control.Concurrent
 import Control.Monad
 import System.Environment
+import System.Directory
 import FSA
 
 projectionThread :: FilePath -> System -> TSb -> MVar Bool -> IO ()
@@ -77,6 +78,7 @@ main =  do progargs <- getArgs
                             _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
                let sigma (states, _, _, _) = M.fromList [((S.toList states)!!i, "q" ++ show i) | i <- range (S.size states)]
                let system = (if (M.member "-sn" flags) then (L.map (\cfsm -> (grenameVertex (sigma cfsm) cfsm)) sys') else sys', ptps)
+               createDirectoryIfMissing True dir
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (cfsmsIds system)) -- (L.map snd (M.assocs $ snd system)))
                let bufferSize =
                      read (flags ! "-b") :: Int
@@ -96,6 +98,7 @@ main =  do progargs <- getArgs
                     braprop <- newEmptyMVar
                     proj    <- newEmptyMVar
                     prnt    <- newEmptyMVar
+                    createDirectoryIfMissing True dir
                     _       <- forkIO $ representabilityThread system ts0 repbra
                     _       <- forkIO $ projectionThread (dir ++ basename) system ts0 proj
                     _       <- forkIO $ printingThread system ts0 (dir ++ basename) flines prnt

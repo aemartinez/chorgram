@@ -24,8 +24,8 @@ setDOT conf = M.fromList $ L.concat $ L.map (\l -> L.map (\p -> (T.unpack $ p!!0
 getDotConf :: IO(Map String DotString)
 getDotConf = do
   home <- getHomeDirectory
-  cc <- getConf (home </> ".chorgram.config")
-  getConf (cc!"dot")
+  cfg  <- getConf (home </> ".chorgram.config")
+  getConf (home </> cfg!"base" </> (cfg!"dot"))
 
 cpV :: DotString
 cpV = " [label=\"\", shape=point, width=0.15, height=0.15, color=darkorange, fillcolor=darkorange, style=filled]\n"
