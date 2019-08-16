@@ -8,10 +8,12 @@ module DotStuff where
 
 import Data.List as L
 import Data.Map.Strict as M
+import Misc
+import System.Directory
+import System.FilePath.Posix
 import qualified Data.Text as T
 
 type DotNode = Int
-type DotString = String
 
 dotCFG :: String
 dotCFG = "aux/dot.cfg"
@@ -19,13 +21,11 @@ dotCFG = "aux/dot.cfg"
 setDOT :: String -> Map String DotString
 setDOT conf = M.fromList $ L.concat $ L.map (\l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l]) (T.lines $ T.pack conf)
 
-
 getDotConf :: IO(Map String DotString)
 getDotConf = do
-             conf <- readFile dotCFG
-             let lines = T.lines $ T.pack conf
-             let aux   = \l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l | ((L.length $ T.unpack l) > 2) && (L.take 2 (T.unpack l) /= "--")]
-             return (M.fromList $ L.concat $ L.map aux lines)
+  home <- getHomeDirectory
+  cc <- getConf (home </> ".chorgram.config")
+  getConf (cc!"dot")
 
 cpV :: DotString
 cpV = " [label=\"\", shape=point, width=0.15, height=0.15, color=darkorange, fillcolor=darkorange, style=filled]\n"

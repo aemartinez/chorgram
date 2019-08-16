@@ -8,7 +8,7 @@
 import Misc
 import GGparser
 import CFSM (cfsm2String)
-import FSA (minimise)
+import FSA (minimise,determinise)
 import Data.Set (toList)
 import Data.List as L
 import Data.Map.Strict as M
@@ -21,7 +21,7 @@ main = do progargs <- getArgs
             then error $ usage(GG2FSA)
             else do
               let ( sourcefile, flags ) =
-                    (last progargs, getFlags GG2FSA (take ((length progargs) - 1) progargs))
+                    (last progargs, getFlags GMC (take ((length progargs) - 1) progargs))
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
@@ -32,6 +32,7 @@ main = do progargs <- getArgs
               -- TODO: fix this String -> [CFSM] -> [[String]] -> System inefficiency 
               let cfsms =
                     L.map (minimise . fst) (L.map (\p -> proj False gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
+--                    L.map (determinise . fst) (L.map (\p -> proj False gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
               -- let sys =
               --       CFSM.parseFSA ((L.map (\(i,m) -> lines (CFSM.cfsm2String i m))) (L.zip ptps cfsms))
               writeToFile (dir ++ baseName ++ ".fsa") (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))

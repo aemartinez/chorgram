@@ -13,7 +13,6 @@ import Misc
 import DotStuff
 import Data.Maybe
 import Data.Map.Strict as M
-import Data.Foldable as F
 
 type Node          = [State]
 type KEvent        = (State, State, Ptp, Ptp, Dir, Message)
@@ -112,26 +111,26 @@ projectTS (nodes, initnode, _, trans) p = (states, q0, actions, finalTrans)
                                         in addTrans xs (S.union newarcs acc)
           addTrans [] acc             = acc
           mysucc n                    = S.map (\(_,y,z) -> (y,z)) (S.filter (\(x,_,_) -> x == n) tmpltrans)
-          epsilonReachable n          = S.fromList $ traverse [n] S.empty [n]
-          traverse (n:ns) visited acc = if S.member n visited  
-                                        then traverse ns visited acc
+          epsilonReachable n          = S.fromList $ visit [n] S.empty [n]
+          visit (n:ns) visited acc = if S.member n visited  
+                                        then visit ns visited acc
                                         else let sucnodes = S.toList $ S.map (\(_,s) -> s) $ S.filter (\(l,s) -> (isNothing $ l) && (not $ S.member s visited)) $ (mysucc n)
-                                             in traverse (ns++sucnodes) (S.insert n visited) (acc++sucnodes)
-          traverse [] _ acc           = acc
+                                             in visit (ns++sucnodes) (S.insert n visited) (acc++sucnodes)
+          visit [] _ acc           = acc
 
 
 firstActions :: TSb -> Configuration -> Ptp -> Set Action -> Set Action
-firstActions ts n0 p goal = traverse [n0] S.empty S.empty
+firstActions ts n0 p goal = visit [n0] S.empty S.empty
   where 
-    traverse [] _ current = current
-    traverse (n:ns) visited current
+    visit [] _ current = current
+    visit (n:ns) visited current
       | goal == current = current
       | otherwise = if S.member n visited 
-                    then traverse ns visited current 
+                    then visit ns visited current 
                     else let pairs   = S.map (\(_,y,z) -> (y,z)) (deriv n ts)
                              actions = S.map (\(Just e) -> e) $ S.filter isJust $ S.map (\(e, _) -> (project e p)) pairs
                              todo    = S.map (\(_,y) -> y) $ S.filter (\(x,_) -> isNothing x ) $ S.map (\(e, n') -> ((project e p), n')) pairs
-                         in traverse (ns++(S.toList todo)) (S.insert n visited) (S.union current actions)
+                         in visit (ns++(S.toList todo)) (S.insert n visited) (S.union current actions)
 
 
 possibleActions :: System -> Ptp -> Configuration -> Set Action
@@ -145,15 +144,15 @@ independent (_,_,m1,m2,_,_) (_,_,m1',m2',_,_) = (m1 /= m1')  && (m1 /= m2') && (
 
 
 reachableNode :: TSb -> Configuration -> [Configuration]
-reachableNode ts@(confs, _, _, _) n0 = traverse (S.singleton n0) (S.singleton n0) [n0]
-  where traverse border visited acc =
+reachableNode ts@(confs, _, _, _) n0 = visit (S.singleton n0) (S.singleton n0) [n0]
+  where visit border visited acc =
             if (S.null border) || (visited == confs)
             then acc -- error $ (show n0)++"\n\n"++(show  acc)
             else
                 let newborder = S.fold S.union S.empty $
                                 S.map (S.filter (\ y -> not $ S.member y visited) . succConfs ts) border
                 in
-                  traverse newborder (S.union visited newborder) (acc++(S.toList newborder))
+                  visit newborder (S.union visited newborder) (acc++(S.toList newborder))
 
 --
 -- Relations on KEvents
@@ -393,6 +392,7 @@ flagAction _ pattern =
                    Tau     -> ":"
                    LoopSnd -> "!"
                    LoopRcv -> "?"
+                   Break   -> "%"
             w  = words pattern
         in if (L.length w < 4)
              then False
@@ -402,8 +402,9 @@ flagAction _ pattern =
 -- PRE:  .dot.cfg must be a file of lines of at least 2 words; only the first two words are considered
 ts2file :: FilePath -> String -> Int -> System -> TSb -> (Map String String) -> [Cause Configuration KEvent] -> [Cause State KEvent] -> IO()
 ts2file destfile sourcefile k sys ts@(confs, q0, _, trans) flags repbra _ = do
-  conf <- readFile dotCFG
-  let flines     = setDOT conf ---M.fromList $ L.concat $ L.map (\l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l]) (T.lines $ T.pack conf)
+--  conf <- readFile $ getDotConf
+  flines <- getDotConf
+  ---setDOT conf ---M.fromList $ L.concat $ L.map (\l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l]) (T.lines $ T.pack conf)
   -- let qsep       = flines!qsep
   -- let bsep       = flines!bsep
   -- let statesep   = flines!statesep

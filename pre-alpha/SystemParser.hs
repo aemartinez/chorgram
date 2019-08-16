@@ -480,9 +480,6 @@ cfsmLoop m@(states, q0, acts, trxs) =
   (S.filter (\q -> not(isTerminal q m)) states, q0, acts, S.map aux trxs)
     where aux (q,act,q') = (q,act, if isTerminal q' m then q0 else q')
 
-myErr :: String -> a
-myErr err = error ("sysparser: ERROR - " ++ err)
-
 parseSystem :: String -> String -> System
 parseSystem ext txt =
   -- if 'ext' is a valid extension (.fsa, .sys, .cms), returns the parsing of txt as a system of CFSMs 
@@ -492,6 +489,9 @@ parseSystem ext txt =
     ".cms" -> (sysgrammar . lexer) txt
     ""     -> parseFSA (Prelude.map (\x -> words x) (lines txt))
     _      -> error ("unknown extension " ++ ext)
+
+myErr :: String -> a
+myErr err = error ("sysparser: ERROR - " ++ err)
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "<built-in>" #-}

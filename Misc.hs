@@ -10,6 +10,7 @@ import Data.List as L
 import Data.Set as S
 import Data.Map.Strict as M
 import System.FilePath.Posix
+import qualified Data.Text as T
 
 type Message             = String
 type Edge vertex label = (vertex, label, vertex)
@@ -171,7 +172,7 @@ mkSep l sep =
     s:l' -> s ++ sep ++ (mkSep l' sep)
 
 setFileNames :: String -> Map String String -> (String, String, String, String)
-setFileNames f flags = (dir, dir ++ baseFile, baseFile , takeExtension f)
+setFileNames f flags = (dir, dir ++ baseFile, baseFile, takeExtension f)
   where baseFile = takeBaseName f
         dir      = let d = flags!"-d" in
                     case d of
@@ -189,7 +190,7 @@ usage :: Command -> String
 -- Message on how to use a command
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
-               GMC   -> "gmc [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
+               GMC   -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ~/.chorgram.config \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
                GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
@@ -222,6 +223,7 @@ defaultFlags :: Command -> Map String String
 -- The default argument of each command
 defaultFlags cmd = case cmd of
                      GMC   -> M.fromList [("-d",dirpath),
+                                          ("-c", "~/.chorgram.config"),
                                           ("-v",""),
                                           ("-m","0"),   -- multiplicity **deprecated**
                                           ("-ts",""),
@@ -246,6 +248,7 @@ getFlags cmd args =
   case cmd of
     GMC -> case args of
       []                 -> defaultFlags(cmd)
+      "-c":y:xs          -> M.insert "-c"  y      (getFlags cmd xs)
       "-l":xs            -> M.insert "-l" "no"    (getFlags cmd xs)
       "-rg":xs           -> M.insert "-rg" "rg"   (getFlags cmd xs) -- for reversible ggs TODO: add to manual
       "-ts":xs           -> M.insert "-ts" "ts"   (getFlags cmd xs)
@@ -663,3 +666,11 @@ epref :: String
 newNode :: (Int -> Bool) -> Int -> Int -> Int
 newNode excluded n j = if (excluded n) then n else (if n > 0 then n + j else n - j)
 
+type DotString = String
+
+getConf :: String -> IO(Map String DotString)
+getConf f = do
+  conf <- readFile f
+  let aux   = \l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l | ((L.length $ T.unpack l) > 2) && (L.take 2 (T.unpack l) /= "--")]
+  let lns = T.lines $ T.pack conf
+  return (M.fromList $ L.concat $ L.map aux lns)

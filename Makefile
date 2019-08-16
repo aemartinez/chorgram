@@ -2,10 +2,12 @@ ccmd = ghc -threaded --make
 title = chorgram
 debug = -auto-all -caf-all -rtsopts
 ccdebug = $(ccmd) -Wall -threaded --make $(debug)
-cfgfile = config.cfg
 profiling = -prof -auto-all -caf-all
+cfgdir = ~/
+cfgfile = .chorgram.config
 hkcpath := $(shell find . -type d -name 'hknt*')
 petripath := $(shell find . -type d -name petrify)/bin
+experimentsdir= "~/Dropbox/chorgram_experiments/"
 os := $(shell uname -s)
 gitmsg = "checkpoint"
 
@@ -56,12 +58,15 @@ parser:
 	happy -a -i  SystemGrammar.y -o SystemParser.hs && $(ccmd) SystemParser.hs
 
 config:
-	@echo "hkc\t"$(hkcpath) > /tmp/$(cfgfile)
+	@echo "experiments\t"$(experimentsdir) > /tmp/$(cfgfile)
+	@echo "hkc\t"$(hkcpath) >> /tmp/$(cfgfile)
 	@echo "petry\t"$(petripath) >> /tmp/$(cfgfile)
 	@echo "gmc\t./gmc" >> /tmp/$(cfgfile)
 	@echo "bg\t./BuildGlobal" >> /tmp/$(cfgfile)
-	@mv /tmp/$(cfgfile) $(cfgfile)
-	$(info >>> config file for the python script created.)
+	@echo "base\t~/choreography/chorgram/" >> /tmp/$(cfgfile)
+	@echo "dot\taux/dot.cfg" >> /tmp/$(cfgfile)
+	@mv /tmp/$(cfgfile) $(cfgdir)$(cfgfile)
+	$(info >>> config file created $(cfgdir)$(cfgfile))
 
 hp:
 	@if test -e $(hkcpath)/hkc; then echo ">>> The binary of hkc is already there. Nothing to be done."; else make -C $(hkcpath); echo ">>> hkc compiled"; fi
@@ -80,3 +85,7 @@ e:
 git:
 	git pull
 	git commit -am $(gitmsg) && git push
+
+alpha:
+	rm -f pre-alpha/*
+	cp Makefile *.hs *.y *.py pre-alpha

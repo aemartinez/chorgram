@@ -465,31 +465,6 @@ data Token =
   | TokenCurlyc
         deriving (Show)
 
--- instance Show Token where
---    show t = showToken t
-
--- showToken t = case t of
---                 TokenStr s -> s
---                 TokenPtps p -> show p
---                 TokenEmp -> "(o)"
---                 TokenArr -> "->"
---                 TokenPar -> "|"
---                 TokenBra -> "+"
---                 TokenSel -> "sel"
---                 TokenSel -> "..."
---                 TokenSeq -> ";"
---                 TokenUnt -> "@"
---                 TokenSec -> ":"
---                 TokenBro -> "("
---                 TokenBrc -> ")"
---                 TokenCom -> ","
---                 TokenMAr -> "=>"
---                 TokenErr err -> err
---                 TokenCurlyo -> "{"
---                 TokenCurlyc -> "}"
-  
--- lexer :: String -> [Token]
--- lexer :: (Token -> Err a) -> Err a
 lexer s = case s of
     []                             -> []
     '(':'o':')':r                  -> TokenEmp : lexer r
@@ -534,35 +509,7 @@ parseError err = case err of
                     _            -> myErr (show err)
 
 
--- parseError :: [Token] -> Err a
--- parseError tokens = failErr "Parse error"
-
---
--- Starting to plagiarise from Happy's user manual
--- (E has been renamed with Err beause it clashed with
--- the type of events)
---
-data Err a = Ok a | Failed String
-
-thenErr :: Err a -> (a -> Err b) -> Err b
-m `thenErr` k = case m of
-       		Ok a     -> k a
-		Failed e -> Failed e
-
-returnErr :: a -> Err a
-returnErr a = Ok a
-
-failErr :: String -> Err a
-failErr err = Failed err
-
-catchErr :: Err a -> (String -> Err a) -> Err a
-catchErr m k = case m of
-      		Ok a     -> Ok a
-		Failed e -> k e
-
 ptpsBranches :: [((GG, Set Ptp), ReversionGuard)] -> Set Ptp
--- ptpsBranches [] = S.empty
--- ptpsBranches ((_, p),_):r = S.union p (ptpsBranches r)
 ptpsBranches = \l -> L.foldr S.union S.empty (L.map (\x -> snd $ fst x) l)
 
 
@@ -572,19 +519,6 @@ checkGuard g m = let tmp = [ x | x <- M.keys m, not (S.member x (snd g)) ] in
                  then (g, m)
                  else myErr ("Unknown participant(s): " ++ (show tmp))
 
-
--- type LineNumber = Int
-
--- data ParseResult a = Ok a | Failed String
--- type P a = String -> ParseResult a
-
-
--- getLineNo :: P LineNumber
--- getLineNo = \s l -> Ok l
-
---
--- Plagiarism done
---
 -- checkToken 'flattens', parallel, branching, and sequential composition
 checkToken :: Token -> (GG, Set Ptp) -> [GG]
 checkToken t (g,_) = case t of

@@ -37,13 +37,14 @@ flat :: Graph (Set State) Action -> CFSM
 flat (states, q0, labels, trxs) =
   (S.map flatSet states, flatSet q0, labels, S.map (\(q, l, q') -> (flatSet q, l, flatSet q')) trxs)
 
+  
 determinise :: CFSM -> CFSM
--- the subset construction on CFSMs
+-- the powerset construction on CFSMs
 -- PRE: the input has to be a tau-less machine
 -- POST: return the minimal machine equivalent to the input machine
 determinise m = flat (states, q0_, acts, trxs)
   where
-    m'@(_, q0, acts, _) = pRemoval m isTau
+    m'@(_, q0, acts, _) = pRemoval m (\x -> not (isCommunication x))
     q0_ = S.singleton q0
     (states, trxs) = aux (S.singleton q0_) S.empty (S.singleton q0_, S.empty)
     aux todo done current =
@@ -75,7 +76,7 @@ determinise m = flat (states, q0_, acts, trxs)
                     (newqs, newtrxs) = (S.fromList $ M.elems rset, strxs)
                 in aux (S.delete s (S.union todo newqs)) (S.insert s done) (S.union newqs (fst current), S.union newtrxs (snd current))
 
-        
+
 minimise :: CFSM -> CFSM
 -- Variant of the partition refinement algorithm were all states are final
 -- PRE: the input has to be a deterministic machine
@@ -103,5 +104,6 @@ minimise m = flat (S.fromList states, q0, acts, trs')
           in if currentStates == nextStates
              then currentStates
              else getPartitions nextStates
+
 
 

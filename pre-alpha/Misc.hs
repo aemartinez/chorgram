@@ -10,6 +10,7 @@ import Data.List as L
 import Data.Set as S
 import Data.Map.Strict as M
 import System.FilePath.Posix
+import qualified Data.Text as T
 
 type Message             = String
 type Edge vertex label = (vertex, label, vertex)
@@ -171,7 +172,7 @@ mkSep l sep =
     s:l' -> s ++ sep ++ (mkSep l' sep)
 
 setFileNames :: String -> Map String String -> (String, String, String, String)
-setFileNames f flags = (dir, dir ++ baseFile, baseFile , takeExtension f)
+setFileNames f flags = (dir, dir ++ baseFile, baseFile, takeExtension f)
   where baseFile = takeBaseName f
         dir      = let d = flags!"-d" in
                     case d of
@@ -189,11 +190,11 @@ usage :: Command -> String
 -- Message on how to use a command
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
-               GMC   -> "gmc [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
+               GMC   -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ~/.chorgram.config \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
                GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               GG2FSA-> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               GG2GML-> "gg2gml [-d dirpath] [-l iter] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
                SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
@@ -222,6 +223,7 @@ defaultFlags :: Command -> Map String String
 -- The default argument of each command
 defaultFlags cmd = case cmd of
                      GMC   -> M.fromList [("-d",dirpath),
+                                          ("-c", "~/.chorgram.config"),
                                           ("-v",""),
                                           ("-m","0"),   -- multiplicity **deprecated**
                                           ("-ts",""),
@@ -234,7 +236,7 @@ defaultFlags cmd = case cmd of
                      GG    -> M.fromList [("-d",dirpath), ("-v","")]
                      SGG   -> M.fromList [("-d",dirpath), ("-v","")]
                      GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2GML-> M.fromList [("-d",dirpath), ("-v","")]
+                     GG2GML-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
                      SYS   -> M.fromList [("-d",dirpath), ("-v","")]
                      MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
                      PROD  -> M.fromList [("-d",dirpath), ("-v","")]
@@ -246,6 +248,7 @@ getFlags cmd args =
   case cmd of
     GMC -> case args of
       []                 -> defaultFlags(cmd)
+      "-c":y:xs          -> M.insert "-c"  y      (getFlags cmd xs)
       "-l":xs            -> M.insert "-l" "no"    (getFlags cmd xs)
       "-rg":xs           -> M.insert "-rg" "rg"   (getFlags cmd xs) -- for reversible ggs TODO: add to manual
       "-ts":xs           -> M.insert "-ts" "ts"   (getFlags cmd xs)
@@ -281,6 +284,7 @@ getFlags cmd args =
     GG2GML -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "-l":y:xs     -> M.insert "-l" y   (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
     SYS -> case args of
@@ -321,22 +325,24 @@ pClosure g lpred v =
           v':wl' -> if v' € visited
                     then aux res wl' visited
                     else aux res' wl'' (v':visited)
-            where vs'  = S.foldl S.union S.empty (S.map (\(q,_,q') -> if q == v' then (S.singleton q') else S.empty) ptrans)
+            where vs'  = S.foldl S.union S.empty
+                         (S.map (\(q,_,q') -> if q == v' then (S.singleton q') else S.empty) ptrans)
                   res' = S.union res vs'
                   wl'' = wl' ++ S.toList vs'
   in aux S.empty [v] []
 
 
 pRemoval :: Ord vertex => Ord label => Graph vertex label -> (label -> Bool) -> Graph vertex label
--- Generalisation of the epsilon-removal in NFA to p-removal for a predicate lpred on labels
-pRemoval g@(vs, v0, labels, trxs) lpred = (vs, v0, S.map glabel trxs', trxs')
+-- Generalisation of the epsilon-removal in NFA to p-removal for a
+-- predicate lpred on labels
+pRemoval g@(vs, v0, _, trxs) lpred = (vs, v0, S.map glabel trxs', trxs')
   where
-    -- TODO: computing vmap like this is quite inefficient and should be optimised
-    vmap = M.fromList $ L.zip (S.toList vs) (L.map (pClosure g lpred) (S.toList vs))
-    (lpred_trxs, other_trxs) = S.partition (\(_, l, _) -> lpred l) trxs
-    aux = \(s, l, t) -> S.map (\q -> (s, l, q)) (S.delete s (vmap!s))
-    new_trxs = S.unions $ S.toList $ S.map aux other_trxs
-    trxs' = S.difference new_trxs lpred_trxs
+    (_, other_trxs) = S.partition (\t -> (lpred $ glabel t)) trxs
+    aux (s, l, s') = case lpred l of
+                       True  -> S.fromList $ L.map (\(l', q) -> (s, l', q)) [(glabel t, gtarget t) | t <- (S.toList other_trxs), gsource t == s']
+                       False -> S.map (\q -> (s, l, q)) (S.delete s' (pClosure g lpred s'))
+    new_trxs = S.unions $ S.toList $ S.map aux trxs
+    trxs' = S.union other_trxs new_trxs
 
 
 reachableVertexes :: Ord vertex => Ord label => Graph vertex label -> vertex -> Set vertex
@@ -660,3 +666,11 @@ epref :: String
 newNode :: (Int -> Bool) -> Int -> Int -> Int
 newNode excluded n j = if (excluded n) then n else (if n > 0 then n + j else n - j)
 
+type DotString = String
+
+getConf :: String -> IO(Map String DotString)
+getConf f = do
+  conf <- readFile f
+  let aux   = \l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l | ((L.length $ T.unpack l) > 2) && (L.take 2 (T.unpack l) /= "--")]
+  let lns = T.lines $ T.pack conf
+  return (M.fromList $ L.concat $ L.map aux lns)

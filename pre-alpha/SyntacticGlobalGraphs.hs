@@ -19,6 +19,7 @@ import DotStuff
 -- (uniquely) during parsing
 data GG = Emp
         | Act Channel Message
+        | LAct Channel Message
         | Par [GG]
         | Bra (Set GG)
         | Seq [GG]
@@ -102,6 +103,7 @@ factorise :: GG -> GG
 factorise gg = case gg of
                 Emp       -> Emp
                 Act _ _   -> gg
+                LAct _ _  -> gg
                 Par ggs   -> Par (L.map factorise ggs)
                 Bra ggs   -> if S.null ggs
                              then Emp
@@ -167,6 +169,9 @@ wb ggs =
                         act@(Act (s,_) _) -> if s == p
                                              then (S.singleton act, S.empty)
                                              else (S.empty, S.singleton act)
+                        act@(LAct (s,_) _)-> if s == p
+                                             then (S.singleton act, S.empty)
+                                             else (S.empty, S.singleton act)
                         Par ggs''         -> L.foldr aux (S.empty, S.empty) ggs''
                             where aux gg_ (fA,fP) = let (fA',fP') = firstActs p gg_ in
                                                     (S.union fA fA', S.union fP fP')
@@ -197,106 +202,38 @@ wb ggs =
 
 sevAt :: Ptp -> GG -> GG
 sevAt p gg = case gg of
-               Emp               -> Emp
-               act@(Act (s,r) _) -> if (s==p || r==p) then act else Emp
-               Par ggs           -> Par (L.map (sevAt p) ggs)
-               Bra ggs           -> Bra (S.map (sevAt p) ggs)
-               Seq ggs           -> Seq (L.map (sevAt p) ggs)
-               Rep gg' p'        -> Rep (sevAt p gg') p'
+               Emp                -> Emp
+               act@(Act (s,r) _)  -> if (s==p || r==p) then act else Emp
+               act@(LAct (s,r) _) -> if (s==p || r==p) then act else Emp
+               Par ggs            -> Par (L.map (sevAt p) ggs)
+               Bra ggs            -> Bra (S.map (sevAt p) ggs)
+               Seq ggs            -> Seq (L.map (sevAt p) ggs)
+               Rep gg' p'         -> Rep (sevAt p gg') p'
                       
 ggptp :: Set Ptp -> GG -> Set Ptp
 --
 -- ggptp computes the set of participants of a global graph
 --
 ggptp ptps g = case g of
-                Emp         -> ptps
-                Act (s,r) _ -> S.union ptps (S.fromList [s,r])
-                Par gs      -> S.union ptps (S.unions $ L.map (ggptp S.empty) gs)
-                Bra gs      -> S.union ptps (S.unions $ S.toList (S.map (ggptp S.empty) gs))
-                Seq gs      -> S.union ptps (S.unions (L.map (ggptp S.empty) gs))
-                Rep g' p    -> S.union ptps (ggptp (S.singleton p) g')
-{-
-proj :: GG -> P -> Ptp -> State -> State -> Int -> (CFSM, State)
---
--- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
--- POST: the non-minimised projection of GG wrt p and a unique exiting state (it must always exist!)
---       n is a counter for fresh state generation
---       q0 and qe correspond to the entry and exit state, respectively
---
-proj gg pmap p q0 qe n =
-  let inverse = M.fromList $ (L.zip (M.elems pmap) (M.keys pmap))
-      suf  = show n
-      taul = ((show $ inverse!p, show $ inverse!p), Break, "")
-      dm   = ( (S.fromList [q0, qe ++ "Break"], q0, S.singleton taul, tautrx q0 (qe ++ "Break")) , qe ++ "Break" )
-      tautrx q1 q2 = if q1==q2 then S.empty else S.singleton (q1, taul, q2)
-  in case gg of
-      Emp         -> dm
-      Act (s,r) m -> if (p/=s && p/=r)
-                     then dm
-                     else ( ((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0,c,qe))) , qe )
-        where c = if (p == s) then ((show $ inverse!p, show $ inverse!r), Send, m) else ((show $ inverse!s, show $ inverse!p), Receive, m)
-      Par ggs     -> ( replaceState (initialOf m) q0 ( S.union (S.singleton qe) (statesOf m ) ,
-                                                       initialOf m ,
-                                                       S.union (actionsOf m) (S.singleton taul) ,
-                                                       (transitionsOf m)
-                                                     )
-                      , qe )
-        where m   = replaceState qe' qe (cfsmProd $ L.map fst mps)
-              qe' = L.foldr stateProd "" (L.map snd mps)
-              mps = L.map (\g -> proj g pmap p q0 qe n) ggs
-      Bra ggs     -> ( replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs) , qe )
-        where (states, acts, trxs) = L.foldl
-                (\(x,y,z) m -> ( S.union x (statesOf m) ,
-                                 S.union y (actionsOf m) ,
-                                 S.union z (transitionsOf m) )
-                )
-                (S.singleton qe, S.singleton taul, S.empty)
-                ms
-              ggs'    = L.zip (S.toList ggs) [1..S.size ggs]
-              mps     = L.map (\(g,i) -> proj g pmap p (q0 ++ (show i)) qe n) ggs'
-              (ms, _) = (L.map fst mps, L.map snd mps)
-      Seq ggs     -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
-        where (_, qe', states, acts, trxs) =
-                L.foldl
-                  (\( i , qi , x , y , z ) g ->
-                    let ( m , qf' ) = proj g pmap p qi (qe ++ (show i)) n in
-                     (i + 1 ,
-                      qf' ,
-                      S.union x (statesOf m) ,
-                      S.union y (actionsOf m) ,
-                      S.union z (transitionsOf m)
-                     )
-                  )
-                  (0, q0, S.empty, S.empty, S.empty)
-                  ggs
-      Rep g p'    -> if (S.member p repptps) then ( ggrep , qe' ) else dm
-        where repptps        = ggptp S.empty g
-              ggrep          = ( S.unions [statesOf body, statesOf loop, statesOf exit] ,
-                                 initialOf body ,
-                                 S.unions [actionsOf body, actionsOf loop, actionsOf exit] ,
-                                 S.unions [transitionsOf body, transitionsOf loop, transitionsOf exit] )
-              ( body , q )   = proj g pmap p q0 (qe ++ suf) (n + 2)
-              ( loop' , ql ) = proj (helper (lpref ++ suf)) pmap p q (q0 ++ suf) (n + 2)
-              loop           = replaceState ql q0 loop'
-              ( exit , qe' ) = proj (helper (epref ++ suf)) pmap p q qe (n + 2)
-              helper s       = Par (L.map (\p'' -> Act (p',p'') s) (S.toList $ S.delete p' repptps))
-
--}
----- The following function should replace the previous one, eventually
-
-
+                Emp          -> ptps
+                Act (s,r) _  -> S.union ptps (S.fromList [s,r])
+                LAct (s,r) _ -> S.union ptps (S.fromList [s,r])
+                Par gs       -> S.union ptps (S.unions $ L.map (ggptp S.empty) gs)
+                Bra gs       -> S.union ptps (S.unions $ S.toList (S.map (ggptp S.empty) gs))
+                Seq gs       -> S.union ptps (S.unions (L.map (ggptp S.empty) gs))
+                Rep g' p     -> S.union ptps (ggptp (S.singleton p) g')
 
 proj :: Bool -> GG -> P -> Ptp -> State -> State -> Int -> (CFSM, State)
+proj loopFlag gg pmap p q0 qe n =
 --
 -- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
 -- POST: the non-minimised projection of GG wrt p and a unique exiting state (it must always exist!)
 --       n is a counter for fresh state generation
 --       q0 and qe correspond to the entry and exit state, respectively
 --
--- The first parameter is set to true when projecting loops
+-- Parameter 'loopFlag' is set to true when projecting loops
 -- and to false otherwise.
 --
-proj loopFlag gg pmap p q0 qe n =
   let inverse        = M.fromList $ (L.zip (M.elems pmap) (M.keys pmap))
       taul l         = ((show $ inverse!p, show $ inverse!p), l, "")
       tautrx q1 q2 l = S.singleton (q1, taul l, q2)
@@ -309,6 +246,12 @@ proj loopFlag gg pmap p q0 qe n =
         where c = if (p == s)
                   then ((show $ inverse!p, show $ inverse!r), Send, m)
                   else ((show $ inverse!s, show $ inverse!p), Receive, m)
+      LAct(s,r) m -> if (p/=s && p/=r)
+                     then dm qe Tau
+                     else (((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0, c, qe))), qe)
+        where c = if (p == s)
+                  then ((show $ inverse!p, show $ inverse!r), LoopSnd, m)
+                  else ((show $ inverse!s, show $ inverse!p), LoopRcv, m)
       Par ggs     -> (replaceState (initialOf m) q0 (S.union (S.singleton qe) (statesOf m),
                                                      initialOf m,
                                                      S.union (actionsOf m) (S.singleton $ taul Tau),
@@ -357,7 +300,7 @@ proj loopFlag gg pmap p q0 qe n =
               (loop', ql) = proj False (helper (lpref ++ suf)) pmap p q (q0 ++ suf) (n + 2)
               loop        = replaceState ql q0 loop'
               (exit, qe') = proj False (helper (epref ++ suf)) pmap p q qe (n + 2)
-              helper s    = Par (L.map (\p'' -> Act (p',p'') s) (S.toList $ S.delete p' bodyptps))
+              helper msg  = Par (L.map (\p'' -> LAct (p',p'') msg) (S.toList $ S.delete p' bodyptps))
 
 --
 -- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ ps are all the participants of gg
@@ -397,6 +340,7 @@ gg2dot gg name nodeSize =
                           in case gg_ of
                                Emp      -> (vs, as)
                                Act _ _  -> ((init vs) ++ [(i, labelOf gg_ )] ++ [sink], attach i i)
+                               LAct _ _ -> ((init vs) ++ [(i, labelOf gg_ )] ++ [sink], attach i i)
                                Par ggs  -> ((init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
                                    where (vs', as') = unionsPD forkV joinV notgate i (rename (\v -> not (notgate v)) i graphs)
                                          graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) ggs)
@@ -435,6 +379,7 @@ labelOf :: GG -> DotString
 labelOf gg = case gg of
               Emp         -> sourceV
               Act (s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]\n"
+              LAct(s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]\n"
               Par _       -> forkV
               Bra _       -> branchV
               Seq _       -> ""
