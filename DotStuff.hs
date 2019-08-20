@@ -15,12 +15,6 @@ import qualified Data.Text as T
 
 type DotNode = Int
 
-dotCFG :: String
-dotCFG = "aux/dot.cfg"
-
-setDOT :: String -> Map String DotString
-setDOT conf = M.fromList $ L.concat $ L.map (\l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l]) (T.lines $ T.pack conf)
-
 getDotConf :: IO(Map String DotString)
 getDotConf = do
   home <- getHomeDirectory

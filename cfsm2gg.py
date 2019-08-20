@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Authors: Julien Lange <j.lange@ic.ac.uk> and
 #          Emilio Tuosto <emilio@le.ac.uk>
@@ -18,12 +18,15 @@ from utils import *
 cmdname = "chorgram"
 
 # Tools to combine
-cfgfile = 'config.cfg'
+cfgfile = os.getenv("HOME") + os.sep + ".chorgram.config"
 with open(cfgfile) as f:
-    HKC   = ((f.readline()).split())[-1] + os.sep + "hkc" + os.uname()[0]
-    PETRY = ((f.readline()).split())[-1] + os.sep + "petrify" + os.uname()[0]
-    GMC   = ((f.readline()).split())[-1]
-    BG    = ((f.readline()).split())[-1]
+    lns = f.readlines()
+    cfg = dict(map(lambda x: x.split("\t"), lns))
+    HKC = cfg["hkc"][:-1] + os.sep + "hkc" + os.uname()[0]
+    PETRY = cfg["petrify"][:-1] + os.sep + "petrify" + os.uname()[0]
+    GMC   = cfg["gmc"][:-1]
+    BG    = cfg["bg"][:-1]
+    logfilename = os.getenv("HOME") + os.sep + cfg["base"][:-1] + os.sep + cfg["logfilename"][:-1]
 
 # Setting flags
 parser = argparse.ArgumentParser(description="chorgram: From communicating machines to graphical choreographies")
@@ -129,7 +132,6 @@ parser.add_argument("filename",
                     help = "Specify the path to file containing the CFSMs"
 )
 args = parser.parse_args()
-
 if args.hkc: HKC   = args.hkc
 if args.pn:  PETRY = args.pn
 if args.gmc: GMC   = args.gmc
@@ -163,11 +165,12 @@ starttime = time.time()
 debugMsg(args.debug, cmdname, "Execution Started on " + date, True)
 
 
-loginfo = [date, basename, args.filename]
-def logexperiment(str = ""):
-    logfilename = "experiments/experiments.csv"
+loginfo = [date, basename, GMC + str(args)]
+def logexperiment(loginfo, str = ""):
+    l = '\t'.join(loginfo + [str]) + '\n'
+    debugMsg(args.debug, cmdname, "Logging experiment " + l, False)
     logfile = open(logfilename, "a+")
-    logfile.write('\t'.join(loginfo + [str]) + '\n')
+    logfile.write(l)
 
 
 ############################### START HERE ###################################
@@ -194,6 +197,8 @@ try:
 except:
     debugMsg(args.debug, cmdname, GMC + " failed")
     loginfo = loginfo + ["gmc err"]
+    logexperiment(loginfo)
+    sys.exit("gmc err")
 
 with open(dir + '.machines') as f:
     machines = (f.readline()).split()
@@ -201,12 +206,12 @@ with open(dir + '.machines') as f:
 
 if machine_number < 2:
     debugMsg(args.debug, cmdname, "Less than 2 machines! Bye...",True)
-    logexperiment("< 2 machines")
-    sys.exit()
+    logexperiment(["< 2 machines"])
+    sys.exit("< 2 machines")
 
 if args.ts:
-    logexperiment("ts only")
-    sys.exit()
+    logexperiment(["ts only"])
+    sys.exit("ts only")
 else:
     debugMsg(args.debug, cmdname, "Checking projections...")
 
@@ -227,19 +232,21 @@ for i in range(machine_number):
     except:
         debugMsg(args.debug, cmdname, "Language equivalence check failed. Something wrong with " + HKC)
         loginfo = loginfo + ["hkc err"]
+        logexperiment(loginfo)
+        sys.exit("hkc err")
     stop = time.time()
     hkctime = hkctime + stop - start
     for line in cmd.stdout: spa = line    # read the last line produced by hkc
-    spa = line.split(': ')                # after ': ' on the last line of its output hkc returns the boolean
+    spa = line.decode('ASCII').split(': ')                # after ': ' on the last line of its output hkc returns the boolean
     hkc_boolean_position = 1              # position of the boolean returned by hkc after the split
-    print(spa)
     res = spa[hkc_boolean_position].split(',')[0]
-    tmpbool = tmpbool and (res == "true")
-    debugMsg(args.debug, cmdname, "Is machine " + str(i) + " equivalent to its projection? "+ res)
+    tmpbool = tmpbool and (res == "<<< true >>>")
+    debugMsg(args.debug, cmdname, "Machine " + str(i) + " is " + (" not " if not tmpbool else "") + "equivalent to its projection")
 
 txt = "Language-equivalence (Representability part (i))? " + str(tmpbool)
 debugMsg(args.debug, cmdname, txt, True)
 
+logexperiment(loginfo, "Lang. eq: " + str(tmpbool))
 
 ######################################## PETRIFY ###############################################
 
@@ -251,6 +258,8 @@ try:
 except:
     debugMsg(args.debug, cmdname, "Petrification failed. Something wrong with " + PETRY + ": " + " ".join(petricmd))
     loginfo = loginfo + ["petrify err"]
+    logexperiment(loginfo)
+    sys.exit("petrify err")
 stop = time.time()
 petritime = stop - start
 st_arrow, st_comma, st_colon,st_del = "AAA", "CCC", "COCO", "delPTP"
@@ -279,15 +288,14 @@ except:
     loginfo = loginfo + [BG + " err"]
     ggstarttime = time.time()
     endtime = time.time()
+    logexperiment(loginfo)
+    sys.exit(BG + " err")
 txt = "All done.\n\tTotal execution time: " +  str(endtime - starttime) +\
          "\n\t\tGMC check:\t\t\t" + str( gmctime - starttime) +\
          "\n\t\tHKC minimisation:\t\t" + str(hkctime) +\
          "\n\t\tPetrify:\t\t\t" + str(petritime) +\
          "\n\t\tGlobal graph generation:\t" + str(endtime - ggstarttime)
 debugMsg(args.debug, cmdname, txt, True)
-
-
-logexperiment("done.")
 
 
 ########################################## DOT #################################################
@@ -324,4 +332,6 @@ if args.nc and not args.debug:
         debugMsg(args.debug, cmdname, "\tDeleting " + fl)
         try:
             os.remove(fl)
-        except: debugMsg(args.debug, cmdname, "Expected file " + fl + " missing")
+        except:
+            debugMsg(args.debug, cmdname, "Expected file " + fl + " missing")
+            sys.exit(-1)
