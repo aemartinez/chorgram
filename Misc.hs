@@ -16,7 +16,7 @@ type Message             = String
 type Edge vertex label = (vertex, label, vertex)
 type Graph vertex label = (Set vertex, vertex, Set label, Set(Edge vertex label))
 
-data Command = GMC | GG | SGG | GG2FSA | GG2GML | SYS | MIN | PROD | HGSEM
+data Command = GMC | GG | SGG | GG2FSA | GG2GML | SYS | MIN | PROD | HGSEM | GG2POM
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
 
 -- Some useful functions
@@ -199,7 +199,8 @@ usage cmd = "Usage: " ++ msg
                MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                HGSEM -> "hgsem [-d dirpath] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
-
+               GG2POM -> "gg2pom [-d dirpath] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
+               
 msgFormat :: Command -> String -> String
 msgFormat cmd msg =
   let pre = case cmd of
@@ -212,6 +213,7 @@ msgFormat cmd msg =
               MIN   -> "minimise:\t"
               PROD  -> "cfsmprod:\t"
               HGSEM -> "hgsem:\t"
+              GG2POM-> "gg2pom:\t"
 
   in pre ++ msg
 
@@ -241,6 +243,7 @@ defaultFlags cmd = case cmd of
                      MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
                      PROD  -> M.fromList [("-d",dirpath), ("-v","")]
                      HGSEM -> M.fromList [("-d",dirpath), ("-v","")]
+                     GG2POM-> M.fromList [("-d",dirpath), ("-v","")]
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
@@ -303,6 +306,10 @@ getFlags cmd args =
       "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
       _         -> error $ usage(cmd)
     HGSEM -> case args of
+      []            -> defaultFlags(cmd)
+      "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+    GG2POM -> case args of
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)

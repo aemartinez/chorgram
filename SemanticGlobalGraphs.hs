@@ -25,7 +25,8 @@ type Lab   = Map Event Action
 type Pomset = (Set Event, Set (Event, Event), Lab)
 
 emptyPom :: Event -> (Set Pomset, Event)
-emptyPom e = (S.singleton (S.singleton e, S.empty, M.fromList [(e, (("?","?"), Tau, "?"))]), e+1)
+-- emptyPom e = (S.singleton (S.singleton e, S.empty, M.fromList [(e, (("?","?"), Tau, "?"))]), e+1)
+emptyPom e = (S.empty, e)
 
 pomsetsOf :: GG -> Int -> Event -> (Set Pomset, Event)
 pomsetsOf gg iter e =
@@ -48,12 +49,11 @@ pomsetsOf gg iter e =
         where aux = \(gs, e') g -> let (p, e'') = pomsetsOf g iter e' in (S.union p gs, e'')
       Seq ggs     ->
         case ggs of
-          []            -> emptyPom e
-          [g']          -> pomsetsOf g' iter e
-          g':g'':ggs' -> (S.map pseq (sprod (S.map pseq (sprod p' p'')) p'''), e''')
+          []          -> emptyPom e
+          [g']        -> pomsetsOf g' iter e
+          g':ggs' -> (S.map pseq (sprod p' p''), e'')
             where (p', e') = pomsetsOf g' iter e
-                  (p'', e'') = pomsetsOf g'' iter e'
-                  (p''', e''') = pomsetsOf (Seq ggs') iter e''
+                  (p'', e'') = pomsetsOf (Seq ggs') iter e'
                   pseq (pom@(events, rel, lab), pom'@(events', rel', lab')) = (S.union events events', S.union (seqrel pom pom') (S.union rel rel'), M.union lab lab')
                   sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
                   seqrel (events, _, lab) (events', _, lab') =

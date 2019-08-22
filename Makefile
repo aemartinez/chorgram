@@ -34,6 +34,7 @@ all:
 	$(ccmd) sysparser.hs &&\
 	$(ccmd) minimise.hs &&\
 	$(ccmd) hgsem.hs &&\
+	$(ccmd) gg2pom.hs &&\
 	$(ccmd) gg2fsa.hs
 	$(ccmd) gg2graphml.hs
 
