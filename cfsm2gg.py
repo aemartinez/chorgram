@@ -239,7 +239,9 @@ for i in range(machine_number):
     for line in cmd.stdout: spa = line    # read the last line produced by hkc
     spa = line.decode('ASCII').split(': ')                # after ': ' on the last line of its output hkc returns the boolean
     hkc_boolean_position = 1              # position of the boolean returned by hkc after the split
+    print(spa)
     res = spa[hkc_boolean_position].split(',')[0]
+    print(res)
     tmpbool = tmpbool and (res == "<<< true >>>")
     debugMsg(args.debug, cmdname, "Machine " + str(i) + " is " + (" not " if not tmpbool else "") + "equivalent to its projection")
 

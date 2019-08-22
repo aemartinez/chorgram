@@ -7,7 +7,8 @@ cfgdir = ~/
 cfgfile = .chorgram.config
 hkcpath := $(shell find . -type d -name 'hknt*')
 petripath := $(shell find . -type d -name petrify)/bin
-experimentsdir= "~/Dropbox/chorgram_experiments/"
+experimentsdir = ~/Dropbox/chorgram_experiments/
+logdir = ~/experiments/experiments.csv
 os := $(shell uname -s)
 gitmsg = "checkpoint"
 
@@ -59,8 +60,9 @@ parser:
 
 config:
 	@echo "experiments\t"$(experimentsdir) > /tmp/$(cfgfile)
+	@echo "logfilename\t"$(logdir) >> /tmp/$(cfgfile)
 	@echo "hkc\t"$(hkcpath) >> /tmp/$(cfgfile)
-	@echo "petry\t"$(petripath) >> /tmp/$(cfgfile)
+	@echo "petrify\t"$(petripath) >> /tmp/$(cfgfile)
 	@echo "gmc\t./gmc" >> /tmp/$(cfgfile)
 	@echo "bg\t./BuildGlobal" >> /tmp/$(cfgfile)
 	@echo "base\t~/choreography/chorgram/" >> /tmp/$(cfgfile)
