@@ -1,6 +1,6 @@
-# Authors: Emilio Tuosto <emilio@le.ac.uk>
-#
-# Compute the pomset-based semantics of global graphs.
+-- Authors: Emilio Tuosto <emilio@le.ac.uk>
+--
+-- Compute the pomset-based semantics of global graphs.
 
 
 import Misc

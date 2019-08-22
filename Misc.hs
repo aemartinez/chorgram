@@ -312,7 +312,7 @@ getFlags cmd args =
     GG2POM -> case args of
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
-      "--gml":xs    -> M.insert "--gml" no     (getFlags cmd xs)
+      "--gml":xs    -> M.insert "--gml" yes    (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
       _         -> error $ usage(cmd)
 
