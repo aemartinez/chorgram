@@ -199,7 +199,7 @@ usage cmd = "Usage: " ++ msg
                MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                HGSEM -> "hgsem [-d dirpath] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
-               GG2POM -> "gg2pom [-d dirpath] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
+               GG2POM -> "gg2pom [-d dirpath] [--gml] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
                
 msgFormat :: Command -> String -> String
 msgFormat cmd msg =
@@ -312,6 +312,7 @@ getFlags cmd args =
     GG2POM -> case args of
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
+      "--gml":xs    -> M.insert "--gml" no     (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
       _         -> error $ usage(cmd)
 

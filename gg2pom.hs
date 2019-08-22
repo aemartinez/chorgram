@@ -1,3 +1,8 @@
+# Authors: Emilio Tuosto <emilio@le.ac.uk>
+#
+# Compute the pomset-based semantics of global graphs.
+
+
 import Misc
 import GGparser
 import Data.Set as S

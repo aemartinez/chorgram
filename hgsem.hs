@@ -1,3 +1,7 @@
+# Authors: Emilio Tuosto <emilio@le.ac.uk>
+#
+# yields the hypergraph-based semantics of global graphs.
+
 import Misc
 import DotStuff
 import GGparser
