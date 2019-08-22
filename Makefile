@@ -7,8 +7,8 @@ cfgdir = ~/
 cfgfile = .chorgram.config
 hkcpath := $(shell find . -type d -name 'hknt*')
 petripath := $(shell find . -type d -name petrify)/bin
-experimentsdir = ~/Dropbox/chorgram_experiments/
-logdir = ~/experiments/experiments.csv
+experimentsdir = ./Dropbox/chorgram_experiments/
+logdir = ./experiments/experiments.csv
 os := $(shell uname -s)
 gitmsg = "checkpoint"
 
@@ -33,6 +33,7 @@ all:
 	$(ccmd) sgg.hs &&\
 	$(ccmd) sysparser.hs &&\
 	$(ccmd) minimise.hs &&\
+	$(ccmd) hgsem.hs &&\
 	$(ccmd) gg2fsa.hs
 	$(ccmd) gg2graphml.hs
 
@@ -65,7 +66,7 @@ config:
 	@echo "petrify\t"$(petripath) >> /tmp/$(cfgfile)
 	@echo "gmc\t./gmc" >> /tmp/$(cfgfile)
 	@echo "bg\t./BuildGlobal" >> /tmp/$(cfgfile)
-	@echo "base\t~/choreography/chorgram/" >> /tmp/$(cfgfile)
+	@echo "base\t./choreography/chorgram/" >> /tmp/$(cfgfile)
 	@echo "dot\taux/dot.cfg" >> /tmp/$(cfgfile)
 	@mv /tmp/$(cfgfile) $(cfgdir)$(cfgfile)
 	$(info >>> config file created $(cfgdir)$(cfgfile))

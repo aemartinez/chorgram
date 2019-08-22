@@ -173,7 +173,7 @@ def logexperiment(loginfo, str = ""):
     logfile.write(l)
 
 
-############################### START HERE ###################################
+### START HERE
 
 callgmc = ([GMC,
             "-d",   args.dir,
@@ -250,7 +250,8 @@ debugMsg(args.debug, cmdname, txt, True)
 
 logexperiment(loginfo, "Lang. eq: " + str(tmpbool))
 
-######################################## PETRIFY ###############################################
+
+### PETRIFY
 
 debugMsg(args.debug, cmdname, "Calling petrify...")
 start = time.time()
@@ -300,7 +301,8 @@ txt = "All done.\n\tTotal execution time: " +  str(endtime - starttime) +\
 debugMsg(args.debug, cmdname, txt, True)
 
 
-########################################## DOT #################################################
+### DOT
+
 if not (args.dot==["none"]):
     debugMsg(args.debug, cmdname, "Transforming dot files in " + args.df + " format", True)
     dot = ["dot"] + ([] if (args.dot==None) else (['-' + d for d in args.dot])) + ["-T" , args.df]
@@ -320,7 +322,7 @@ if not (args.dot==["none"]):
         )
 
 
-###################################### CLEANING UP #############################################
+### CLEANING UP
 
 if args.nc and not args.debug:
     to_be_deleted = [
