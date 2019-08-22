@@ -12,6 +12,7 @@ import Data.Map.Strict as M
 import SemanticGlobalGraphs as Sem
 import System.Environment
 import Control.Monad (foldM)
+import System.Directory(createDirectoryIfMissing)
 
 main :: IO ()
 main = do progargs <- getArgs
@@ -24,6 +25,7 @@ main = do progargs <- getArgs
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
+              createDirectoryIfMissing True dir
               let ( gg, _ ) =
                     (gggrammar . GGparser.lexer) ggtxt
               let pomsets =

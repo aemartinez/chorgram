@@ -177,8 +177,6 @@ S : '(o)'                               { (Emp, S.empty) }
                                                  ++ (checkToken TokenSeq $3)),
                                             S.union (snd $1) (snd $3))
                                         }
-  | '(' G ')'                           { $2 }    -- this is for backward compatibility
-  | '{' G '}'                           { $2 }
 
 
 
@@ -218,6 +216,8 @@ Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 =
                                                  (False, _)    -> myErr ("Bad name " ++ $2)
                                                  (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
                                              }
+  | '(' G ')'                           { $2 }    -- this is for backward compatibility
+  | '{' G '}'                           { $2 }
 
 
 guard :: { M.Map String String }

@@ -20,6 +20,7 @@ import ErlanGG
 import SemanticGlobalGraphs
 import BCGBridge
 import System.Environment
+import System.Directory(createDirectoryIfMissing)
 
 main :: IO ()
 main = do progargs <- getArgs
@@ -32,6 +33,7 @@ main = do progargs <- getArgs
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
+              createDirectoryIfMissing True dir              
               if (M.notMember "-rg" flags)
                 then do
                 putStrLn $ msgFormat SGG "start"

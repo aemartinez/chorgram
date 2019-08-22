@@ -10,6 +10,7 @@ import Data.List as L
 import Data.Map.Strict as M
 import SemanticGlobalGraphs
 import System.Environment
+import System.Directory(createDirectoryIfMissing)
 
 main :: IO ()
 main = do progargs <- getArgs
@@ -22,6 +23,7 @@ main = do progargs <- getArgs
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
+              createDirectoryIfMissing True dir
               putStrLn $ msgFormat HGSEM "start"
               let ( gg, names ) =
                     (gggrammar . GGparser.lexer) ggtxt
