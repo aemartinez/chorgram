@@ -7,6 +7,7 @@ import Misc
 import GGparser
 import Data.Set as S
 import Data.List as L
+import Data.Map.Strict
 import SemanticGlobalGraphs
 import System.Environment
 import System.Directory(createDirectoryIfMissing)
@@ -26,7 +27,11 @@ main = do progargs <- getArgs
                     (gggrammar . GGparser.lexer) ggtxt
               let ( pomsets, _ ) =
                     pomsetsOf gg 0 0
-              let aux b ps i = case ps of
-                                 [] -> return ()
-                                 p:ps' -> writeToFile (dir ++ b ++ (show i) ++ ".graphml") (pomset2GML p) >>= \_ -> aux b ps' (i+1)
+              let aux b ps i =
+                    let (f, ext) = if flags!"--gml" == "yes"
+                                   then (pomset2GML, ".graphml")
+                                   else (show, ".txt")
+                    in case ps of
+                         [] -> return ()
+                         p:ps' -> writeToFile (dir ++ b ++ (show i) ++ ext) (f p) >>= \_ -> aux b ps' (i+1)
               aux baseName (S.toList pomsets) (0 :: Int)

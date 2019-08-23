@@ -130,14 +130,14 @@ G : B                                   { $1 }
 
 B :: { (GG, Set Ptp) }
 B : S                                   { $1 }
-  | '{' Br '+' Bs '}'                   { (Bra (S.fromList $
-                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
-                                                   []
-                                                   (L.map fst ([$2] ++ $4))
-                                                 )
-                                               ),
-                                            ptpsBranches ([$2] ++ $4))
-                                        }
+  -- | '{' Br '+' Bs '}'                   { (Bra (S.fromList $
+  --                                                (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
+  --                                                  []
+  --                                                  (L.map fst ([$2] ++ $4))
+  --                                                )
+  --                                              ),
+  --                                           ptpsBranches ([$2] ++ $4))
+  --                                       }
   | choiceop '{' Br '+' Bs '}'        	{ (Bra (S.fromList $
                                                  (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
                                                    []
@@ -173,7 +173,7 @@ Br : S                                  { ($1, M.empty) }
 S :: { (GG, Set Ptp) }
 S : '(o)'                               { (Emp, S.empty) }
   | Blk                                 { $1 }
-  | Blk ';' B                           { (Seq ((checkToken TokenSeq $1)
+  | B ';' B                           { (Seq ((checkToken TokenSeq $1)
                                                  ++ (checkToken TokenSeq $3)),
                                             S.union (snd $1) (snd $3))
                                         }

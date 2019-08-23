@@ -28,16 +28,16 @@ heV :: DotString
 heV = " [label=\"\", shape=square, width=0.05, height=0.05, color=blue, fillcolor=whitesmoke, style=filled]\n"
 
 forkV :: DotString
-forkV = " [label=\"|\", shape=square, fixedsize=true, fillcolor=papayawhip, style=filled, fontsize=20, fontcolor=sienna]\n"
+forkV = " [label=\"|\", shape=square, fixedsize=true, fillcolor=papayawhip, style=filled, fontsize=10, fontcolor=sienna]\n"
 
 joinV :: DotString
-joinV = " [label=\"|\", shape=square, fixedsize=true, fillcolor=sienna, style=filled, fontsize=20, fontcolor=papayawhip]\n"
+joinV = " [label=\"|\", shape=square, fixedsize=true, fillcolor=sienna, style=filled, fontsize=10, fontcolor=papayawhip]\n"
 
 branchV :: DotString
-branchV = " [label=\"+\", shape=diamond, fixedsize=true, fillcolor=papayawhip, style=filled, fontsize=20, fontcolor=sienna]\n"
+branchV = " [label=\"+\", shape=diamond, fixedsize=true, fillcolor=papayawhip, style=filled, fontsize=10, fontcolor=sienna]\n"
 
 mergeV :: DotString
-mergeV = " [label=\"+\", shape=diamond, fixedsize=true, fillcolor=sienna, style=filled, fontsize=20, fontcolor=papayawhip]\n"
+mergeV = " [label=\"+\", shape=diamond, fixedsize=true, fillcolor=sienna, style=filled, fontsize=10, fontcolor=papayawhip]\n"
 
 sourceV :: DotString
 sourceV = " [label=\"\", shape=circle, fixedsize=true]\n"
