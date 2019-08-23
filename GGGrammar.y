@@ -11,7 +11,6 @@
 --       |  P -> P : M
 --       |  P => P, ..., P : M
 --	 |  G | G
---       |  { G + ... + G }
 --       |  sel { Brc }
 --       |  sel P { Brc }
 --       |  branch { Brc }
