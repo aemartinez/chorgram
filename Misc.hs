@@ -160,8 +160,8 @@ dirpath = "experiments/results/"
 nop :: IO ()
 nop = sequence_ []
 
-verbose :: Map String String -> String -> String -> String -> IO()
-verbose m f v s = do if m ! f == v then (putStrLn $ s) else nop
+verbose :: Map String String -> String -> String -> String -> t -> IO()
+verbose m f v s = do \_ -> if m ! f == v then (putStrLn $ s) else nop
 
 mkSep :: [String] -> String -> String
 mkSep l sep =
@@ -192,13 +192,13 @@ usage cmd = "Usage: " ++ msg
   where msg = case cmd of
                GMC   -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ~/.chorgram.config \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
                GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               SGG   -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2GML-> "gg2gml [-d dirpath] [-l iter] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
                SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               HGSEM -> "hgsem [-d dirpath] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
+               HGSEM -> "hgsem [-d dirpath] [-v] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
                GG2POM -> "gg2pom [-d dirpath] [--gml] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
                
 msgFormat :: Command -> String -> String
@@ -277,6 +277,7 @@ getFlags cmd args =
       []            -> defaultFlags(cmd)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
       "-rg":xs      -> M.insert "-rg" yes      (getFlags cmd xs)
+      "-v":xs       -> M.insert "-v" yes       (getFlags cmd xs)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GG2FSA -> case args of
@@ -308,6 +309,7 @@ getFlags cmd args =
     HGSEM -> case args of
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
+      "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
     GG2POM -> case args of
       []            -> defaultFlags(cmd)
