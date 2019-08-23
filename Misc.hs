@@ -163,6 +163,9 @@ nop = sequence_ []
 verbose :: Map String String -> String -> String -> String -> t -> IO()
 verbose m f v s = do \_ -> if m ! f == v then (putStrLn $ s) else nop
 
+myPrint :: Map String String -> Command -> String -> IO ()
+myPrint flags cmd msg = if not(flags!"-v" == "") then putStrLn $ msgFormat cmd msg else return ()
+
 mkSep :: [String] -> String -> String
 mkSep l sep =
   case l of
@@ -218,9 +221,6 @@ msgFormat cmd msg =
   in pre ++ msg
 
 
-myPrint :: Map String String -> Command -> String -> IO ()
-myPrint flags cmd msg = if not(flags!"-v" == "") then putStrLn $ msgFormat cmd msg else return ()
-
 defaultFlags :: Command -> Map String String
 -- The default argument of each command
 defaultFlags cmd = case cmd of
@@ -243,7 +243,7 @@ defaultFlags cmd = case cmd of
                      MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
                      PROD  -> M.fromList [("-d",dirpath), ("-v","")]
                      HGSEM -> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2POM-> M.fromList [("-d",dirpath), ("-v","")]
+                     GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
