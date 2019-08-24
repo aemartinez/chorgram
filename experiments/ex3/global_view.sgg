@@ -1,5 +1,5 @@
 sel {
-( A -> B : x | A -> C : x) ; ( D -> B : y | D -> C : y )
-+
-( D -> B : y | D -> C : y ) ; ( A -> B : x | A -> C : x )
+  ( A -> B : x | A -> C : x) ; ( D -> B : y | D -> C : y )
+  +
+  ( D -> B : y | D -> C : y ) ; ( A -> B : x | A -> C : x )
 }
