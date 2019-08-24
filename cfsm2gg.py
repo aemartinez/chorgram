@@ -24,8 +24,8 @@ with open(cfgfile) as f:
     cfg = dict(map(lambda x: x.split("\t"), lns))
     HKC = cfg["hkc"][:-1] + os.sep + "hkc" + os.uname()[0]
     PETRY = cfg["petrify"][:-1] + os.sep + "petrify" + os.uname()[0]
-    GMC   = cfg["gmc"][:-1]
-    BG    = cfg["bg"][:-1]
+    GMC = cfg["gmc"][:-1]
+    BG = cfg["bg"][:-1]
     logfilename = os.getenv("HOME") + os.sep + cfg["base"][:-1] + os.sep + cfg["logfilename"][:-1]
 
 # Setting flags
@@ -156,8 +156,8 @@ debugMsg(args.debug, cmdname, "\n   Executing with...\n\tgmc\t\t" + GMC +
          "\n\tBuildGraph\t" + BG +
          "\n\tHKC\t\t" + HKC +
          "\n\tPETRIFY\t\t" + PETRY +
-         "\n\tmultiplicity\t" + factor +
-         "\n\tdir\t\t" + args.dir +
+#         "\n\tmultiplicity\t" + factor +
+#         "\n\tdir\t\t" + args.dir +
          "\n\tCFSMs\t\t" + args.filename + "\n"
 )
 date = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
@@ -219,7 +219,7 @@ tmpbool = True
 hkctime = 0
 
 for i in range(machine_number):
-    debugMsg(args.debug, cmdname, "Testing machine "+ MACH + str(i) + " for language equivalence")
+    debugMsg(args.debug, cmdname, "Testing machine " + MACH + str(i) + " for language equivalence")
     debugMsg(args.debug, cmdname, HKC + " -equiv " + basename + MACH + str(i) + " " + basename + PROJ + str(i))
     start = time.time()
     try:
@@ -236,12 +236,10 @@ for i in range(machine_number):
         sys.exit("hkc err")
     stop = time.time()
     hkctime = hkctime + stop - start
-    for line in cmd.stdout: spa = line    # read the last line produced by hkc
+    for line in cmd.stdout: spa = line                    # read the last line produced by hkc
     spa = line.decode('ASCII').split(': ')                # after ': ' on the last line of its output hkc returns the boolean
-    hkc_boolean_position = 1              # position of the boolean returned by hkc after the split
-    print(spa)
+    hkc_boolean_position = 1                              # position of the boolean returned by hkc after the split
     res = spa[hkc_boolean_position].split(',')[0]
-    print(res)
     tmpbool = tmpbool and (res == "<<< true >>>")
     debugMsg(args.debug, cmdname, "Machine " + str(i) + " is " + (" not " if not tmpbool else "") + "equivalent to its projection")
 
@@ -257,6 +255,7 @@ debugMsg(args.debug, cmdname, "Calling petrify...")
 start = time.time()
 try:
     petricmd = [PETRY, "-dead","-ip", "-efc", basename + "_toPetrify", "-o" , dir + TEMP]
+    print("%%%" + " ".join(petricmd))
     subprocess.check_call(petricmd)
 except:
     debugMsg(args.debug, cmdname, "Petrification failed. Something wrong with " + PETRY + ": " + " ".join(petricmd))
@@ -275,6 +274,7 @@ replacements = [(st_comma,', '), # NOTE: the order is important
                 [(', ', ',')]
 try:
     bgcmd = [BG, "-d" , dir, "" if args.shh else "-v", basename + PNET]
+    print("%%%" + " ".join(bgcmd))
     with open(dir + TEMP, "rt") as fin:
         lines =  fin.readlines()
         fin.close()

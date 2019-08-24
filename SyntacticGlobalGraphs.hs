@@ -379,7 +379,7 @@ labelOf :: GG -> DotString
 labelOf gg = case gg of
               Emp         -> sourceV
               Act (s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]\n"
-              LAct(s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]\n"
+              LAct(s,r) m -> labelOf (Act (s,r) m)
               Par _       -> forkV
               Bra _       -> branchV
               Seq _       -> ""

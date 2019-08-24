@@ -129,14 +129,6 @@ G : B                                   { $1 }
 
 B :: { (GG, Set Ptp) }
 B : S                                   { $1 }
-  -- | '{' Br '+' Bs '}'                   { (Bra (S.fromList $
-  --                                                (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
-  --                                                  []
-  --                                                  (L.map fst ([$2] ++ $4))
-  --                                                )
-  --                                              ),
-  --                                           ptpsBranches ([$2] ++ $4))
-  --                                       }
   | choiceop '{' Br '+' Bs '}'        	{ (Bra (S.fromList $
                                                  (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
                                                    []
@@ -259,11 +251,12 @@ data Token =
   | TokenCurlyc
         deriving (Show)
 
+
 lexer s = case s of
     []                             -> []
     '(':'o':')':r                  -> TokenEmp : lexer r
-    '[':r                          -> lexer $ tail (L.dropWhile (\c->c/=']') r)
-    '.':'.':r                      -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
+    '[':r                          -> lexer $ mytail (L.dropWhile (\c->c/=']') r)
+    '.':'.':r                      -> lexer $ mytail (L.dropWhile (\c->c/='\n') r)
     ' ':r                          -> lexer r
     '\n':r                         -> lexer r
     '\t':r                         -> lexer r
@@ -296,6 +289,10 @@ lexer s = case s of
     _                              -> TokenStr (fst s') : (lexer $ snd s')
         where s' = span isAlpha s
 
+mytail :: [t] -> [t]
+mytail l = if L.null l
+           then l
+           else tail l
 
 parseError :: [Token] -> a
 parseError err = case err of

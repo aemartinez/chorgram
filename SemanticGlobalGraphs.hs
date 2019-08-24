@@ -24,9 +24,15 @@ type Event = Int
 type Lab   = Map Event Action
 type Pomset = (Set Event, Set (Event, Event), Lab)
 
-emptyPom :: Event -> (Set Pomset, Event)
--- emptyPom e = (S.singleton (S.singleton e, S.empty, M.fromList [(e, (("?","?"), Tau, "?"))]), e+1)
-emptyPom e = (S.empty, e)
+emptySem :: Event -> (Set Pomset, Event)
+-- emptySem e = (S.singleton (S.singleton e, S.empty, M.fromList [(e, (("?","?"), Tau, "?"))]), e+1)
+emptySem e = (S.empty, e)
+
+emptyPom :: Pomset
+emptyPom = (S.empty, S.empty, M.empty)
+
+sprod :: Ord t => Ord t' => Set t -> Set t' -> Set (t,t')
+sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
 
 pomsetsOf :: GG -> Int -> Event -> (Set Pomset, Event)
 pomsetsOf gg iter e =
@@ -38,24 +44,36 @@ pomsetsOf gg iter e =
       -- TODO: uniform unfoldind for the moment. Eventually to generate random numbers between 0 and iter.
   in
     case gg of
-      Emp         -> emptyPom e
-      Act (s,r) m -> (S.fromList [ (S.fromList [e, e+1], (S.singleton (e,e+1)), lab )], e+2)
-        where lab = M.fromList [(e, ((s,r), Send, m)), (e+1, ((s,r), Receive, m) )]
-      Par ggs     -> (S.singleton $ S.foldr pUnion (S.empty, S.empty, M.empty) pomsets, e'')
-        where (pomsets, e'') = L.foldl aux (emptyPom e) ggs
-              aux = \(gs, e') g -> let (p, e_) = pomsetsOf g iter e' in (S.union gs p, e_)
-              pUnion = \(events, rel, lab) (events', rel', lab') -> (S.union events events', S.union rel rel', M.union lab lab')
-      Bra ggs     -> L.foldl aux (emptyPom e) ggs
+      Emp -> emptySem e
+      Act c m -> (S.fromList [ (S.fromList [e, e+1], (S.singleton (e,e+1)), lab )], e+2)
+        where lab = M.fromList [(e, (c, Send, m)), (e+1, (c, Receive, m) )]
+      LAct c m -> pomsetsOf (Act c m) iter e
+      Par ggs -> (combine (tail pomsets) (head pomsets), e'')
+        where (pomsets, e'') = L.foldl aux ([], e) ggs
+              aux = \(gs, e') g ->
+                let (p, e_) = pomsetsOf g iter e'
+                in (p : gs, e_)
+              combine pps ps =
+                case pps of
+                  [] -> ps
+                  ps':pps' ->
+                    let f = \(p, p') a -> S.insert (pUnion p p') a
+                    in combine pps' (S.foldr f S.empty (sprod ps ps'))
+              pUnion = \(events, rel, lab) (events', rel', lab') ->
+                (S.union events events', S.union rel rel', M.union lab lab')
+      Bra ggs -> L.foldl aux (emptySem e) ggs
         where aux = \(gs, e') g -> let (p, e'') = pomsetsOf g iter e' in (S.union p gs, e'')
-      Seq ggs     ->
+      Seq ggs ->
         case ggs of
-          []          -> emptyPom e
-          [g']        -> pomsetsOf g' iter e
+          [] -> emptySem e
+          [g'] -> pomsetsOf g' iter e
           g':ggs' -> (S.map pseq (sprod p' p''), e'')
             where (p', e') = pomsetsOf g' iter e
                   (p'', e'') = pomsetsOf (Seq ggs') iter e'
-                  pseq (pom@(events, rel, lab), pom'@(events', rel', lab')) = (S.union events events', S.union (seqrel pom pom') (S.union rel rel'), M.union lab lab')
-                  sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
+                  pseq (pom@(events, rel, lab), pom'@(events', rel', lab')) =
+                    (S.union events events',
+                     S.union (seqrel pom pom') (S.union rel rel'),
+                     M.union lab lab')
                   seqrel (events, _, lab) (events', _, lab') =
                     S.filter (\(e1,e2) -> case (M.lookup e1 lab, M.lookup e2 lab') of
                                             (Just x, Just y) -> subjectOf x == subjectOf y
