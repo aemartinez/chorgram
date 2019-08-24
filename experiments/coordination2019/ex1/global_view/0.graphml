@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key attr.name="in" attr.type="string" for="node" id="in" />
+  <key attr.name="out" attr.type="string" for="node" id="out" />
+  <key attr.name="subject" attr.type="string" for="node" id="subject" />
+  <key attr.name="partner" attr.type="string" for="node" id="partner" />
+  <graph edgedefault="directed">
+    <node id="AB!x">
+      <data key="subject">A</data>
+      <data key="partner">B</data>
+      <data key="out">x</data>
+    </node>
+    <node id="AB?x">
+      <data key="subject">B</data>
+      <data key="partner">A</data>
+      <data key="in">x</data>
+    </node>
+    <node id="BC!z">
+      <data key="subject">B</data>
+      <data key="partner">C</data>
+      <data key="out">z</data>
+    </node>
+    <node id="BC?z">
+      <data key="subject">C</data>
+      <data key="partner">B</data>
+      <data key="in">z</data>
+    </node>
+    <edge source="AB!x" target="AB?x" />
+    <edge source="AB?x" target="BC!z" />
+    <edge source="BC!z" target="BC?z" />
+  </graph>
+</graphml>
