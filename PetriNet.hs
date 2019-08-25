@@ -17,7 +17,8 @@ import Data.String.Utils as SU
 data Place = P String
            deriving (Ord, Eq, Show)
 
-data Transition = T String | Silent String
+data Transition = T String
+                | Silent String
                 deriving (Ord, Eq, Show)
 
 data Flow = PT (Place, Transition) 

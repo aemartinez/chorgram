@@ -255,7 +255,6 @@ debugMsg(args.debug, cmdname, "Calling petrify...")
 start = time.time()
 try:
     petricmd = [PETRY, "-dead","-ip", "-efc", basename + "_toPetrify", "-o" , dir + TEMP]
-    print("%%%" + " ".join(petricmd))
     subprocess.check_call(petricmd)
 except:
     debugMsg(args.debug, cmdname, "Petrification failed. Something wrong with " + PETRY + ": " + " ".join(petricmd))
@@ -274,14 +273,17 @@ replacements = [(st_comma,', '), # NOTE: the order is important
                 [(', ', ',')]
 try:
     bgcmd = [BG, "-d" , dir, "" if args.shh else "-v", basename + PNET]
-    print("%%%" + " ".join(bgcmd))
     with open(dir + TEMP, "rt") as fin:
-        lines =  fin.readlines()
+        lines = fin.readlines()
         fin.close()
+        print("%%%", replacements)
         for (src,target) in replacements:
-            lines = map(lambda x: x.replace(src,target), lines)
+            print("%%%", src, target)
+            lines = map(lambda x: str(x).replace(src,target), lines)
+            print("%%%", lines)
+        sys.exit()
         with open(basename + PNET, "wt") as fout:
-            for l in lines: fout.write(l)
+            for l in rlines: fout.write(l)
         debugMsg(args.debug, cmdname, "Generating Global Graph...")
         ggstarttime = time.time()
         subprocess.check_call(bgcmd)
