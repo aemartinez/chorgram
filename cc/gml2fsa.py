@@ -56,10 +56,6 @@ def graphsml_to_fsa(gmldir):
     ptps = dict(zip([x[1] for x in init_sbj], range(len(init_sbj))))
     return "\n\n".join(map(lambda z : graphml_to_fsa(z[0],ptps,z[1]), zip(gmls,init_sbj)))
 
-### test
-# print(graphsml_to_fsa("examples/ex1/proj/"))
-# print(graphsml_to_fsa("examples/ex2/proj/"))
-
 def usage():
     print('gml2fsa [-h] [-o <output-file>] <input-directory>')
     

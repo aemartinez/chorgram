@@ -276,14 +276,10 @@ try:
     with open(dir + TEMP, "rt") as fin:
         lines = fin.readlines()
         fin.close()
-        print("%%%", replacements)
         for (src,target) in replacements:
-            print("%%%", src, target)
-            lines = map(lambda x: str(x).replace(src,target), lines)
-            print("%%%", lines)
-        sys.exit()
+            lines = list(map(lambda x: x.replace(src,target), lines))
         with open(basename + PNET, "wt") as fout:
-            for l in rlines: fout.write(l)
+            for l in lines: fout.write(l)
         debugMsg(args.debug, cmdname, "Generating Global Graph...")
         ggstarttime = time.time()
         subprocess.check_call(bgcmd)
