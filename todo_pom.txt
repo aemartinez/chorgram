@@ -1,0 +1,10 @@
+- esempi
+  - atm
+  - genserver
+
+- process miniming
+
+- diff di grapi
+
+- gg 2 gml
+

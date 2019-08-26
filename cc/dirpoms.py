@@ -1,4 +1,8 @@
 #!/usr/bin/python3
+# Author: Roberto Guanciale <robertog@kth.se>
+#
+# This script computes the CC2- and CC3-pomset closures
+
 import networkx as nx
 from utils import *
 from ccpom import *

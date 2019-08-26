@@ -43,10 +43,6 @@ type CFSM    = Graph State Action
 type System  = ( [CFSM] , P )
 type Diamond = Set ( ( State, Action ), ( State, Action ) )
 
---- type ECFSM     = (CFSM, Map LTrans Cond) -- TODO: remove
---- type ESystem   = ([ECFSM] , [String]) -- TODO: remove
-
-
 cfsmsIds :: System -> [Ptp]
 cfsmsIds (_,ptps) = L.map snd (M.assocs ptps)
 

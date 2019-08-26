@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+#
 # Author: Emilio Tuosto <emilio@le.ac.uk>
 #
 # This script converts a system of CFSMs in graphml formato to the
@@ -11,11 +11,11 @@ from os import listdir, curdir
 from os.path import isfile, join, splitext, basename
 
 def mkQ(x):
+    '''State names cannot start with numbers to be digested by petrify'''
     return "q" + x
 
 def get_init(gr):
-    # TODO: controllare che lo stato iniziale sia giusto...
-    #       take the initial node and the subject from its first transition
+    '''Return initial state and subject of an automaton in graphml-format'''  
     # PRE: all edges in gr have the same subject
     # POST: return the pair made of the initial state and the subject of the machine
     #
@@ -27,14 +27,16 @@ def get_init(gr):
     return (mkQ(q0),sbj)
 
 
-def to_fsa_action(e,ptps):
-    # PRE: e is an edge of a graphm object representing a CFSM
+def to_fsa_action(e, ptps):
+    '''Transforms edges in graphml format in fsa format'''
+    # PRE: e is an edge of a graphml object representing a CFSM
     # POST: return 'fsa' string of the action
     #
     res = ' ! ' + e['out'] if 'out' in e.keys() else ' ? ' + e['in']
     return str(ptps[e['partner']]) + res
 
 def graphml_to_fsa(gr,ptps,init_sbj):
+    '''Compute the fsa-version of a graphml automaton'''
     # PRE: gr represents a CFSM and ptps  maps participants' names to integers (to convert names into indexes of CFSMs)
     # return the fsa format of the graphml gr using
     #
@@ -46,6 +48,7 @@ def graphml_to_fsa(gr,ptps,init_sbj):
     return "\n".join([fsa_start % sbj, fsa_trx, fsa_stop % q0])
 
 def graphsml_to_fsa(gmldir):
+    '''Transforms all the graphml automata of a directory in the fsa-format.'''
     # PRE: gmldir is the path to a directory containing
     #      the CFSMs in graphml files; each file is a CFSM
     # POST: the 'fsa' format of the system of CFSMs
