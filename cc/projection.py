@@ -21,7 +21,6 @@ def proj_to_cfsm(graphs, pr):
     
     
     to_process = [root]
-    
     while (len(to_process) > 0):
        state = to_process.pop()
        l_to_nodes = {}
