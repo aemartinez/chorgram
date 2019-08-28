@@ -22,13 +22,14 @@ gitmsg = "checkpoint"
 # compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs
 #	$(ccmd)
 
-compile: gmc.hs gg2graphml.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs
+compile: gmc.hs gg2graphml.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs #K KGparser.hs 
 	$(MAKE) all
 
 all:
 	$(ccmd) gmc.hs &&\
 	$(ccmd) BuildGlobal.hs &&\
 	$(ccmd) GGparser.hs &&\
+#K	$(ccmd) KGparser.hs &&\
 	$(ccmd) SystemParser.hs &&\
 	$(ccmd) sgg.hs &&\
 	$(ccmd) sysparser.hs &&\
@@ -42,6 +43,7 @@ debug:
 	$(ccdebug) gmc.hs &&\
 	$(ccdebug) BuildGlobal.hs &&\
 	$(ccdebug) GGparser.hs &&\
+#K	$(ccdebug) KGparser.hs &&\
 	$(ccdebug) SystemParser.hs &&\
 	$(ccdebug) sgg.hs &&\
 	$(ccdebug) sysparser.hs\
@@ -52,11 +54,12 @@ prof:
 	$(ccmd) $(profiling) gmc.hs && ghc --make  $(profiling) BuildGlobal.hs
 
 clean:
-	@rm -f *~ *.o *.hi SystemParser.* GGparser.* gmc sgg BuildGlobal sysparser $(cfgfile) *.info *.log
+	@rm -f *~ *.o *.hi SystemParser.* GGparser.* KGparser.* gmc sgg BuildGlobal sysparser $(cfgfile) *.info *.log
 	$(info >>> cleaning done.)
 
 parser:
 	happy -a -i  GGGrammar.y -o GGparser.hs && $(ccmd) GGparser.hs
+#K	happy -a -i  KGGrammar.y -o KGparser.hs && $(ccmd) KGparser.hs
 	happy -a -i  RGGGrammar.y -o RGGparser.hs && $(ccmd) RGGparser.hs
 	happy -a -i  SystemGrammar.y -o SystemParser.hs && $(ccmd) SystemParser.hs
 
