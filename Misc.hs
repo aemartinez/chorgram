@@ -16,7 +16,7 @@ type Message             = String
 type Edge vertex label = (vertex, label, vertex)
 type Graph vertex label = (Set vertex, vertex, Set label, Set(Edge vertex label))
 
-data Command = GMC | GG | SGG | GG2FSA | GG2GML | SYS | MIN | PROD | HGSEM | GG2POM
+data Command = GMC | GG | SGG | GG2FSA | GG2POM | GG2GML | SYS | MIN | PROD | HGSEM
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
 
 -- Some useful functions
@@ -197,12 +197,12 @@ usage cmd = "Usage: " ++ msg
                GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG   -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               GG2GML-> "gg2gml [-d dirpath] [-l iter] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
+               GG2POM-> "gg2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
+               GG2GML-> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
                SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                HGSEM -> "hgsem [-d dirpath] [-v] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
-               GG2POM -> "gg2pom [-d dirpath] [--gml] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
                
 msgFormat :: Command -> String -> String
 msgFormat cmd msg =
@@ -211,6 +211,7 @@ msgFormat cmd msg =
               GG    -> "gg:\t"
               SGG   -> "sgg:\t"
               GG2FSA-> "gg2fsa:\t"
+              GG2POM-> "gg2pom:\t"
               GG2GML-> "gg2gml:\t"
               SYS   -> "systemparser:\t"
               MIN   -> "minimise:\t"
@@ -238,6 +239,7 @@ defaultFlags cmd = case cmd of
                      GG    -> M.fromList [("-d",dirpath), ("-v","")]
                      SGG   -> M.fromList [("-d",dirpath), ("-v","")]
                      GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
+                     GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
                      GG2GML-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
                      SYS   -> M.fromList [("-d",dirpath), ("-v","")]
                      MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
@@ -283,6 +285,12 @@ getFlags cmd args =
     GG2FSA -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
+      _             -> error $ usage(cmd)
+    GG2POM -> case args of
+      []            -> defaultFlags(cmd)
+      "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "-l":y:xs     -> M.insert "-l" y   (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GG2GML -> case args of

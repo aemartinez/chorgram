@@ -6,5 +6,7 @@
 
 - diff di grapi
 
+- pomset to chor
+
 - gg 2 gml
 
