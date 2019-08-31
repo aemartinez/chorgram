@@ -88,9 +88,10 @@ getClosure :: Set Event -> Pomset -> Set Event
 getClosure evs p@(events, rel, _)=
   let p' = subpom evs p
       left = minOfPomset p'
-      right = S.difference evs left
+      right = S.difference events evs
       p'' = subpom right p
-      new = S.filter (\e -> not (S.null $ getNonPred e p' (reflexoTransitiveClosure (S.toList events) (S.toList rel)))) (minOfPomset p'')
+      rel' = [(x,y) | (x,y) <- reflexoTransitiveClosure (S.toList events) (S.toList rel), x /= y]
+      new = S.filter (\e -> not (S.null $ getNonPred e p' rel')) (minOfPomset p'')
   in if S.null new then
        evs
      else getClosure (S.union evs new) p
