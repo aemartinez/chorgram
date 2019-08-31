@@ -1,13 +1,11 @@
-
 --
 -- Author: Emilio Tuosto <emilio@le.ac.uk>
 --
--- This module implements the pomset semantics of JLAMP 17 (but for
--- the well-formedness checking) and should eventually implement the
--- HG semantics of ICE16 + JLAMP 17
+-- This module should eventually implement the
+-- HG semantics of ICE16 + JLAMP 17 (badly drafted for the moment)
 --
 
-module SemanticGlobalGraphs where
+module HGSemantics where
 
 import Data.Set as S
 import Data.List as L
@@ -17,97 +15,6 @@ import Misc
 import CFSM
 import DotStuff
 import Data.Map.Strict as M
-
---------------------- Pomset semantics ---------------------
-
-type Event = Int
-type Lab   = Map Event Action
-type Pomset = (Set Event, Set (Event, Event), Lab)
-
-emptySem :: Event -> (Set Pomset, Event)
--- emptySem e = (S.singleton (S.singleton e, S.empty, M.fromList [(e, (("?","?"), Tau, "?"))]), e+1)
-emptySem e = (S.empty, e)
-
-emptyPom :: Pomset
-emptyPom = (S.empty, S.empty, M.empty)
-
-sprod :: Ord t => Ord t' => Set t -> Set t' -> Set (t,t')
-sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
-
-pomsetsOf :: GG -> Int -> Event -> (Set Pomset, Event)
-pomsetsOf gg iter e =
-  -- PRE: gg is well-formed
-  -- POST: returns the set of pomsets [[gg]] with n-unfolds of each loop for n = |iter|
-  --       (eventually) well-formedness is checked iff iter >= 0
-  -- e is the 'counter' of the events
-  let unfold g n = Seq (L.replicate (abs n) g)
-      -- TODO: uniform unfoldind for the moment. Eventually to generate random numbers between 0 and iter.
-  in
-    case gg of
-      Emp -> emptySem e
-      Act c m -> (S.fromList [ (S.fromList [e, e+1], (S.singleton (e,e+1)), lab )], e+2)
-        where lab = M.fromList [(e, (c, Send, m)), (e+1, (c, Receive, m) )]
-      LAct c m -> pomsetsOf (Act c m) iter e
-      Par ggs -> (combine (tail pomsets) (head pomsets), e'')
-        where (pomsets, e'') = L.foldl aux ([], e) ggs
-              aux = \(gs, e') g ->
-                let (p, e_) = pomsetsOf g iter e'
-                in (p : gs, e_)
-              combine pps ps =
-                case pps of
-                  [] -> ps
-                  ps':pps' ->
-                    let f = \(p, p') a -> S.insert (pUnion p p') a
-                    in combine pps' (S.foldr f S.empty (sprod ps ps'))
-              pUnion = \(events, rel, lab) (events', rel', lab') ->
-                (S.union events events', S.union rel rel', M.union lab lab')
-      Bra ggs -> L.foldl aux (emptySem e) ggs
-        where aux = \(gs, e') g -> let (p, e'') = pomsetsOf g iter e' in (S.union p gs, e'')
-      Seq ggs ->
-        case ggs of
-          [] -> emptySem e
-          [g'] -> pomsetsOf g' iter e
-          g':ggs' -> (S.map pseq (sprod p' p''), e'')
-            where (p', e') = pomsetsOf g' iter e
-                  (p'', e'') = pomsetsOf (Seq ggs') iter e'
-                  pseq (pom@(events, rel, lab), pom'@(events', rel', lab')) =
-                    (S.union events events',
-                     S.union (seqrel pom pom') (S.union rel rel'),
-                     M.union lab lab')
-                  seqrel (events, _, lab) (events', _, lab') =
-                    S.filter (\(e1,e2) -> case (M.lookup e1 lab, M.lookup e2 lab') of
-                                            (Just x, Just y) -> subjectOf x == subjectOf y
-                                            _                -> False
-                             ) (sprod events events')
-      Rep gg' _ -> pomsetsOf (unfold gg' iter) iter e
-
-pomset2GML :: Pomset -> String
-pomset2GML (events, rel, lab) =
-  -- returns the graphML representation of the pomset
-  let mlpref =          "<?xml version='1.0' encoding='utf-8'?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n  <key attr.name=\"in\" attr.type=\"string\" for=\"node\" id=\"d0\" />\n  <key attr.name=\"out\" attr.type=\"string\" for=\"node\" id=\"d1\" />\n  <key attr.name=\"subject\" attr.type=\"string\" for=\"node\" id=\"d2\" />\n  <key attr.name=\"partner\" attr.type=\"string\" for=\"node\" id=\"d3\" />\n  <graph edgedefault=\"directed\">\n"
-      snodetag nodeid = "    <node id=\"" ++ nodeid ++ "\">\n"
-      datatag key v =   "      <data key=\"" ++ key ++ "\">" ++ v ++ "</data>\n"
-      enodetag =        "    </node>\n"
-      edgetab src tgt = "    <edge source=\"" ++ src ++ "\" target=\"" ++ tgt ++ "\" />\n"
-      mlsuff =          "  </graph>\n</graphml>\n"
-      (inkey, outkey, subjkey, othkey) = ("d0", "d1", "d2", "d3") 
-      nodeGL e = (snodetag $ show e) ++ labGL e ++ enodetag
-      edgeGL (e,e') = edgetab (show e) (show e')
-      labGL e = case M.lookup e lab of
-                  Just ((s,r), Receive, m) -> (datatag subjkey r) ++ (datatag othkey s) ++ (datatag inkey m)
-                  Just ((s,r), Send,    m) -> (datatag subjkey s) ++ (datatag othkey r) ++ (datatag outkey m)
-                  Just ((s,_), Tau, _)     -> (datatag subjkey s)
-                  _                        -> error (msgFormat SGG "Unknown action: " ++ (show (M.lookup e lab)))
-  in mlpref ++ (L.foldr (++) "" (S.map nodeGL events)) ++ (L.foldr (++) "" (S.map edgeGL rel)) ++ mlsuff
-
-
-
-
-  
---------------------- HyperGraphs-based semantics ---------------------
------------------------------ to be revised ---------------------------
-
-
 -- TODO: 
 
 --
@@ -192,17 +99,17 @@ emptyHG = (S.empty, S.empty, S.empty, S.empty, S.empty)
 relOf :: HG -> Set HE
 relOf (rels,_,_,_,_) = rels
 
-minOf :: HG -> Set E
-minOf (_,mins,_,_,_) = mins
+minOfHG :: HG -> Set E
+minOfHG (_,mins,_,_,_) = mins
 
-maxOf :: HG -> Set E
-maxOf (_,_,maxs,_,_) = maxs
+maxOfHG :: HG -> Set E
+maxOfHG (_,_,maxs,_,_) = maxs
 
-fstOf :: HG -> Set HE
-fstOf (_,_,_,fsts,_) = fsts
+fstOfHG :: HG -> Set HE
+fstOfHG (_,_,_,fsts,_) = fsts
 
-lstOf :: HG -> Set HE
-lstOf (_,_,_,_,lsts) = lsts
+lstOfHG :: HG -> Set HE
+lstOfHG (_,_,_,_,lsts) = lsts
 
 isOutEvent :: E -> Bool
 isOutEvent (_,Nothing) = False
@@ -245,15 +152,15 @@ communicationsOf hg p = L.filter (\e -> isOutEvent e || isInpEvent e) (eventsOf 
 
 -- # is not used
 (#) :: HG -> HG -> HG
-hg # hg' = ( rel, minOf hg, maxOf hg', fstOf hg, lstOf hg' )
+hg # hg' = ( rel, minOfHG hg, maxOfHG hg', fstOfHG hg, lstOfHG hg' )
   where rel =  S.fromList [(fst es, snd es')| es <- (S.toList $ relOf hg), es' <- (S.toList $ relOf hg'), (Misc.intersect (snd es) (fst es')) ]
 
 seqHG :: HG -> HG -> HG
-seqHG hg hg' = ( rel, minOf hg, maxOf hg', fstOf hg, lstOf hg' )
+seqHG hg hg' = ( rel, minOfHG hg, maxOfHG hg', fstOfHG hg, lstOfHG hg' )
   where rel = S.unions [relOf hg, relOf hg', S.fromList l]
         l   = [( S.singleton e, S.singleton e' ) |
-               e  <- eventsOf $ lstOf hg,  isJust $ actOf e,
-               e' <- eventsOf $ fstOf hg', isJust $ actOf e',
+               e  <- eventsOf $ lstOfHG hg,  isJust $ actOf e,
+               e' <- eventsOf $ fstOfHG hg', isJust $ actOf e',
                (sbjOf e == sbjOf e')]
 
 -- reflexive and transitive closure of the order induce by a hg
@@ -278,8 +185,8 @@ ws :: HG -> HG -> Bool
 ws pg pg' = L.all (precHG (seqHG pg pg')) chkl
   where chkl = [(e,e') | e  <- L.filter isOutEvent (eventsOf (relOf pg)),
                          e' <- L.filter isInpEvent (eventsOf (relOf pg'))]
-  -- where chkl = [( e, e' ) | e  <- L.concat $ S.toList (S.map (S.toList . csFst) (lstOf $ pg)),
-  --                           e' <- L.concat $ S.toList (S.map (S.toList . csSnd) (fstOf $ pg'))]
+  -- where chkl = [( e, e' ) | e  <- L.concat $ S.toList (S.map (S.toList . csFst) (lstOfHG $ pg)),
+  --                           e' <- L.concat $ S.toList (S.map (S.toList . csSnd) (fstOfHG $ pg'))]
 
 unionHG :: Maybe HG -> Maybe HG -> Maybe HG
 unionHG hg hg' 
@@ -287,10 +194,10 @@ unionHG hg hg'
       let (hg1,hg1') = (fromJust hg, fromJust hg')
       in Just (
                S.union (relOf hg1) (relOf hg1'),
-               S.union (minOf hg1) (minOf hg1'),
-               S.union (maxOf hg1) (maxOf hg1'),
-               S.union (fstOf hg1) (fstOf hg1'),
-               S.union (lstOf hg1) (lstOf hg1')
+               S.union (minOfHG hg1) (minOfHG hg1'),
+               S.union (maxOfHG hg1) (maxOfHG hg1'),
+               S.union (fstOfHG hg1) (fstOfHG hg1'),
+               S.union (lstOfHG hg1) (lstOfHG hg1')
               )
   | otherwise                   = Nothing
 
@@ -326,11 +233,11 @@ sem iter mu gg ptps =
      where ( mu', l ) = semList iter mu ggs ptps
            i          = 1 + mu'
            hgu_       = unionsHG l
-           (e1,e2)    = ((S.singleton (i,Nothing), minOf $ fromJust hgu_), (maxOf $ fromJust hgu_, S.singleton ((-i), Nothing)))
+           (e1,e2)    = ((S.singleton (i,Nothing), minOfHG $ fromJust hgu_), (maxOfHG $ fromJust hgu_, S.singleton ((-i), Nothing)))
            hgu        = if isJust hgu_
                         then (S.union (relOf $ fromJust hgu_) (S.fromList [e1, e2]),
-                              minOf $ fromJust hgu_,
-                              maxOf $ fromJust hgu_,
+                              minOfHG $ fromJust hgu_,
+                              maxOfHG $ fromJust hgu_,
                               S.singleton e1,
                               S.singleton e2
                              )
@@ -341,11 +248,11 @@ sem iter mu gg ptps =
            hgu = unionsHG l
            hg' = if iter || (wb ggs && isJust hgu)
                  then unionHG hgu
-                      (Just ( S.fromList $ L.concat $ L.map aux l, e, e', fstOf $ fromJust hgu, lstOf $ fromJust hgu ))
+                      (Just ( S.fromList $ L.concat $ L.map aux l, e, e', fstOfHG $ fromJust hgu, lstOfHG $ fromJust hgu ))
                  else error (msgFormat SGG "Violation of well-branchedness: " ++ show (Bra ggs))
            e   = S.singleton (i, Nothing)
            e'  = S.singleton ((-i), Nothing)
-           aux = \x -> if isJust x then let x' = fromJust x in [(e, minOf x')] ++ [(maxOf x', e')] else error (msgFormat SGG "ERROR ...")
+           aux = \x -> if isJust x then let x' = fromJust x in [(e, minOfHG x')] ++ [(maxOfHG x', e')] else error (msgFormat SGG "ERROR ...")
    Seq ggs     -> case ggs of
                    []            -> ( mu, emptyHG )
                    [g']          -> sem iter mu g' ptps
@@ -362,11 +269,11 @@ sem iter mu gg ptps =
                               else error (msgFormat SGG "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
            ( i, suf )       = ( 1+mu' , show i )
            ( eL, eE )       = (S.singleton (i, Just ( ( p , p ) , LoopSnd , lpref ++ suf )), S.singleton ((-i), Just ( ( p , p ) , LoopRcv , epref ++ suf )))
-           rel              = S.fromList ([( S.singleton e , eE ) | e <- S.toList $ maxOf $ hgb] ++
-                                          [( eL , S.singleton e ) | e <- S.toList $ minOf $ hgb] ++
+           rel              = S.fromList ([( S.singleton e , eE ) | e <- S.toList $ maxOfHG $ hgb] ++
+                                          [( eL , S.singleton e ) | e <- S.toList $ minOfHG $ hgb] ++
                                           [( eE , eL )]
                                          )
-           hgr              = (S.union rel (relOf hgb), eL, eE, (fstOf hgb), (lstOf hgb))
+           hgr              = (S.union rel (relOf hgb), eL, eE, (fstOfHG hgb), (lstOfHG hgb))
 
 -- DOT format
 

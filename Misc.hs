@@ -27,6 +27,9 @@ list2map l = M.fromList [(p,l!!p) | p <- [0 .. (L.length l) - 1 ] ]
 intersect :: (Ord a) => Set a -> Set a -> Bool
 intersect x y = not(S.null (S.intersection x y))
 
+dropElems :: Ord a => (a -> Bool) -> Set a -> Set a
+dropElems f x = S.foldr (\e y -> if (f e) then y else (S.insert e y)) S.empty x
+
 findId :: (Eq a, Show a, Show k) => a -> [(k, a)] -> k
 findId e m = case m of
               []        -> error ("Element " ++ show e ++ " not in the map " ++ show m)
@@ -101,13 +104,6 @@ update i v l
 
 (€) :: (Eq a) => a -> [a] -> Bool
 x € y = L.elem x y
-
-transitiveClosureParam :: (Eq a) => (a -> a -> Bool) -> [(a, a)] -> [(a, a)]
-transitiveClosureParam f closure 
-  | closure == closureUntilNow = closure
-  | otherwise                  = transitiveClosureParam f closureUntilNow
-  where closureUntilNow = 
-          L.nub $ closure ++ [(a, c) | (a, b) <- closure, (b', c) <- closure, ((f b b') || (f b' b))]
           
 minR :: (Eq a) => [(a,a)] -> [(a,a)]
 minR as = [ (n,m) | (n,m) <- as, L.all (\(_,t) -> n/=t) as ]
@@ -135,7 +131,20 @@ transitiveClosure closure
     | closure == closureUntilNow = closure
     | otherwise                  = transitiveClosure closureUntilNow
     where closureUntilNow = L.nub $ closure ++ [(a, c) | (a, b) <- closure, (b', c) <- closure, b == b']
-        
+
+transitiveClosureParam :: (Eq a) => (a -> a -> Bool) -> [(a, a)] -> [(a, a)]
+transitiveClosureParam f closure 
+  | closure == closureUntilNow = closure
+  | otherwise                  = transitiveClosureParam f closureUntilNow
+  where closureUntilNow = 
+          L.nub $ closure ++ [(a, c) | (a, b) <- closure, (b', c) <- closure, ((f b b') || (f b' b))]
+
+reflexoTransitiveClosure :: (Eq a) =>  [a] -> [(a, a)] -> [(a, a)]
+reflexoTransitiveClosure els closure =
+-- PRE: closure must be a binary relation over the elements in els
+-- POST: returns the reflexo-transitive closure of the relation in the 2nd argument
+  L.nub $ (transitiveClosure closure) ++ [(a, a) | a <- els]
+
 cartProd :: (Ord a, Ord b) => Set a -> Set b -> Set (a,b)
 cartProd sa sb = S.fromList $ [(x,y) | x <- (S.toList sa), y <- (S.toList sb)]
 
@@ -217,7 +226,6 @@ msgFormat cmd msg =
               MIN   -> "minimise:\t"
               PROD  -> "cfsmprod:\t"
               HGSEM -> "hgsem:\t"
-              GG2POM-> "gg2pom:\t"
 
   in pre ++ msg
 
@@ -239,13 +247,12 @@ defaultFlags cmd = case cmd of
                      GG    -> M.fromList [("-d",dirpath), ("-v","")]
                      SGG   -> M.fromList [("-d",dirpath), ("-v","")]
                      GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
+                     GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
                      GG2GML-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
                      SYS   -> M.fromList [("-d",dirpath), ("-v","")]
                      MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
                      PROD  -> M.fromList [("-d",dirpath), ("-v","")]
                      HGSEM -> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
@@ -287,12 +294,6 @@ getFlags cmd args =
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
-    GG2POM -> case args of
-      []            -> defaultFlags(cmd)
-      "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
-      "-l":y:xs     -> M.insert "-l" y   (getFlags cmd xs)
-      "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
-      _             -> error $ usage(cmd)
     GG2GML -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
@@ -318,7 +319,8 @@ getFlags cmd args =
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
-      "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+      "-d":y:xs -> M.insert "-d"  y        (getFlags cmd xs)
+      _         -> error $ usage(cmd) ++ "\tbad pattern"
     GG2POM -> case args of
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)

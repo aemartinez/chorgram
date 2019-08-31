@@ -43,15 +43,17 @@ type CFSM    = Graph State Action
 type System  = ( [CFSM] , P )
 type Diamond = Set ( ( State, Action ), ( State, Action ) )
 
---- type ECFSM     = (CFSM, Map LTrans Cond) -- TODO: remove
---- type ESystem   = ([ECFSM] , [String]) -- TODO: remove
-
-
 cfsmsIds :: System -> [Ptp]
 cfsmsIds (_,ptps) = L.map snd (M.assocs ptps)
 
+isSend :: Action -> Bool
+isSend (_, d, _) = (d == Send)
+
+isReceive :: Action -> Bool
+isReceive (_, d, _) = (d == Receive)
+
 isCommunication :: Action -> Bool
-isCommunication (_, d, _) = (d == Send) || (d == Receive)
+isCommunication a = (isSend a) || (isReceive a)
 
 isTau :: Action -> Bool
 isTau (_, d, _) = (d == Tau)

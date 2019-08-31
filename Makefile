@@ -22,7 +22,7 @@ gitmsg = "checkpoint"
 # compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs
 #	$(ccmd)
 
-compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs gg2pom.hs #K KGparser.hs 
+compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs PomsetSemantics.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs gg2pom.hs minimise.hs gg2pom.hs gg2fsa.hs gg2gml.hs #K KGparser.hs hgsem.hs
 	$(MAKE) all
 
 all:
@@ -31,10 +31,11 @@ all:
 	$(ccmd) GGparser.hs &&\
 #K	$(ccmd) KGparser.hs &&\
 	$(ccmd) SystemParser.hs &&\
+	$(ccmd) PomsetSemantics.hs &&\
 	$(ccmd) sgg.hs &&\
 	$(ccmd) sysparser.hs &&\
 	$(ccmd) minimise.hs &&\
-	$(ccmd) hgsem.hs &&\
+#	$(ccmd) hgsem.hs &&\
 	$(ccmd) gg2pom.hs &&\
 	$(ccmd) gg2fsa.hs
 	$(ccmd) gg2gml.hs

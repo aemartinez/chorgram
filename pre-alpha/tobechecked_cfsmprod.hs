@@ -20,6 +20,7 @@ import Control.Concurrent
 import Control.Monad
 import System.Environment
 import FSA
+import System.Directory(createDirectoryIfMissing)
 
 parseSYS :: String -> System
 parseSYS txt = (sysgrammar . lexer) txt
@@ -36,6 +37,7 @@ main =  do progargs <- getArgs
                cfsmFile <- readFile sourcefile
                let ( dir, destfile, basename, ext ) =
                      setFileNames sourcefile flags
+               createDirectoryIfMissing True dir
                let system =
                      case ext of
                       ".fsa" -> parseFSA (Prelude.map (\x -> words x) (lines cfsmFile))

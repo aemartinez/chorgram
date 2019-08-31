@@ -16,7 +16,7 @@ type Message             = String
 type Edge vertex label = (vertex, label, vertex)
 type Graph vertex label = (Set vertex, vertex, Set label, Set(Edge vertex label))
 
-data Command = GMC | GG | SGG | GG2FSA | GG2GML | SYS | MIN | PROD | HGSEM
+data Command = GMC | GG | SGG | GG2FSA | GG2POM | GG2GML | SYS | MIN | PROD | HGSEM
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
 
 -- Some useful functions
@@ -160,8 +160,11 @@ dirpath = "experiments/results/"
 nop :: IO ()
 nop = sequence_ []
 
-verbose :: Map String String -> String -> String -> String -> IO()
-verbose m f v s = do if m ! f == v then (putStrLn $ s) else nop
+verbose :: Map String String -> String -> String -> String -> t -> IO()
+verbose m f v s = do \_ -> if m ! f == v then (putStrLn $ s) else nop
+
+myPrint :: Map String String -> Command -> String -> IO ()
+myPrint flags cmd msg = if not(flags!"-v" == "") then putStrLn $ msgFormat cmd msg else return ()
 
 mkSep :: [String] -> String -> String
 mkSep l sep =
@@ -192,14 +195,15 @@ usage cmd = "Usage: " ++ msg
   where msg = case cmd of
                GMC   -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ~/.chorgram.config \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
                GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               SGG   -> "sgg [-d dirpath] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               SGG   -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               GG2GML-> "gg2gml [-d dirpath] [-l iter] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
+               GG2POM-> "gg2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
+               GG2GML-> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
                SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
                PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               HGSEM -> "hgsem [-d dirpath] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
-
+               HGSEM -> "hgsem [-d dirpath] [-v] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
+               
 msgFormat :: Command -> String -> String
 msgFormat cmd msg =
   let pre = case cmd of
@@ -207,17 +211,16 @@ msgFormat cmd msg =
               GG    -> "gg:\t"
               SGG   -> "sgg:\t"
               GG2FSA-> "gg2fsa:\t"
+              GG2POM-> "gg2pom:\t"
               GG2GML-> "gg2gml:\t"
               SYS   -> "systemparser:\t"
               MIN   -> "minimise:\t"
               PROD  -> "cfsmprod:\t"
               HGSEM -> "hgsem:\t"
+              GG2POM-> "gg2pom:\t"
 
   in pre ++ msg
 
-
-myPrint :: Map String String -> Command -> String -> IO ()
-myPrint flags cmd msg = if not(flags!"-v" == "") then putStrLn $ msgFormat cmd msg else return ()
 
 defaultFlags :: Command -> Map String String
 -- The default argument of each command
@@ -236,11 +239,13 @@ defaultFlags cmd = case cmd of
                      GG    -> M.fromList [("-d",dirpath), ("-v","")]
                      SGG   -> M.fromList [("-d",dirpath), ("-v","")]
                      GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
+                     GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
                      GG2GML-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
                      SYS   -> M.fromList [("-d",dirpath), ("-v","")]
                      MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
                      PROD  -> M.fromList [("-d",dirpath), ("-v","")]
                      HGSEM -> M.fromList [("-d",dirpath), ("-v","")]
+                     GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
@@ -274,11 +279,18 @@ getFlags cmd args =
       []            -> defaultFlags(cmd)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
       "-rg":xs      -> M.insert "-rg" yes      (getFlags cmd xs)
+      "-v":xs       -> M.insert "-v" yes       (getFlags cmd xs)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GG2FSA -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
+      _             -> error $ usage(cmd)
+    GG2POM -> case args of
+      []            -> defaultFlags(cmd)
+      "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "-l":y:xs     -> M.insert "-l" y   (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GG2GML -> case args of
@@ -305,6 +317,12 @@ getFlags cmd args =
     HGSEM -> case args of
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
+      "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+    GG2POM -> case args of
+      []            -> defaultFlags(cmd)
+      "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
+      "--gml":xs    -> M.insert "--gml" yes    (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
       _         -> error $ usage(cmd)
 

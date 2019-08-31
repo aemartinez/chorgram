@@ -11,7 +11,6 @@
 --       |  P -> P : M
 --       |  P => P, ..., P : M
 --	 |  G | G
---       |  { G + ... + G }
 --       |  sel { Brc }
 --       |  sel P { Brc }
 --       |  branch { Brc }
@@ -130,14 +129,6 @@ G : B                                   { $1 }
 
 B :: { (GG, Set Ptp) }
 B : S                                   { $1 }
-  | '{' Br '+' Bs '}'                   { (Bra (S.fromList $
-                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
-                                                   []
-                                                   (L.map fst ([$2] ++ $4))
-                                                 )
-                                               ),
-                                            ptpsBranches ([$2] ++ $4))
-                                        }
   | choiceop '{' Br '+' Bs '}'        	{ (Bra (S.fromList $
                                                  (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
                                                    []
@@ -173,12 +164,10 @@ Br : S                                  { ($1, M.empty) }
 S :: { (GG, Set Ptp) }
 S : '(o)'                               { (Emp, S.empty) }
   | Blk                                 { $1 }
-  | Blk ';' B                           { (Seq ((checkToken TokenSeq $1)
+  | B ';' B                           { (Seq ((checkToken TokenSeq $1)
                                                  ++ (checkToken TokenSeq $3)),
                                             S.union (snd $1) (snd $3))
                                         }
-  | '(' G ')'                           { $2 }    -- this is for backward compatibility
-  | '{' G '}'                           { $2 }
 
 
 
@@ -218,6 +207,8 @@ Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 =
                                                  (False, _)    -> myErr ("Bad name " ++ $2)
                                                  (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
                                              }
+  | '(' G ')'                           { $2 }    -- this is for backward compatibility
+  | '{' G '}'                           { $2 }
 
 
 guard :: { M.Map String String }
@@ -260,11 +251,12 @@ data Token =
   | TokenCurlyc
         deriving (Show)
 
+
 lexer s = case s of
     []                             -> []
     '(':'o':')':r                  -> TokenEmp : lexer r
-    '[':r                          -> lexer $ tail (L.dropWhile (\c->c/=']') r)
-    '.':'.':r                      -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
+    '[':r                          -> lexer $ mytail (L.dropWhile (\c->c/=']') r)
+    '.':'.':r                      -> lexer $ mytail (L.dropWhile (\c->c/='\n') r)
     ' ':r                          -> lexer r
     '\n':r                         -> lexer r
     '\t':r                         -> lexer r
@@ -297,6 +289,10 @@ lexer s = case s of
     _                              -> TokenStr (fst s') : (lexer $ snd s')
         where s' = span isAlpha s
 
+mytail :: [t] -> [t]
+mytail l = if L.null l
+           then l
+           else tail l
 
 parseError :: [Token] -> a
 parseError err = case err of

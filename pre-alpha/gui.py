@@ -4,22 +4,42 @@
 # Author: Emilio Tuosto <emilio@le.ac.uk>
 #
 # My first GUI :)
-
-
+# I used https://tkdocs.com/tutorial/
 
 from tkinter import *
+from tkinter import ttk
+from tkinter.filedialog import *
+
+menu = {}
+root = Tk(className="ChorGram")
+# mainframe = ttk.Frame(root, padding="3 3 12 12")
+# mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+# root.columnconfigure(0, weight=1)
+# root.rowconfigure(0, weight=1)
+menubar = Menu(root)
+root.config(menu = menubar)
+
+def retrieve_input(textBox):
+    text = textBox.get("1.0",END)
+    print(text)
+    return text
 
 def newFile():
-    print("New File!")
+    textBox=Text(root, height=20, width=100)
+    textBox.pack()
+    buttonCommit=Button(root, height=1, width=10, text="Commit", 
+                        command=lambda: retrieve_input(textBox))
+    buttonCommit.pack()
+
 def openFile():
     name = askopenfilename()
-    print(name)
+    print("open " + name)
 def saveFile():
     name = askopenfilename()
-    print(name)
+    print("save " + name)
 def saveAs():
     name = askopenfilename()
-    print(name)
+    print("save as " + name)
 def about():
     print("Something about ChorGram")
 
@@ -44,58 +64,46 @@ def checkGMC():
 def sysparser():
     dummyCmd()
 
-menus = {}
+def mk_menu(key, name_actions):
+    menubar.add_cascade(label=key, menu=name_actions[0])
+    for t in name_actions[1]:
+        if len(t) < 3:
+            name_actions[0].add_command(label=t[0], command=t[1])
+        else:
+            name_actions[0].add_command(label=t[0], command=t[1], accelerator=t[2])
 
-root = Tk(className="ChorGram")
-
-# w = Label(root)
-
-menubar = Menu(root)
-
-def mk_menu(key):
-    (name, actions) = menus[key]
-    menubar.add_cascade(label=key, menu=name)
-    for (cmdDisplay, cmd) in actions:
-        name.add_command(label=cmdDisplay, command=cmd)
 
 # Defining menus
 filemenu = Menu(menubar, tearoff = 0)
-menus["File"] = (filemenu, [("New File", newFile),
-                            ("Open File", openFile),
-                            ("Save File", saveFile),
-                            ("Save As", saveAs)]
+menu["File"] = (filemenu, [("New File", newFile, "Ctrl+n"),
+                           ("Open File", openFile, "Ctrl+o"),
+                           ("Save File", saveFile, "Ctrl+s"),
+                           ("Save As", saveAs, "Ctrl+Shift+s"),
+                           ("Exit", root.quit, "Ctrl+q")]
 )
-mk_menu("File")
 
 toolsmenu = Menu(menubar)
-menus["Tools"] = (toolsmenu, [("gg2cfsm", gg2cfsm),
+menu["Tools"] = (toolsmenu, [("gg2cfsm", gg2cfsm),
                               ("gg2erl", gg2erl),
                               ("cfsm2gg", cfsm2gg),
                               ("check GMC", checkGMC),
                               ("Parse system of CFSMs", sysparser),
                               ("semantics", semantics)]
 )
-mk_menu("Tools")
 
 configmenu = Menu(menubar)
-menus["Config"] = (configmenu,[("Graphic output", dummyCmd),
+menu["Config"] = (configmenu,[("Graphic output", dummyCmd),
                                ("Auxiliary tools", dummyCmd),
                                ("Y", dummyCmd),
                                ("Z", dummyCmd)]
 )
-mk_menu("Config")
 
 helpmenu = Menu(menubar)
-menus["Help"] = (helpmenu, [("About...", about),
+menu["Help"] = (helpmenu, [("About...", about),
                             ("Help", dummyCmd)]
 )
-mk_menu("Help")
 
-# for k in menus.keys():
-#     print(k)
-#     mk_menu(k, menus[k])
-
-
-root.config(menu = menubar)
+for k in ["File", "Tools", "Config", "Help"]:
+    mk_menu(k, menu[k])
 
 root.mainloop()

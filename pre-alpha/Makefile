@@ -7,7 +7,8 @@ cfgdir = ~/
 cfgfile = .chorgram.config
 hkcpath := $(shell find . -type d -name 'hknt*')
 petripath := $(shell find . -type d -name petrify)/bin
-experimentsdir= "~/Dropbox/chorgram_experiments/"
+experimentsdir = ./Dropbox/chorgram_experiments/
+logdir = ./experiments/experiments.csv
 os := $(shell uname -s)
 gitmsg = "checkpoint"
 
@@ -21,24 +22,28 @@ gitmsg = "checkpoint"
 # compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs
 #	$(ccmd)
 
-compile: gmc.hs gg2graphml.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs
+compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs gg2pom.hs #K KGparser.hs 
 	$(MAKE) all
 
 all:
 	$(ccmd) gmc.hs &&\
 	$(ccmd) BuildGlobal.hs &&\
 	$(ccmd) GGparser.hs &&\
+#K	$(ccmd) KGparser.hs &&\
 	$(ccmd) SystemParser.hs &&\
 	$(ccmd) sgg.hs &&\
 	$(ccmd) sysparser.hs &&\
 	$(ccmd) minimise.hs &&\
+	$(ccmd) hgsem.hs &&\
+	$(ccmd) gg2pom.hs &&\
 	$(ccmd) gg2fsa.hs
-	$(ccmd) gg2graphml.hs
+	$(ccmd) gg2gml.hs
 
 debug:
 	$(ccdebug) gmc.hs &&\
 	$(ccdebug) BuildGlobal.hs &&\
 	$(ccdebug) GGparser.hs &&\
+#K	$(ccdebug) KGparser.hs &&\
 	$(ccdebug) SystemParser.hs &&\
 	$(ccdebug) sgg.hs &&\
 	$(ccdebug) sysparser.hs\
@@ -49,21 +54,23 @@ prof:
 	$(ccmd) $(profiling) gmc.hs && ghc --make  $(profiling) BuildGlobal.hs
 
 clean:
-	@rm -f *~ *.o *.hi SystemParser.* GGparser.* gmc sgg BuildGlobal sysparser $(cfgfile) *.info *.log
+	@rm -f *~ *.o *.hi SystemParser.* GGparser.* KGparser.* gmc sgg BuildGlobal sysparser $(cfgfile) *.info *.log
 	$(info >>> cleaning done.)
 
 parser:
 	happy -a -i  GGGrammar.y -o GGparser.hs && $(ccmd) GGparser.hs
+#K	happy -a -i  KGGrammar.y -o KGparser.hs && $(ccmd) KGparser.hs
 	happy -a -i  RGGGrammar.y -o RGGparser.hs && $(ccmd) RGGparser.hs
 	happy -a -i  SystemGrammar.y -o SystemParser.hs && $(ccmd) SystemParser.hs
 
 config:
 	@echo "experiments\t"$(experimentsdir) > /tmp/$(cfgfile)
+	@echo "logfilename\t"$(logdir) >> /tmp/$(cfgfile)
 	@echo "hkc\t"$(hkcpath) >> /tmp/$(cfgfile)
-	@echo "petry\t"$(petripath) >> /tmp/$(cfgfile)
+	@echo "petrify\t"$(petripath) >> /tmp/$(cfgfile)
 	@echo "gmc\t./gmc" >> /tmp/$(cfgfile)
 	@echo "bg\t./BuildGlobal" >> /tmp/$(cfgfile)
-	@echo "base\t~/choreography/chorgram/" >> /tmp/$(cfgfile)
+	@echo "base\t./choreography/chorgram/" >> /tmp/$(cfgfile)
 	@echo "dot\taux/dot.cfg" >> /tmp/$(cfgfile)
 	@mv /tmp/$(cfgfile) $(cfgdir)$(cfgfile)
 	$(info >>> config file created $(cfgdir)$(cfgfile))
