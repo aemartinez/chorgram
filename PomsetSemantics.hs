@@ -25,6 +25,15 @@ emptySem e = (S.empty, e)
 emptyPom :: Pomset
 emptyPom = (S.empty, S.empty, M.empty)
 
+eventsOf :: Pomset -> Set Event
+eventsOf (events, _, _) = events
+
+orderOf :: Pomset -> Set (Event, Event)
+orderOf (_, rel, _) = rel
+
+labOf :: Pomset -> Lab
+labOf (_, _, lab) = lab
+
 sprod :: Ord t => Ord t' => Set t -> Set t' -> Set (t,t')
 sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
 
@@ -123,18 +132,18 @@ mkInteractions p@(_, rel, lab) =
 
 minOfPomset :: Pomset -> Set Event
 minOfPomset (events, rel, _) =
-  let imgrel = S.map snd rel
-      ismin e evs = if S.member e imgrel then
-                      evs
-                    else S.insert e evs
+  let cod = S.map snd (S.filter (\(x,y) -> x /= y) rel)
+      ismin e acc = if S.member e cod then
+                      acc
+                    else S.insert e acc
   in S.foldr ismin S.empty events
 
 maxOfPomset :: Pomset -> Set Event
 maxOfPomset (events, rel, _) =
-  let domrel = S.map fst rel
-      ismax e evs = if S.member e domrel then
-                      evs
-                    else S.insert e evs
+  let domrel = S.map fst (S.filter (\(x,y) -> x /= y) rel)
+      ismax e acc = if S.member e domrel then
+                      acc
+                    else S.insert e acc
   in S.foldr ismax S.empty events
 
 subpom :: Set Event -> Pomset -> Pomset
@@ -165,11 +174,11 @@ components (events, rel, _) = S.foldr aux S.empty events
                 in connected (e:visited) (tovisit' ++ todo) (S.union acc (S.fromList todo))
 
 pomset2gg :: Pomset -> Maybe GG
-pomset2gg p@(events, _, lab) =
+pomset2gg p@(_, _, lab) =
   let comps = components $ mkInteractions p
   in if S.null comps then
         Just Emp
-     else let tmp = S.foldr aux (Just []) (S.filter (not.(S.null)) comps) -- TODO: is the filtering necessary?
+     else let tmp = S.foldr aux (Just []) comps
           in case tmp of
                Nothing -> Nothing
                Just [gg] -> Just gg
@@ -177,21 +186,25 @@ pomset2gg p@(events, _, lab) =
   where aux evs l =
           case l of
             Nothing -> Nothing
-            Just l' -> let closure = getClosure (S.filter (\e -> S.member e (minOfPomset p)) evs) p in
-              if closure == evs then
-                if S.size evs > 1 then                -- A closure with more than one event
-                  Nothing                             -- cannot be represented with parallel or sequential
-                else                                  -- we just return the interatction
-                  let act = lab!(head $ S.toList evs) -- recall that those must be output actions
-                      s = subjectOf act
-                      r = objectOf act
-                      m = msgOf act
-                  in Just ((Act (s,r) m) : l')
-              else                                       -- a split is possible and we recur
-                let p' = subpom closure p
-                    p'' = subpom (S.difference events closure) p
-                in
-                  case (pomset2gg p', pomset2gg p'') of
-                    (Nothing, _) -> Nothing
-                    (_, Nothing) -> Nothing
-                    (Just g1, Just g2) -> Just ((Seq [g1,g2]):l')
+            Just l' ->
+              let
+                subp = subpom evs (mkInteractions p)
+                closure = getClosure (S.filter (\e -> S.member e (minOfPomset subp)) evs) subp
+              in
+                if closure == evs then
+                  if S.size evs > 1 then                -- A closure with more than one event
+                    Nothing                             -- cannot be represented with parallel or sequential
+                  else                                  -- we just return the interatction
+                    let act = lab!(head $ S.toList evs) -- recall that those must be output actions
+                        s = subjectOf act
+                        r = objectOf act
+                        m = msgOf act
+                    in Just ((Act (s,r) m) : l')
+                else                                       -- a split is possible and we recur
+                  let p' = subpom closure subp
+                      p'' = subpom (S.difference (eventsOf subp) closure) subp
+                  in
+                    case (pomset2gg p', pomset2gg p'') of
+                      (Nothing, _) -> Nothing
+                      (_, Nothing) -> Nothing
+                      (Just g1, Just g2) -> Just ((Seq [g1,g2]):l')
