@@ -85,20 +85,23 @@ pomsetsOf gg iter e =
       Rep gg' _ -> pomsetsOf (unfold gg' iter) iter e
 
 getClosure :: Set Event -> Pomset -> Set Event
-getClosure evs p =
+getClosure evs p@(events, rel, _)=
   let p' = subpom evs p
       left = minOfPomset p'
       right = S.difference evs left
       p'' = subpom right p
-      new = S.filter (\e -> not (S.null $ getNonPred e p')) (minOfPomset p'')
+      new = S.filter (\e -> not (S.null $ getNonPred e p' (reflexoTransitiveClosure (S.toList events) (S.toList rel)))) (minOfPomset p'')
   in if S.null new then
        evs
      else getClosure (S.union evs new) p
 
-getNonPred :: Event -> Pomset -> Set Event
-getNonPred e p@(events, rel, _) =
-  let rel' = reflexoTransitiveClosure (S.toList events) (S.toList rel)
-  in dropElems (\e' -> (e',e) € rel') (maxOfPomset p)
+-- getNonPred :: Event -> Pomset -> Set Event
+-- getNonPred e p@(events, rel, _) rel' =
+--   let rel' = reflexoTransitiveClosure (S.toList events) (S.toList rel)
+--   in dropElems (\e' -> (e',e) € rel') (maxOfPomset p)
+
+getNonPred :: Event -> Pomset -> [(Event, Event)] -> Set Event
+getNonPred e p rel = dropElems (\e' -> (e',e) € rel) (maxOfPomset p)
 
 pomset2GML :: Pomset -> String
 pomset2GML (events, rel, lab) =
