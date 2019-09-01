@@ -22,8 +22,8 @@ def get_init(gr):
     for q0 in gr.nodes():
         if 'initial' in gr.node[q0].keys():
             break
-    i = list(gr.edge[gr.edges()[0][0]].keys())[0]
-    sbj = gr.edge[gr.edges()[0][0]][i]['subject']
+    edge0 = list(gr.edges())[0]
+    sbj = gr.edges[edge0]['subject']
     return (mkQ(q0),sbj)
 
 
@@ -44,7 +44,7 @@ def graphml_to_fsa(gr,ptps,init_sbj):
     fsa_stop = ".marking %s\n.end\n"
     # convert each edge into a transition of the fsa
     (q0,sbj) = (init_sbj[0],init_sbj[1])
-    fsa_trx = "\n".join([" ".join([mkQ(s), to_fsa_action(gr.edge[s][t],ptps), mkQ(t)]) for (s,t) in gr.edges()])
+    fsa_trx = "\n".join([" ".join([mkQ(s), to_fsa_action(gr.edges[s, t],ptps), mkQ(t)]) for (s,t) in gr.edges()])
     return "\n".join([fsa_start % sbj, fsa_trx, fsa_stop % q0])
 
 def graphsml_to_fsa(gmldir):

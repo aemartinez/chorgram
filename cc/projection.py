@@ -17,7 +17,7 @@ def proj_to_cfsm(graphs, pr):
     id_to_pomsets[nid] = pr_pomsets
     
     attr = {"initial": 1}
-    automaton.add_node(nid, attr)
+    automaton.add_node(nid, **attr)
     
     
     to_process = [root]
@@ -38,7 +38,7 @@ def proj_to_cfsm(graphs, pr):
            automaton.add_node(nid)
            attr = dict(l)
            attr["label"] = attr_to_label(attr)
-           automaton.add_edge(state, nid, attr)
+           automaton.add_edge(state, nid, **attr)
            target_pomsets = []
            for (gr, node) in l_to_nodes[l]:
                nodes = [x for x in gr.nodes() if x != node]
