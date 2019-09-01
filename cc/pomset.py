@@ -16,7 +16,8 @@ def transitive_closure(gr):
 
 def transitive_reduction(gr):
     gr = nx.subgraph(gr, gr.nodes())
-    for (n1, n2) in gr.edges():
+    gr = nx.Graph(gr)
+    for (n1, n2) in list(gr.edges()):
         if len(set(nx.descendants(gr, n1)).intersection(set(nx.ancestors(gr, n2)))) > 0:
             gr.remove_edge(n1,n2)
     return gr

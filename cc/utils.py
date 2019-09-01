@@ -42,7 +42,7 @@ def debug_graphs(grs, prefix):
         pass
     os.makedirs(prefix)
     for i in range(len(grs)):
-        f = debug_graph(transitive_reduction(grs[i]), "%s/graph-%d" % (prefix, i))
+        f = debug_graph(transitive_reduction(nx.Graph(grs[i])), "%s/graph-%d" % (prefix, i))
         print("Pomset %d\n[[file:%s]]\n" % (i+1, f))
 
 

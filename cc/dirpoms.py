@@ -80,7 +80,7 @@ def analysis(inputfolder, outputfolder2, outputfolder3, outputfolder4, draw):
             if not found:
                 corrected_model.append(pomset)
             for pomset in corrected_model:
-                for node in pomset.nodes():
+                for node in list(pomset.nodes()):
                     if not "out" in pomset.node[node]:
                         continue
                     outs = [b for (a, b) in pomset.out_edges(node)]
@@ -94,7 +94,7 @@ def analysis(inputfolder, outputfolder2, outputfolder3, outputfolder4, draw):
                             found = True
                             break
                     if not found:
-                        pomset.add_node(node+"-in", dict(get_matching_label(pomset.node[node])))
+                        pomset.add_node(node+"-in", **(dict(get_matching_label(pomset.node[node]))))
                         pomset.add_edge(node, node+"-in")
 
     for i in range(len(corrected_model)):
