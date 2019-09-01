@@ -16,7 +16,7 @@ type Message             = String
 type Edge vertex label = (vertex, label, vertex)
 type Graph vertex label = (Set vertex, vertex, Set label, Set(Edge vertex label))
 
-data Command = GMC | GG | SGG | GG2FSA | GG2POM | GG2GML | SYS | MIN | PROD | HGSEM
+data Command = GMC | GG | SGG | GG2FSA | GG2POM | POM2GG | GG2GML | SYS | MIN | PROD | HGSEM
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
 
 -- Some useful functions
@@ -207,6 +207,7 @@ usage cmd = "Usage: " ++ msg
                SGG   -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2POM-> "gg2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
+               POM2GG-> "pom2gg [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
                GG2GML-> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
                SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
@@ -221,6 +222,7 @@ msgFormat cmd msg =
               SGG   -> "sgg:\t"
               GG2FSA-> "gg2fsa:\t"
               GG2POM-> "gg2pom:\t"
+              POM2GG-> "pom2gg:\t"
               GG2GML-> "gg2gml:\t"
               SYS   -> "systemparser:\t"
               MIN   -> "minimise:\t"
@@ -248,6 +250,7 @@ defaultFlags cmd = case cmd of
                      SGG   -> M.fromList [("-d",dirpath), ("-v","")]
                      GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
                      GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
+                     POM2GG-> M.fromList [("-d",dirpath)]
                      GG2GML-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
                      SYS   -> M.fromList [("-d",dirpath), ("-v","")]
                      MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
@@ -325,6 +328,10 @@ getFlags cmd args =
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       "--gml":xs    -> M.insert "--gml" yes    (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+      _         -> error $ usage(cmd)
+    POM2GG -> case args of
+      []            -> defaultFlags(cmd)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
       _         -> error $ usage(cmd)
 

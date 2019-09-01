@@ -104,25 +104,6 @@ getClosure evs p@(events, rel, _)=
 getNonPred :: Event -> Pomset -> [(Event, Event)] -> Set Event
 getNonPred e p rel = dropElems (\e' -> (e',e) € rel) (maxOfPomset p)
 
-pomset2GML :: Pomset -> String
-pomset2GML (events, rel, lab) =
-  -- returns the graphML representation of the pomset
-  let mlpref =          "<?xml version='1.0' encoding='utf-8'?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n  <key attr.name=\"in\" attr.type=\"string\" for=\"node\" id=\"d0\" />\n  <key attr.name=\"out\" attr.type=\"string\" for=\"node\" id=\"d1\" />\n  <key attr.name=\"subject\" attr.type=\"string\" for=\"node\" id=\"d2\" />\n  <key attr.name=\"partner\" attr.type=\"string\" for=\"node\" id=\"d3\" />\n  <graph edgedefault=\"directed\">\n"
-      snodetag nodeid = "    <node id=\"" ++ nodeid ++ "\">\n"
-      datatag key v =   "      <data key=\"" ++ key ++ "\">" ++ v ++ "</data>\n"
-      enodetag =        "    </node>\n"
-      edgetab src tgt = "    <edge source=\"" ++ src ++ "\" target=\"" ++ tgt ++ "\" />\n"
-      mlsuff =          "  </graph>\n</graphml>\n"
-      (inkey, outkey, subjkey, othkey) = ("d0", "d1", "d2", "d3") 
-      nodeGL e = (snodetag $ show e) ++ labGL e ++ enodetag
-      edgeGL (e,e') = edgetab (show e) (show e')
-      labGL e = case M.lookup e lab of
-                  Just ((s,r), Receive, m) -> (datatag subjkey r) ++ (datatag othkey s) ++ (datatag inkey m)
-                  Just ((s,r), Send,    m) -> (datatag subjkey s) ++ (datatag othkey r) ++ (datatag outkey m)
-                  Just ((s,_), Tau, _)     -> (datatag subjkey s)
-                  _                        -> error (msgFormat SGG "Unknown action: " ++ (show (M.lookup e lab)))
-  in mlpref ++ (L.foldr (++) "" (S.map nodeGL events)) ++ (L.foldr (++) "" (S.map edgeGL rel)) ++ mlsuff
-
 mkInteractions :: Pomset -> Pomset
 -- replaces matching output/input pairs of events with the
 -- corresponding interaction while preserving the order
@@ -212,3 +193,31 @@ pomset2gg p@(_, _, lab) =
                       (Nothing, _) -> Nothing
                       (_, Nothing) -> Nothing
                       (Just g1, Just g2) -> Just ((Seq [g1,g2]):l')
+
+
+-- GML stuff
+
+pomset2gml :: Pomset -> String
+pomset2gml (events, rel, lab) =
+  -- returns the graphML representation of the pomset
+  let mlpref =          "<?xml version='1.0' encoding='utf-8'?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n  <key attr.name=\"in\" attr.type=\"string\" for=\"node\" id=\"d0\" />\n  <key attr.name=\"out\" attr.type=\"string\" for=\"node\" id=\"d1\" />\n  <key attr.name=\"subject\" attr.type=\"string\" for=\"node\" id=\"d2\" />\n  <key attr.name=\"partner\" attr.type=\"string\" for=\"node\" id=\"d3\" />\n  <graph edgedefault=\"directed\">\n"
+      snodetag nodeid = "    <node id=\"" ++ nodeid ++ "\">\n"
+      datatag key v =   "      <data key=\"" ++ key ++ "\">" ++ v ++ "</data>\n"
+      enodetag =        "    </node>\n"
+      edgetab src tgt = "    <edge source=\"" ++ src ++ "\" target=\"" ++ tgt ++ "\" />\n"
+      mlsuff =          "  </graph>\n</graphml>\n"
+      (inkey, outkey, subjkey, othkey) = ("d0", "d1", "d2", "d3") 
+      nodeGL e = (snodetag $ show e) ++ labGL e ++ enodetag
+      edgeGL (e,e') = edgetab (show e) (show e')
+      labGL e = case M.lookup e lab of
+                  Just ((s,r), Receive, m) -> (datatag subjkey r) ++ (datatag othkey s) ++ (datatag inkey m)
+                  Just ((s,r), Send,    m) -> (datatag subjkey s) ++ (datatag othkey r) ++ (datatag outkey m)
+                  Just ((s,_), Tau, _)     -> (datatag subjkey s)
+                  _                        -> error (msgFormat SGG "Unknown action: " ++ (show (M.lookup e lab)))
+  in mlpref ++ (L.foldr (++) "" (S.map nodeGL events)) ++ (L.foldr (++) "" (S.map edgeGL rel)) ++ mlsuff
+
+-- gml2pomset :: String -> Pomset
+-- gml2pomset s = emptyPom
+--   -- return the pomset from its gml representation
+--   where 
+

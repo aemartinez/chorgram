@@ -29,7 +29,7 @@ main = do progargs <- getArgs
                     pomsetsOf gg 0 0
               let aux b ps i =
                     let (f, ext) = if flags!"--gml" == "yes"
-                                   then (pomset2GML, ".graphml")
+                                   then (pomset2gml, ".graphml")
                                    else (show, ".txt")
                     in case ps of
                          [] -> return ()
