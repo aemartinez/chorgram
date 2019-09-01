@@ -46,8 +46,14 @@ type Diamond = Set ( ( State, Action ), ( State, Action ) )
 cfsmsIds :: System -> [Ptp]
 cfsmsIds (_,ptps) = L.map snd (M.assocs ptps)
 
+isSend :: Action -> Bool
+isSend (_, d, _) = (d == Send)
+
+isReceive :: Action -> Bool
+isReceive (_, d, _) = (d == Receive)
+
 isCommunication :: Action -> Bool
-isCommunication (_, d, _) = (d == Send) || (d == Receive)
+isCommunication a = (isSend a) || (isReceive a)
 
 isTau :: Action -> Bool
 isTau (_, d, _) = (d == Tau)
@@ -99,6 +105,14 @@ subjectOf ( ( s, r ), d, _ ) = case d of
                                 Receive -> r
                                 LoopRcv -> r
                                 _       -> s
+
+objectOf :: Action -> Ptp
+objectOf ( ( s, r ), d, _ ) = case d of
+                                Send    -> r
+                                LoopSnd -> r
+                                Receive -> s
+                                LoopRcv -> s
+                                _       -> r
 
 eventOf :: LTrans -> Action
 eventOf ( _, e, _ ) = e

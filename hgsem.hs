@@ -8,7 +8,7 @@ import GGparser
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
-import SemanticGlobalGraphs
+import HGSemantics
 import System.Environment
 import System.Directory(createDirectoryIfMissing)
 

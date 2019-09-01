@@ -17,7 +17,7 @@ import Data.List as L
 import Data.Map.Strict as M
 import SyntacticGlobalGraphs
 import ErlanGG
-import SemanticGlobalGraphs
+import HGSemantics
 import BCGBridge
 import System.Environment
 import System.Directory(createDirectoryIfMissing)

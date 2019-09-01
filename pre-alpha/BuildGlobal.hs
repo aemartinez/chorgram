@@ -20,7 +20,6 @@ main =  do progargs <- getArgs
              else do
                   let flags = getFlags GG $ take ((length progargs) - 1) progargs
                   let filename = (flags ! "-d") ++ (if (""== (flags ! "-d")) then "" else [pathSeparator]) ++ (takeFileName $ (last progargs))
-                  -- myPrint flags GG (show filename)
                   pnfile <- readFile filename
                   let pn = parsePetriNet (Prelude.map (\x -> words x) (lines pnfile))
                   -- myPrint flags GG ("\n" ++ (show pn))

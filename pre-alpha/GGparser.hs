@@ -26,7 +26,7 @@ data HappyAbsSyn t6
 	| HappyAbsSyn12 ([String])
 
 happyExpList :: Happy_Data_Array.Array Int Int
-happyExpList = Happy_Data_Array.listArray (0,144) ([12288,29832,24576,59664,0,0,32768,8192,0,0,0,512,0,48,0,0,0,34864,116,4192,233,8384,466,0,0,0,0,512,0,0,0,32768,0,12288,29832,0,2048,0,8192,0,16,0,0,8,8192,0,2048,0,8,0,16,0,4192,233,0,16,16768,548,8192,0,0,4096,3072,7458,6144,8772,0,0,0,128,0,2048,0,512,0,1,0,0,0,4,0,17432,34,0,0,4192,233,0,0,0,1088,0,128,16384,0,0,0,0,2,0,0,8192,0,16384,0,32768,0,0,32,0,37126,8,0,2,17432,34,0,0,0,0,0,0,128,0,33536,1096,0,0,0,0,2048,0,0,2048,0,0,0,2048,0,16384,0,0,0,0,0,4,0,0,0,0,0,0
+happyExpList = Happy_Data_Array.listArray (0,138) ([12288,29832,24576,59664,0,64,32768,8192,0,0,0,0,0,48,0,0,0,34864,116,4192,233,8384,466,0,0,0,0,512,0,0,0,32768,8,12288,29832,24576,59664,0,4096,0,16384,0,4096,0,1024,0,4,0,8,0,0,4,4192,233,16384,0,4096,0,0,2048,1536,3729,0,16,0,256,0,64,8192,0,0,0,0,0,0,18563,7,512,0,0,0,0,68,0,0,32,0,64,0,128,0,8192,0,512,0,3072,7458,0,1024,0,2,0,0,0,16,32768,42049,3,0,0,0,0,0,0,0,0,16,0,0,16,0,32,128,0,33536,1864,0,0,0,0,0,256,0,0,0,0,16384,0,0,0,0,0
 	])
 
 {-# NOINLINE happyExpListPerState #-}
@@ -43,29 +43,29 @@ happyExpListPerState st =
         f (True, nr) = [token_strs !! nr]
 
 happyActOffsets :: Happy_Data_Array.Array Int Int
-happyActOffsets = Happy_Data_Array.listArray (0,73) ([1,1,0,7,0,-2,2,0,1,1,1,0,0,3,-9,18,1,-1,19,30,-5,29,33,48,49,1,41,9,51,43,1,9,0,68,50,94,105,0,106,9,0,1,0,62,93,102,0,103,0,110,111,112,108,9,99,9,0,0,0,115,9,0,0,116,104,0,107,109,0,0,117,0,0,0
+happyActOffsets = Happy_Data_Array.listArray (0,68) ([1,1,8,6,0,0,2,0,1,1,1,0,0,24,5,-1,1,1,17,23,20,30,45,46,38,1,51,48,-8,1,73,47,79,96,0,0,1,92,0,80,0,101,102,103,99,105,1,91,104,0,106,1,0,0,0,0,107,95,98,108,1,0,0,109,0,0,111,0,0
 	])
 
 happyGotoOffsets :: Happy_Data_Array.Array Int Int
-happyGotoOffsets = Happy_Data_Array.listArray (0,73) ([32,69,0,0,0,0,0,0,39,46,25,0,0,0,0,0,53,0,0,0,0,0,0,0,114,75,0,95,0,0,60,98,0,0,0,0,0,0,119,80,0,67,0,0,0,0,0,0,0,0,120,0,0,84,0,88,0,0,0,0,92,0,0,122,0,0,0,0,0,0,123,0,0,0
+happyGotoOffsets = Happy_Data_Array.listArray (0,68) ([22,9,0,0,0,0,0,0,29,36,43,0,0,0,0,0,50,93,0,0,0,0,0,110,0,81,0,0,0,87,0,0,0,0,0,0,57,0,0,0,0,0,112,0,0,114,63,0,0,0,0,69,0,0,0,0,115,0,0,0,75,0,0,0,0,0,117,0,0
 	])
 
 happyAdjustOffset :: Int -> Int
 happyAdjustOffset = id
 
 happyDefActions :: Happy_Data_Array.Array Int Int
-happyDefActions = Happy_Data_Array.listArray (0,73) ([0,0,0,0,-4,-15,0,-14,0,0,0,-8,-9,0,0,-2,0,0,0,0,-4,0,0,0,0,0,0,0,0,-12,0,0,-16,0,-26,0,0,-17,0,0,-18,0,-3,0,0,-10,-13,0,-21,0,0,0,0,0,0,0,-20,-27,-19,0,0,-5,-22,0,0,-11,-24,0,-6,-7,0,-23,-25
+happyDefActions = Happy_Data_Array.listArray (0,68) ([0,0,0,0,-4,-14,0,-13,0,0,0,-7,-8,0,0,-2,0,0,0,0,0,0,0,0,0,0,0,0,-11,0,0,-25,0,0,-21,-22,0,-15,-3,0,-18,0,0,0,0,0,0,0,-9,-12,0,0,-17,-26,-16,-19,0,0,0,0,0,-5,-10,-23,-6,-20,0,-24
 	])
 
 happyCheck :: Happy_Data_Array.Array Int Int
-happyCheck = Happy_Data_Array.listArray (0,144) ([-1,6,1,2,1,3,4,9,1,8,1,2,21,12,15,20,15,8,17,18,19,12,15,5,15,0,1,2,19,4,5,6,0,1,2,16,6,5,6,0,1,2,13,10,5,6,0,1,2,1,1,5,6,0,1,2,15,6,5,6,0,1,2,20,14,5,6,0,1,2,1,2,5,6,5,6,1,2,16,11,5,6,20,3,4,5,6,3,4,5,6,3,4,5,6,3,4,5,6,4,5,6,4,5,6,11,1,1,6,16,7,1,1,1,6,16,1,1,1,-1,16,14,8,-1,-1,16,7,-1,8,7,7,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+happyCheck = Happy_Data_Array.listArray (0,138) ([-1,9,1,2,5,3,4,1,9,8,1,2,20,12,5,6,15,9,17,18,19,15,0,1,2,1,21,5,6,0,1,2,15,13,5,6,0,1,2,16,10,5,6,0,1,2,1,1,5,6,0,1,2,15,6,5,6,0,1,2,9,14,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,11,4,5,6,1,2,11,4,5,6,1,2,16,1,5,6,20,9,1,1,1,6,1,16,1,1,6,16,1,7,16,-1,-1,-1,8,-1,8,7,7,14,7,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
 	])
 
 happyTable :: Happy_Data_Array.Array Int Int
-happyTable = Happy_Data_Array.listArray (0,144) ([0,-12,7,8,18,24,25,26,27,9,7,8,-1,10,42,39,11,9,12,13,14,10,28,17,31,18,15,3,14,19,20,5,14,15,3,41,40,4,5,22,15,3,38,37,4,5,21,15,3,36,35,4,5,42,15,3,32,54,4,5,18,15,3,39,51,4,5,43,15,3,2,3,4,5,4,5,32,3,63,52,4,5,64,44,45,29,5,54,45,29,5,67,45,29,5,65,45,29,5,28,29,5,52,29,5,50,49,48,61,62,60,59,35,57,56,69,67,48,48,0,72,71,33,0,0,70,46,0,57,64,72,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+happyTable = Happy_Data_Array.listArray (0,138) ([0,-4,7,8,17,23,24,25,18,9,2,3,46,10,4,5,11,18,12,13,14,26,14,15,3,19,-1,4,5,21,15,3,37,35,4,5,20,15,3,36,34,4,5,19,15,3,33,32,4,5,38,15,3,30,47,4,5,39,15,3,18,43,4,5,26,3,47,48,28,5,26,3,58,48,28,5,26,3,62,48,28,5,26,3,44,27,28,5,26,3,42,44,28,5,37,3,56,41,4,5,57,18,55,32,53,52,51,62,51,64,61,66,51,60,65,0,0,0,30,0,53,49,57,67,67,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 	])
 
-happyReduceArr = Happy_Data_Array.array (1, 26) [
+happyReduceArr = Happy_Data_Array.array (1, 25) [
 	(1 , happyReduce_1),
 	(2 , happyReduce_2),
 	(3 , happyReduce_3),
@@ -90,8 +90,7 @@ happyReduceArr = Happy_Data_Array.array (1, 26) [
 	(22 , happyReduce_22),
 	(23 , happyReduce_23),
 	(24 , happyReduce_24),
-	(25 , happyReduce_25),
-	(26 , happyReduce_26)
+	(25 , happyReduce_25)
 	]
 
 happy_n_terms = 22 :: Int
@@ -122,25 +121,8 @@ happyReduction_3 (HappyAbsSyn4  happy_var_1)
 	)
 happyReduction_3 _  = notHappyAtAll 
 
-happyReduce_4 = happyReduce 5 1 happyReduction_4
+happyReduce_4 = happyReduce 6 1 happyReduction_4
 happyReduction_4 (_ `HappyStk`
-	(HappyAbsSyn7  happy_var_4) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn8  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn4
-		 ((Bra (S.fromList $
-                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
-                                                   []
-                                                   (L.map fst ([happy_var_2] ++ happy_var_4))
-                                                 )
-                                               ),
-                                            ptpsBranches ([happy_var_2] ++ happy_var_4))
-	) `HappyStk` happyRest
-
-happyReduce_5 = happyReduce 6 1 happyReduction_5
-happyReduction_5 (_ `HappyStk`
 	(HappyAbsSyn7  happy_var_5) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn8  happy_var_3) `HappyStk`
@@ -157,8 +139,8 @@ happyReduction_5 (_ `HappyStk`
                                             ptpsBranches ([happy_var_3] ++ happy_var_5))
 	) `HappyStk` happyRest
 
-happyReduce_6 = happyReduce 7 1 happyReduction_6
-happyReduction_6 (_ `HappyStk`
+happyReduce_5 = happyReduce 7 1 happyReduction_5
+happyReduction_5 (_ `HappyStk`
 	(HappyAbsSyn7  happy_var_6) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn8  happy_var_4) `HappyStk`
@@ -176,65 +158,65 @@ happyReduction_6 (_ `HappyStk`
                                             ptpsBranches ([happy_var_4] ++ happy_var_6))
 	) `HappyStk` happyRest
 
+happyReduce_6 = happySpecReduce_1  2 happyReduction_6
+happyReduction_6 _
+	 =  HappyAbsSyn6
+		 (
+	)
+
 happyReduce_7 = happySpecReduce_1  2 happyReduction_7
 happyReduction_7 _
 	 =  HappyAbsSyn6
 		 (
 	)
 
-happyReduce_8 = happySpecReduce_1  2 happyReduction_8
-happyReduction_8 _
-	 =  HappyAbsSyn6
-		 (
-	)
-
-happyReduce_9 = happySpecReduce_1  3 happyReduction_9
-happyReduction_9 (HappyAbsSyn8  happy_var_1)
+happyReduce_8 = happySpecReduce_1  3 happyReduction_8
+happyReduction_8 (HappyAbsSyn8  happy_var_1)
 	 =  HappyAbsSyn7
 		 ([ happy_var_1 ]
 	)
-happyReduction_9 _  = notHappyAtAll 
+happyReduction_8 _  = notHappyAtAll 
 
-happyReduce_10 = happySpecReduce_3  3 happyReduction_10
-happyReduction_10 (HappyAbsSyn7  happy_var_3)
+happyReduce_9 = happySpecReduce_3  3 happyReduction_9
+happyReduction_9 (HappyAbsSyn7  happy_var_3)
 	_
 	(HappyAbsSyn8  happy_var_1)
 	 =  HappyAbsSyn7
 		 ([happy_var_1] ++ happy_var_3
 	)
-happyReduction_10 _ _ _  = notHappyAtAll 
+happyReduction_9 _ _ _  = notHappyAtAll 
 
-happyReduce_11 = happySpecReduce_1  4 happyReduction_11
-happyReduction_11 (HappyAbsSyn4  happy_var_1)
+happyReduce_10 = happySpecReduce_1  4 happyReduction_10
+happyReduction_10 (HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn8
 		 ((happy_var_1, M.empty)
 	)
-happyReduction_11 _  = notHappyAtAll 
+happyReduction_10 _  = notHappyAtAll 
 
-happyReduce_12 = happySpecReduce_3  4 happyReduction_12
-happyReduction_12 (HappyAbsSyn11  happy_var_3)
+happyReduce_11 = happySpecReduce_3  4 happyReduction_11
+happyReduction_11 (HappyAbsSyn11  happy_var_3)
 	_
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn8
 		 (checkGuard happy_var_1 happy_var_3
 	)
-happyReduction_12 _ _ _  = notHappyAtAll 
+happyReduction_11 _ _ _  = notHappyAtAll 
 
-happyReduce_13 = happySpecReduce_1  5 happyReduction_13
-happyReduction_13 _
+happyReduce_12 = happySpecReduce_1  5 happyReduction_12
+happyReduction_12 _
 	 =  HappyAbsSyn4
 		 ((Emp, S.empty)
 	)
 
-happyReduce_14 = happySpecReduce_1  5 happyReduction_14
-happyReduction_14 (HappyAbsSyn4  happy_var_1)
+happyReduce_13 = happySpecReduce_1  5 happyReduction_13
+happyReduction_13 (HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
 		 (happy_var_1
 	)
-happyReduction_14 _  = notHappyAtAll 
+happyReduction_13 _  = notHappyAtAll 
 
-happyReduce_15 = happySpecReduce_3  5 happyReduction_15
-happyReduction_15 (HappyAbsSyn4  happy_var_3)
+happyReduce_14 = happySpecReduce_3  5 happyReduction_14
+happyReduction_14 (HappyAbsSyn4  happy_var_3)
 	_
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
@@ -242,28 +224,10 @@ happyReduction_15 (HappyAbsSyn4  happy_var_3)
                                                  ++ (checkToken TokenSeq happy_var_3)),
                                             S.union (snd happy_var_1) (snd happy_var_3))
 	)
-happyReduction_15 _ _ _  = notHappyAtAll 
+happyReduction_14 _ _ _  = notHappyAtAll 
 
-happyReduce_16 = happySpecReduce_3  5 happyReduction_16
-happyReduction_16 _
-	(HappyAbsSyn4  happy_var_2)
-	_
-	 =  HappyAbsSyn4
-		 (happy_var_2
-	)
-happyReduction_16 _ _ _  = notHappyAtAll 
-
-happyReduce_17 = happySpecReduce_3  5 happyReduction_17
-happyReduction_17 _
-	(HappyAbsSyn4  happy_var_2)
-	_
-	 =  HappyAbsSyn4
-		 (happy_var_2
-	)
-happyReduction_17 _ _ _  = notHappyAtAll 
-
-happyReduce_18 = happyReduce 5 6 happyReduction_18
-happyReduction_18 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
+happyReduce_15 = happyReduce 5 6 happyReduction_15
+happyReduction_15 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
 	_ `HappyStk`
 	(HappyTerminal (TokenStr happy_var_3)) `HappyStk`
 	_ `HappyStk`
@@ -280,8 +244,8 @@ happyReduction_18 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
 	        			    (False, _, False)    -> myErr ("Bad name " ++ happy_var_1 ++ " and sender and receiver must be different")
 	) `HappyStk` happyRest
 
-happyReduce_19 = happyReduce 5 6 happyReduction_19
-happyReduction_19 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
+happyReduce_16 = happyReduce 5 6 happyReduction_16
+happyReduction_16 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn12  happy_var_3) `HappyStk`
 	_ `HappyStk`
@@ -297,8 +261,8 @@ happyReduction_19 ((HappyTerminal (TokenStr happy_var_5)) `HappyStk`
                                             (False, _)     -> myErr ("Bad name " ++ happy_var_1)
 	) `HappyStk` happyRest
 
-happyReduce_20 = happyReduce 4 6 happyReduction_20
-happyReduction_20 ((HappyTerminal (TokenStr happy_var_4)) `HappyStk`
+happyReduce_17 = happyReduce 4 6 happyReduction_17
+happyReduction_17 ((HappyTerminal (TokenStr happy_var_4)) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn4  happy_var_2) `HappyStk`
 	_ `HappyStk`
@@ -310,8 +274,8 @@ happyReduction_20 ((HappyTerminal (TokenStr happy_var_4)) `HappyStk`
                                             (True, False) -> myErr ("Participant " ++ happy_var_4 ++ " is not among the loop's participants: " ++ (show $ toList $ snd happy_var_2))
 	) `HappyStk` happyRest
 
-happyReduce_21 = happyReduce 5 6 happyReduction_21
-happyReduction_21 (_ `HappyStk`
+happyReduce_18 = happyReduce 5 6 happyReduction_18
+happyReduction_18 (_ `HappyStk`
 	(HappyAbsSyn4  happy_var_4) `HappyStk`
 	_ `HappyStk`
 	(HappyTerminal (TokenStr happy_var_2)) `HappyStk`
@@ -324,8 +288,8 @@ happyReduction_21 (_ `HappyStk`
                                             (True, False) -> myErr ("Participant " ++ happy_var_2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd happy_var_4))
 	) `HappyStk` happyRest
 
-happyReduce_22 = happyReduce 7 6 happyReduction_22
-happyReduction_22 (_ `HappyStk`
+happyReduce_19 = happyReduce 7 6 happyReduction_19
+happyReduction_19 (_ `HappyStk`
 	_ `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn4  happy_var_4) `HappyStk`
@@ -340,17 +304,35 @@ happyReduction_22 (_ `HappyStk`
                                                  (True, False) -> myErr ("Participant " ++ happy_var_2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd happy_var_4))
 	) `HappyStk` happyRest
 
-happyReduce_23 = happySpecReduce_3  7 happyReduction_23
-happyReduction_23 (HappyTerminal (TokenStr happy_var_3))
+happyReduce_20 = happySpecReduce_3  6 happyReduction_20
+happyReduction_20 _
+	(HappyAbsSyn4  happy_var_2)
+	_
+	 =  HappyAbsSyn4
+		 (happy_var_2
+	)
+happyReduction_20 _ _ _  = notHappyAtAll 
+
+happyReduce_21 = happySpecReduce_3  6 happyReduction_21
+happyReduction_21 _
+	(HappyAbsSyn4  happy_var_2)
+	_
+	 =  HappyAbsSyn4
+		 (happy_var_2
+	)
+happyReduction_21 _ _ _  = notHappyAtAll 
+
+happyReduce_22 = happySpecReduce_3  7 happyReduction_22
+happyReduction_22 (HappyTerminal (TokenStr happy_var_3))
 	_
 	(HappyTerminal (TokenStr happy_var_1))
 	 =  HappyAbsSyn11
 		 (M.insert happy_var_1 happy_var_3 M.empty
 	)
-happyReduction_23 _ _ _  = notHappyAtAll 
+happyReduction_22 _ _ _  = notHappyAtAll 
 
-happyReduce_24 = happyReduce 5 7 happyReduction_24
-happyReduction_24 ((HappyAbsSyn11  happy_var_5) `HappyStk`
+happyReduce_23 = happyReduce 5 7 happyReduction_23
+happyReduction_23 ((HappyAbsSyn11  happy_var_5) `HappyStk`
 	_ `HappyStk`
 	(HappyTerminal (TokenStr happy_var_3)) `HappyStk`
 	_ `HappyStk`
@@ -360,15 +342,15 @@ happyReduction_24 ((HappyAbsSyn11  happy_var_5) `HappyStk`
 		 (M.insert happy_var_1 happy_var_3 happy_var_5
 	) `HappyStk` happyRest
 
-happyReduce_25 = happySpecReduce_1  8 happyReduction_25
-happyReduction_25 (HappyTerminal (TokenStr happy_var_1))
+happyReduce_24 = happySpecReduce_1  8 happyReduction_24
+happyReduction_24 (HappyTerminal (TokenStr happy_var_1))
 	 =  HappyAbsSyn12
 		 (if (isPtp happy_var_1) then [happy_var_1] else myErr ("Bad name " ++ happy_var_1)
 	)
-happyReduction_25 _  = notHappyAtAll 
+happyReduction_24 _  = notHappyAtAll 
 
-happyReduce_26 = happySpecReduce_3  8 happyReduction_26
-happyReduction_26 (HappyAbsSyn12  happy_var_3)
+happyReduce_25 = happySpecReduce_3  8 happyReduction_25
+happyReduction_25 (HappyAbsSyn12  happy_var_3)
 	_
 	(HappyTerminal (TokenStr happy_var_1))
 	 =  HappyAbsSyn12
@@ -378,7 +360,7 @@ happyReduction_26 (HappyAbsSyn12  happy_var_3)
                                         (s:l) -> (happy_var_1:s:l))
                                   else myErr ("Bad name " ++ happy_var_1)
 	)
-happyReduction_26 _ _ _  = notHappyAtAll 
+happyReduction_25 _ _ _  = notHappyAtAll 
 
 happyNewToken action sts stk [] =
 	happyDoAction 21 notHappyAtAll action sts stk []
@@ -465,11 +447,12 @@ data Token =
   | TokenCurlyc
         deriving (Show)
 
+
 lexer s = case s of
     []                             -> []
     '(':'o':')':r                  -> TokenEmp : lexer r
-    '[':r                          -> lexer $ tail (L.dropWhile (\c->c/=']') r)
-    '.':'.':r                      -> lexer $ tail (L.dropWhile (\c->c/='\n') r)
+    '[':r                          -> lexer $ mytail (L.dropWhile (\c->c/=']') r)
+    '.':'.':r                      -> lexer $ mytail (L.dropWhile (\c->c/='\n') r)
     ' ':r                          -> lexer r
     '\n':r                         -> lexer r
     '\t':r                         -> lexer r
@@ -502,6 +485,10 @@ lexer s = case s of
     _                              -> TokenStr (fst s') : (lexer $ snd s')
         where s' = span isAlpha s
 
+mytail :: [t] -> [t]
+mytail l = if L.null l
+           then l
+           else tail l
 
 parseError :: [Token] -> a
 parseError err = case err of
