@@ -442,10 +442,10 @@ gmlEdge :: Int -> Int -> String
 gmlEdge source target = "    <edge source=\"" ++ (show source) ++ "\" target=\"" ++ (show target) ++ "\"></edge>\n"
 
 gmlOpenGate :: Int -> GMLTAGS -> String
-gmlOpenGate id gate = gmlNode (gmldata "ogate" (show gate)) id
+gmlOpenGate id gate = gmlNode (gmldata "open" (show gate)) id
 
 gmlCloseGate :: Int -> GMLTAGS -> String
-gmlCloseGate id gate = gmlNode (gmldata "cgate" (show gate)) (-id)
+gmlCloseGate id gate = gmlNode (gmldata "close" (show gate)) (-id)
 
 gmlrename :: (Int -> Bool) -> Int -> Int -> String -> String
 gmlrename excluded n j s = if (excluded n)
