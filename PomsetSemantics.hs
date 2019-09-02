@@ -241,6 +241,7 @@ xgml2pomset xml = aux (xreadDoc xml) M.empty
           case localPart tag of
             "key" -> aux rest (addKey xtree m)
             "graph" -> aux xtree' m
+            "graphml" -> aux xtree' m
             "node" -> addNode xtree xtree' m (aux rest m)
             "edge" -> addEdge xtree (aux rest m)
             _ -> error (msgFormat POM2GG "Bad Tag " ++ (localPart tag))
@@ -263,6 +264,7 @@ xgml2pomset xml = aux (xreadDoc xml) M.empty
             _ -> error (msgFormat POM2GG "Bad node")
         getData pairs datum =
           case datum of
+            [] -> pairs
             (NTree (XTag tag xkey) xval):ds ->
               checkTag tag "data" (
               let
@@ -273,7 +275,8 @@ xgml2pomset xml = aux (xreadDoc xml) M.empty
                     _ -> error (msgFormat POM2GG "Bad key at node " ++ (show nodeid))
               in (getPair xkey xval):(getData pairs ds)
               )
-            _ -> error (msgFormat POM2GG "Bad action at node " ++ (show nodeid))
+            (NTree (XText _) _):ds -> (getData pairs ds)
+            _ -> error (msgFormat POM2GG "Bad action at node " ++ (show nodeid) ++ "\t" ++ (show datum))
         action =
           let
             tmpMap = M.fromList (getData [] d)

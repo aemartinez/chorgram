@@ -36,5 +36,5 @@ main = do progargs <- getArgs
               case gg of
                 Nothing -> putStrLn "The pomset in not representable as global graph"
                 Just gg' ->
-                  writeToFile (dir ++ baseName ++ ".gml") (gg2graphml gg') >>=
+                  writeToFile (dir ++ baseName ++ ".graphml") (gg2graphml gg') >>=
                   \_ -> writeToFile (dir ++ baseName ++ ".dot") (gg2dot gg' baseName sizeNode)
