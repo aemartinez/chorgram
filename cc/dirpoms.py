@@ -80,6 +80,7 @@ def analysis(inputfolder, outputfolder2, outputfolder3, outputfolder4, draw):
             if not found:
                 corrected_model.append(pomset)
             for pomset in corrected_model:
+                last_int = max([int(x) for x in pomset.nodes()])
                 for node in list(pomset.nodes()):
                     if not "out" in pomset.node[node]:
                         continue
@@ -94,8 +95,9 @@ def analysis(inputfolder, outputfolder2, outputfolder3, outputfolder4, draw):
                             found = True
                             break
                     if not found:
-                        pomset.add_node(node+"-in", **(dict(get_matching_label(pomset.node[node]))))
-                        pomset.add_edge(node, node+"-in")
+                        last_int += 1
+                        pomset.add_node(last_int, **(dict(get_matching_label(pomset.node[node]))))
+                        pomset.add_edge(node, last_int)
 
     for i in range(len(corrected_model)):
         nx.readwrite.graphml.write_graphml(corrected_model[i], join(inputfolder + "_corrected", "%d.graphml"%i))
