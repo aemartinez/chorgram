@@ -7,12 +7,16 @@
 
 module PomsetSemantics where
 
+import Misc
 import Data.Set as S
 import Data.List as L
-import SyntacticGlobalGraphs
-import Misc
-import CFSM
 import Data.Map.Strict as M
+import CFSM
+import SyntacticGlobalGraphs
+import Text.XML.HXT.Parser.XmlParsec(xreadDoc)
+import Data.Tree.NTree.TypeDefs
+import Text.XML.HXT.DOM.TypeDefs
+-- import Text.XML.HXT.DOM.QualifiedName
 
 type Event = Int
 type Lab   = Map Event Action
@@ -87,7 +91,6 @@ pomsetsOf gg iter e =
 getClosure :: Set Event -> Pomset -> Set Event
 getClosure evs p@(events, rel, _)=
   let p' = subpom evs p
-      left = minOfPomset p'
       right = S.difference events evs
       p'' = subpom right p
       rel' = [(x,y) | (x,y) <- reflexoTransitiveClosure (S.toList events) (S.toList rel), x /= y]
@@ -213,7 +216,7 @@ pomset2gml (events, rel, lab) =
                   Just ((s,r), Receive, m) -> (datatag subjkey r) ++ (datatag othkey s) ++ (datatag inkey m)
                   Just ((s,r), Send,    m) -> (datatag subjkey s) ++ (datatag othkey r) ++ (datatag outkey m)
                   Just ((s,_), Tau, _)     -> (datatag subjkey s)
-                  _                        -> error (msgFormat SGG "Unknown action: " ++ (show (M.lookup e lab)))
+                  _                        -> error (msgFormat GG2POM "Unknown action: " ++ (show (M.lookup e lab)))
   in mlpref ++ (L.foldr (++) "" (S.map nodeGL events)) ++ (L.foldr (++) "" (S.map edgeGL rel)) ++ mlsuff
 
 -- gml2pomset :: String -> Pomset
@@ -221,3 +224,61 @@ pomset2gml (events, rel, lab) =
 --   -- return the pomset from its gml representation
 --   where 
 
+checkTag :: QName -> String -> a -> a
+checkTag tag val expr =
+  if localPart tag == val then
+    expr
+  else error (msgFormat POM2GG "Bad " ++ val)
+
+xgml2pomset :: String -> Pomset
+xgml2pomset xml = aux (xreadDoc xml) M.empty
+  where
+    aux t m =
+      case t of
+        [] -> emptyPom
+        (NTree (XPi _ _ ) _):rest -> aux rest m
+        (NTree (XTag tag xtree) xtree'):rest ->
+          case localPart tag of
+            "key" -> aux rest (addKey xtree m)
+            "graph" -> aux xtree' m
+            "node" -> addNode xtree xtree' m (aux rest m)
+            "edge" -> addEdge xtree (aux rest m)
+            _ -> error (msgFormat POM2GG "Bad Tag " ++ (localPart tag))
+        _:rest -> aux rest m
+    addKey xkey dict =
+      case xkey of
+        [NTree (XAttr attrtag) [NTree (XText k) _], _, _, NTree (XAttr idtag) [NTree (XText v) _]] ->
+          checkTag attrtag "attr.name" (checkTag idtag "id" (M.insert v k dict))
+        _ -> error (msgFormat POM2GG "Bad key " ++ (show xkey))
+    addEdge e (events, rel, lab) =
+      case e of
+        [NTree (XAttr srctag) [NTree (XText s) []], NTree (XAttr tgttag) [NTree (XText t) _]] ->
+          checkTag srctag "source" (checkTag tgttag "target" (events, S.insert ((read s)::Int, (read t)::Int) rel, lab))
+        _ -> error (msgFormat POM2GG "Bad edge " ++ (show e))
+    addNode n d dict (events, rel, lab) = 
+      let
+        nodeid = 
+          case n of
+            [NTree _ [NTree (XText xid) _]] -> (read xid)::Int
+            _ -> error (msgFormat POM2GG "Bad node")
+        getData pairs datum =
+          case datum of
+            (NTree (XTag tag xkey) xval):ds ->
+              checkTag tag "data" (
+              let
+                getPair k v =
+                  case (k, v) of
+                    ([NTree (XAttr tag') [NTree (XText k') _]], [NTree (XText v') _]) ->
+                      checkTag tag' "key" (dict!k', v')
+                    _ -> error (msgFormat POM2GG "Bad key at node " ++ (show nodeid))
+              in (getPair xkey xval):(getData pairs ds)
+              )
+            _ -> error (msgFormat POM2GG "Bad action at node " ++ (show nodeid))
+        action =
+          let
+            tmpMap = M.fromList (getData [] d)
+          in if L.elem "in" (M.keys tmpMap) then
+            ((tmpMap!"partner", tmpMap!"subject"), Receive, tmpMap!"in")
+          else ((tmpMap!"subject",tmpMap!"partner"), Send, tmpMap!"out")
+      in
+        (S.insert nodeid events, rel, M.insert nodeid action lab)
