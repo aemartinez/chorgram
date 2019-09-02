@@ -442,10 +442,10 @@ gmlEdge :: Int -> Int -> String
 gmlEdge source target = "    <edge source=\"" ++ (show source) ++ "\" target=\"" ++ (show target) ++ "\"></edge>\n"
 
 gmlOpenGate :: Int -> GMLTAGS -> String
-gmlOpenGate id gate = gmlNode (gmldata "ogate" (show gate)) id
+gmlOpenGate id gate = gmlNode (gmldata "open" (show gate)) id
 
 gmlCloseGate :: Int -> GMLTAGS -> String
-gmlCloseGate id gate = gmlNode (gmldata "cgate" (show gate)) (-id)
+gmlCloseGate id gate = gmlNode (gmldata "close" (show gate)) (-id)
 
 gmlrename :: (Int -> Bool) -> Int -> Int -> String -> String
 gmlrename excluded n j s = if (excluded n)
@@ -461,13 +461,13 @@ gg2graphml :: GG -> String
 gg2graphml gg =
   let header   = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:java=\"http://www.yworks.com/xml/yfiles-common/1.0/java\" xmlns:sys=\"http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0\" xmlns:x=\"http://www.yworks.com/xml/yfiles-common/markup/2.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:y=\"http://www.yworks.com/xml/graphml\" xmlns:yed=\"http://www.yworks.com/xml/yed/3\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd\">\n"
               -- "<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n"
-      ogate    = "  <key attr.name=\"ogate\" attr.type=\"string\" for=\"node\" id=\"open\" />\n"
-      cgate    = "  <key attr.name=\"cgate\" attr.type=\"string\" for=\"node\" id=\"close\" />\n"
+      ogate    = "  <key attr.name=\"open\" attr.type=\"string\" for=\"node\" id=\"open\" />\n"
+      cgate    = "  <key attr.name=\"close\" attr.type=\"string\" for=\"node\" id=\"close\" />\n"
       sender   = "  <key attr.name=\"sender\" attr.type=\"string\" for=\"node\" id=\"sender\" />\n"
       receiver = "  <key attr.name=\"receiver\" attr.type=\"string\" for=\"node\" id=\"receiver\" />\n"
       payload  = "  <key attr.name=\"payload\" attr.type=\"string\" for=\"node\" id=\"payload\" />\n"
-      source   = "  <key attr.name=\"source\" attr.type=\"string\" for=\"node\" id=\"source\" />\n"
-      sink     = "  <key attr.name=\"sink\" attr.type=\"string\" for=\"node\" id=\"sink\" />\n"
+      source   = ""--  <key attr.name=\"source\" attr.type=\"string\" for=\"node\" id=\"source\" />\n"
+      sink     = ""--"  <key attr.name=\"sink\" attr.type=\"string\" for=\"node\" id=\"sink\" />\n"
       yattr    = "  <key for=\"node\" id=\"ylabel\" yfiles.type=\"nodegraphics\"/>"
       edir     = "  <graph edgedefault=\"directed\">\n"
       footer   = "  </graph>\n</graphml>\n"
