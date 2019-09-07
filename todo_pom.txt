@@ -6,7 +6,6 @@
 
 - diff di grapi
 
-- pomset to chor
+- esportare i gml in dot
 
-- gg 2 gml
-
+- GUI
