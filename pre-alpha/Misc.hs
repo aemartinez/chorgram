@@ -16,7 +16,7 @@ type Message             = String
 type Edge vertex label = (vertex, label, vertex)
 type Graph vertex label = (Set vertex, vertex, Set label, Set(Edge vertex label))
 
-data Command = GMC | GG | SGG | GG2FSA | GG2POM | GG2GML | SYS | MIN | PROD | HGSEM
+data Command = GMC | GG | SGG | CHOR2DOT | GG2FSA | GG2POM | POM2GG | GG2GML | SYS | MIN | PROD | HGSEM
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
 
 -- Some useful functions
@@ -26,6 +26,9 @@ list2map l = M.fromList [(p,l!!p) | p <- [0 .. (L.length l) - 1 ] ]
 
 intersect :: (Ord a) => Set a -> Set a -> Bool
 intersect x y = not(S.null (S.intersection x y))
+
+dropElems :: Ord a => (a -> Bool) -> Set a -> Set a
+dropElems f x = S.foldr (\e y -> if (f e) then y else (S.insert e y)) S.empty x
 
 findId :: (Eq a, Show a, Show k) => a -> [(k, a)] -> k
 findId e m = case m of
@@ -101,13 +104,6 @@ update i v l
 
 (€) :: (Eq a) => a -> [a] -> Bool
 x € y = L.elem x y
-
-transitiveClosureParam :: (Eq a) => (a -> a -> Bool) -> [(a, a)] -> [(a, a)]
-transitiveClosureParam f closure 
-  | closure == closureUntilNow = closure
-  | otherwise                  = transitiveClosureParam f closureUntilNow
-  where closureUntilNow = 
-          L.nub $ closure ++ [(a, c) | (a, b) <- closure, (b', c) <- closure, ((f b b') || (f b' b))]
           
 minR :: (Eq a) => [(a,a)] -> [(a,a)]
 minR as = [ (n,m) | (n,m) <- as, L.all (\(_,t) -> n/=t) as ]
@@ -135,7 +131,20 @@ transitiveClosure closure
     | closure == closureUntilNow = closure
     | otherwise                  = transitiveClosure closureUntilNow
     where closureUntilNow = L.nub $ closure ++ [(a, c) | (a, b) <- closure, (b', c) <- closure, b == b']
-        
+
+transitiveClosureParam :: (Eq a) => (a -> a -> Bool) -> [(a, a)] -> [(a, a)]
+transitiveClosureParam f closure 
+  | closure == closureUntilNow = closure
+  | otherwise                  = transitiveClosureParam f closureUntilNow
+  where closureUntilNow = 
+          L.nub $ closure ++ [(a, c) | (a, b) <- closure, (b', c) <- closure, ((f b b') || (f b' b))]
+
+reflexoTransitiveClosure :: (Eq a) =>  [a] -> [(a, a)] -> [(a, a)]
+reflexoTransitiveClosure els closure =
+-- PRE: closure must be a binary relation over the elements in els
+-- POST: returns the reflexo-transitive closure of the relation in the 2nd argument
+  L.nub $ (transitiveClosure closure) ++ [(a, a) | a <- els]
+
 cartProd :: (Ord a, Ord b) => Set a -> Set b -> Set (a,b)
 cartProd sa sb = S.fromList $ [(x,y) | x <- (S.toList sa), y <- (S.toList sb)]
 
@@ -193,59 +202,67 @@ usage :: Command -> String
 -- Message on how to use a command
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
-               GMC   -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ~/.chorgram.config \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
-               GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               SGG   -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               GG2POM-> "gg2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
-               GG2GML-> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
-               SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
-               PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               HGSEM -> "hgsem [-d dirpath] [-v] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
+               GMC      -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ~/.chorgram.config \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
+               GG       -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               SGG      -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               CHOR2DOT -> "chor2dot [-d dirpath] [-fmt gml | -fmt sgg] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n \t -fmt = sgg\n"
+               GG2FSA   -> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               GG2POM   -> "gg2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
+               POM2GG   -> "pom2gg [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
+               GG2GML   -> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
+               SYS      -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               MIN      -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
+               PROD     -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               HGSEM    -> "hgsem [-d dirpath] [-v] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
                
+
+cmdName :: Command -> String
+cmdName cmd =
+  case cmd of
+    GMC      -> "gmc"
+    GG       -> "gg"
+    SGG      -> "sgg"
+    CHOR2DOT -> "chor2dot"
+    GG2FSA   -> "gg2fsa"
+    GG2POM   -> "gg2pom"
+    POM2GG   -> "pom2gg"
+    GG2GML   -> "gg2gml"
+    SYS      -> "systemparser"
+    MIN      -> "minimise"
+    PROD     -> "cfsmprod"
+    HGSEM    -> "hgsem"
+
+
 msgFormat :: Command -> String -> String
 msgFormat cmd msg =
-  let pre = case cmd of
-              GMC   -> "gmc:\t"
-              GG    -> "gg:\t"
-              SGG   -> "sgg:\t"
-              GG2FSA-> "gg2fsa:\t"
-              GG2POM-> "gg2pom:\t"
-              GG2GML-> "gg2gml:\t"
-              SYS   -> "systemparser:\t"
-              MIN   -> "minimise:\t"
-              PROD  -> "cfsmprod:\t"
-              HGSEM -> "hgsem:\t"
-              GG2POM-> "gg2pom:\t"
-
-  in pre ++ msg
+  (cmdName cmd) ++ ":\t" ++ msg
 
 
 defaultFlags :: Command -> Map String String
 -- The default argument of each command
 defaultFlags cmd = case cmd of
-                     GMC   -> M.fromList [("-d",dirpath),
-                                          ("-c", "~/.chorgram.config"),
-                                          ("-v",""),
-                                          ("-m","0"),   -- multiplicity **deprecated**
-                                          ("-ts",""),
-                                          ("-b","0"),
-                                          ("-cp", ""),
-                                          ("-tp", "- - - -"),
-                                          ("-p", ""),
-                                          ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
-                                         ]
-                     GG    -> M.fromList [("-d",dirpath), ("-v","")]
-                     SGG   -> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
-                     GG2GML-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
-                     SYS   -> M.fromList [("-d",dirpath), ("-v","")]
-                     MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
-                     PROD  -> M.fromList [("-d",dirpath), ("-v","")]
-                     HGSEM -> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
+                     GMC      -> M.fromList [("-d",dirpath),
+                                             ("-c", "~/.chorgram.config"),
+                                             ("-v",""),
+                                             ("-m","0"),   -- multiplicity **deprecated**
+                                             ("-ts",""),
+                                             ("-b","0"),
+                                             ("-cp", ""),
+                                             ("-tp", "- - - -"),
+                                             ("-p", ""),
+                                             ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
+                                            ]
+                     GG       -> M.fromList [("-d",dirpath), ("-v","")]
+                     SGG      -> M.fromList [("-d",dirpath), ("-v","")]
+                     CHOR2DOT -> M.fromList [("-d",dirpath), ("-fmt","sgg")]
+                     GG2FSA   -> M.fromList [("-d",dirpath), ("-v","")]
+                     GG2POM   -> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
+                     POM2GG   -> M.fromList [("-d",dirpath)]
+                     GG2GML   -> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
+                     SYS      -> M.fromList [("-d",dirpath), ("-v","")]
+                     MIN      -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
+                     PROD     -> M.fromList [("-d",dirpath), ("-v","")]
+                     HGSEM    -> M.fromList [("-d",dirpath), ("-v","")]
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
@@ -282,15 +299,14 @@ getFlags cmd args =
       "-v":xs       -> M.insert "-v" yes       (getFlags cmd xs)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       _             -> error $ usage(cmd)
+    CHOR2DOT -> case args of
+      []            -> defaultFlags(cmd)
+      "-fmt":y:xs   -> M.insert "-fmt" y (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
+      _             -> error $ usage(cmd)
     GG2FSA -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
-      "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
-      _             -> error $ usage(cmd)
-    GG2POM -> case args of
-      []            -> defaultFlags(cmd)
-      "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
-      "-l":y:xs     -> M.insert "-l" y   (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GG2GML -> case args of
@@ -318,11 +334,16 @@ getFlags cmd args =
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
-      "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+      "-d":y:xs -> M.insert "-d"  y        (getFlags cmd xs)
+      _         -> error $ usage(cmd) ++ "\tbad pattern"
     GG2POM -> case args of
       []            -> defaultFlags(cmd)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       "--gml":xs    -> M.insert "--gml" yes    (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+      _         -> error $ usage(cmd)
+    POM2GG -> case args of
+      []            -> defaultFlags(cmd)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
       _         -> error $ usage(cmd)
 

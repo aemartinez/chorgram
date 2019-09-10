@@ -106,6 +106,14 @@ subjectOf ( ( s, r ), d, _ ) = case d of
                                 LoopRcv -> r
                                 _       -> s
 
+objectOf :: Action -> Ptp
+objectOf ( ( s, r ), d, _ ) = case d of
+                                Send    -> r
+                                LoopSnd -> r
+                                Receive -> s
+                                LoopRcv -> s
+                                _       -> r
+
 eventOf :: LTrans -> Action
 eventOf ( _, e, _ ) = e
 

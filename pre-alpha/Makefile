@@ -22,7 +22,7 @@ gitmsg = "checkpoint"
 # compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs
 #	$(ccmd)
 
-compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs gg2pom.hs #K KGparser.hs 
+compile: gmc.hs BuildGlobal.hs GGparser.hs SystemParser.hs PomsetSemantics.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs gg2pom.hs pom2gg.hs minimise.hs gg2gml.hs #K KGparser.hs hgsem.hs
 	$(MAKE) all
 
 all:
@@ -31,12 +31,15 @@ all:
 	$(ccmd) GGparser.hs &&\
 #K	$(ccmd) KGparser.hs &&\
 	$(ccmd) SystemParser.hs &&\
+	$(ccmd) PomsetSemantics.hs &&\
 	$(ccmd) sgg.hs &&\
 	$(ccmd) sysparser.hs &&\
 	$(ccmd) minimise.hs &&\
-	$(ccmd) hgsem.hs &&\
+#	$(ccmd) hgsem.hs &&\
 	$(ccmd) gg2pom.hs &&\
+	$(ccmd) pom2gg.hs &&\
 	$(ccmd) gg2fsa.hs
+	$(ccmd) chor2dot.hs &&\
 	$(ccmd) gg2gml.hs
 
 debug:
@@ -45,9 +48,16 @@ debug:
 	$(ccdebug) GGparser.hs &&\
 #K	$(ccdebug) KGparser.hs &&\
 	$(ccdebug) SystemParser.hs &&\
+	$(ccdebug) PomsetSemantics.hs &&\
 	$(ccdebug) sgg.hs &&\
+	$(ccdebug) minimise.hs &&\
+#	$(ccdebug) hgsem.hs &&\
 	$(ccdebug) sysparser.hs\
-	$(ccdebug) gg2fsa.hs
+	$(ccdebug) gg2pom.hs &&\
+	$(ccdebug) pom2gg.hs &&\
+	$(ccdebug) gg2fsa.hs &&\
+	$(ccmd) chor2dot.hs &&\
+	$(ccdebug) gg2gml.hs
 
 # To get the stack trace, add +RTS -xc at the end of the gmc or BuildGlobal command
 prof:
@@ -59,9 +69,9 @@ clean:
 
 parser:
 	happy -a -i  GGGrammar.y -o GGparser.hs && $(ccmd) GGparser.hs
-#K	happy -a -i  KGGrammar.y -o KGparser.hs && $(ccmd) KGparser.hs
 	happy -a -i  RGGGrammar.y -o RGGparser.hs && $(ccmd) RGGparser.hs
 	happy -a -i  SystemGrammar.y -o SystemParser.hs && $(ccmd) SystemParser.hs
+#K	happy -a -i  KGGrammar.y -o KGparser.hs && $(ccmd) KGparser.hs
 
 config:
 	@echo "experiments\t"$(experimentsdir) > /tmp/$(cfgfile)

@@ -6,6 +6,6 @@
 
 - diff di grapi
 
-- esportare i gml in dot
+- esportare i gml in dot senza passare da sgg
 
 - GUI
