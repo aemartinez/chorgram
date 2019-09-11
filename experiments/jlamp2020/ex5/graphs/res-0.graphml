@@ -85,10 +85,10 @@
   <data key="d8">63.0</data>
   <data key="d9">322.0</data>
   <data key="d10">"A" -&gt; "B" : "y"</data>
-  <data key="d12">l</data>
+  <data key="d12">x</data>
   <data key="d13">1</data>
   <data key="d2">76</data>
-  <data key="d3">14</data>
+  <data key="d3">10</data>
   <data key="d4">1-76</data>
 </node>
 <node id="(1, '87')">
@@ -117,10 +117,10 @@
   <data key="d8">63.0</data>
   <data key="d9">322.0</data>
   <data key="d10">"A" -&gt; "B" : "r"</data>
-  <data key="d12">x</data>
+  <data key="d12">l</data>
   <data key="d13">1</data>
   <data key="d2">91</data>
-  <data key="d3">10</data>
+  <data key="d3">14</data>
   <data key="d4">1-91</data>
 </node>
 <node id="(1, '-3')">
@@ -151,17 +151,17 @@
 <edge source="(1, '-30')" target="(1, '-10')"/>
 <edge source="(1, '-10')" target="(1, '58')"/>
 <edge source="(1, '58')" target="(1, '-3')"/>
+<edge source="(1, '67')" target="(1, '76')">
+  <data key="d14">1</data>
+</edge>
 <edge source="(1, '67')" target="(1, '87')">
   <data key="d14">1</data>
 </edge>
-<edge source="(1, '67')" target="(1, '91')">
+<edge source="(1, '76')" target="(1, '91')">
   <data key="d15">1</data>
 </edge>
-<edge source="(1, '67')" target="(1, '76')">
-  <data key="d16">1</data>
-</edge>
 <edge source="(1, '76')" target="(1, '-67')">
-  <data key="d14">1</data>
+  <data key="d16">1</data>
 </edge>
 <edge source="(1, '87')" target="(1, '-67')">
   <data key="d14">1</data>
@@ -172,7 +172,7 @@
 <edge source="(1, '-67')" target="(1, '91')">
   <data key="d16">1</data>
 </edge>
-<edge source="(1, '91')" target="(1, '76')">
+<edge source="(1, '91')" target="(1, '-67')">
   <data key="d15">1</data>
 </edge>
 <edge source="(1, '91')" target="(1, '-3')">
