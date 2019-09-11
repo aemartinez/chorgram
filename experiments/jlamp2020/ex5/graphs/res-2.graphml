@@ -1,0 +1,189 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key attr.name="deleted" attr.type="long" for="edge" id="d16"/>
+<key attr.name="added" attr.type="long" for="edge" id="d15"/>
+<key attr.name="kept" attr.type="string" for="edge" id="d14"/>
+<key attr.name="close" attr.type="string" for="node" id="d13"/>
+<key attr.name="changed" attr.type="long" for="node" id="d12"/>
+<key attr.name="payload-change-to" attr.type="string" for="node" id="d11"/>
+<key attr.name="label" attr.type="string" for="node" id="d10"/>
+<key attr.name="y" attr.type="string" for="node" id="d9"/>
+<key attr.name="x" attr.type="string" for="node" id="d8"/>
+<key attr.name="payload" attr.type="string" for="node" id="d7"/>
+<key attr.name="receiver" attr.type="string" for="node" id="d6"/>
+<key attr.name="sender" attr.type="string" for="node" id="d5"/>
+<key attr.name="node-id" attr.type="string" for="node" id="d4"/>
+<key attr.name="target-node" attr.type="string" for="node" id="d3"/>
+<key attr.name="src-node" attr.type="string" for="node" id="d2"/>
+<key attr.name="kept" attr.type="long" for="node" id="d1"/>
+<key attr.name="open" attr.type="string" for="node" id="d0"/>
+<graph edgedefault="directed"><node id="(1, '1')">
+  <data key="d0">Source</data>
+  <data key="d1">1</data>
+  <data key="d2">1</data>
+  <data key="d3">1</data>
+  <data key="d4">1-1</data>
+</node>
+<node id="(1, '3')">
+  <data key="d0">Branch</data>
+  <data key="d1">1</data>
+</node>
+<node id="(1, '10')">
+  <data key="d0">Fork</data>
+  <data key="d1">1</data>
+  <data key="d2">10</data>
+  <data key="d3">3</data>
+  <data key="d4">1-10</data>
+</node>
+<node id="(1, '19')">
+  <data key="d5">A</data>
+  <data key="d6">B</data>
+  <data key="d7">x</data>
+  <data key="d8">63.0</data>
+  <data key="d9">322.0</data>
+  <data key="d10">"A" -&gt; "B" : "x"</data>
+  <data key="d1">1</data>
+  <data key="d2">19</data>
+  <data key="d3">10</data>
+  <data key="d4">1-19</data>
+</node>
+<node id="(1, '30')">
+  <data key="d0">Branch</data>
+  <data key="d1">1</data>
+</node>
+<node id="(1, '41')">
+  <data key="d5">C</data>
+  <data key="d6">B</data>
+  <data key="d7">x</data>
+  <data key="d8">63.0</data>
+  <data key="d9">322.0</data>
+  <data key="d10">"C" -&gt; "B" : "x"</data>
+  <data key="d11">y</data>
+  <data key="d12">1</data>
+  <data key="d2">41</data>
+  <data key="d3">21</data>
+  <data key="d4">1-41</data>
+</node>
+<node id="(1, '54')">
+  <data key="d5">C</data>
+  <data key="d6">B</data>
+  <data key="d7">z</data>
+  <data key="d8">63.0</data>
+  <data key="d9">322.0</data>
+  <data key="d10">"C" -&gt; "B" : "z"</data>
+</node>
+<node id="(1, '-30')">
+  <data key="d13">Merge</data>
+  <data key="d1">1</data>
+</node>
+<node id="(1, '-10')">
+  <data key="d13">Join</data>
+  <data key="d1">1</data>
+  <data key="d2">-10</data>
+  <data key="d3">-3</data>
+  <data key="d4">1--10</data>
+</node>
+<node id="(1, '58')">
+  <data key="d5">A</data>
+  <data key="d6">B</data>
+  <data key="d7">l</data>
+  <data key="d8">63.0</data>
+  <data key="d9">322.0</data>
+  <data key="d10">"A" -&gt; "B" : "l"</data>
+  <data key="d1">1</data>
+  <data key="d2">58</data>
+  <data key="d3">14</data>
+  <data key="d4">1-58</data>
+</node>
+<node id="(1, '67')">
+  <data key="d0">Fork</data>
+</node>
+<node id="(1, '76')">
+  <data key="d5">A</data>
+  <data key="d6">B</data>
+  <data key="d7">y</data>
+  <data key="d8">63.0</data>
+  <data key="d9">322.0</data>
+  <data key="d10">"A" -&gt; "B" : "y"</data>
+</node>
+<node id="(1, '87')">
+  <data key="d5">C</data>
+  <data key="d6">B</data>
+  <data key="d7">y</data>
+  <data key="d8">63.0</data>
+  <data key="d9">322.0</data>
+  <data key="d10">"C" -&gt; "B" : "y"</data>
+</node>
+<node id="(1, '-67')">
+  <data key="d13">Join</data>
+</node>
+<node id="(1, '91')">
+  <data key="d5">A</data>
+  <data key="d6">B</data>
+  <data key="d7">r</data>
+  <data key="d8">63.0</data>
+  <data key="d9">322.0</data>
+  <data key="d10">"A" -&gt; "B" : "r"</data>
+</node>
+<node id="(1, '-3')">
+  <data key="d13">Merge</data>
+  <data key="d1">1</data>
+</node>
+<node id="(1, '-1')">
+  <data key="d13">Sink</data>
+  <data key="d1">1</data>
+  <data key="d2">-1</data>
+  <data key="d3">-1</data>
+  <data key="d4">1--1</data>
+</node>
+<edge source="(1, '1')" target="(1, '3')">
+  <data key="d14">1</data>
+</edge>
+<edge source="(1, '3')" target="(1, '67')"/>
+<edge source="(1, '3')" target="(1, '10')">
+  <data key="d14">1</data>
+</edge>
+<edge source="(1, '10')" target="(1, '19')">
+  <data key="d14">1</data>
+</edge>
+<edge source="(1, '10')" target="(1, '30')">
+  <data key="d14">1</data>
+</edge>
+<edge source="(1, '19')" target="(1, '58')">
+  <data key="d15">1</data>
+</edge>
+<edge source="(1, '19')" target="(1, '-10')">
+  <data key="d16">1</data>
+</edge>
+<edge source="(1, '30')" target="(1, '54')"/>
+<edge source="(1, '30')" target="(1, '41')">
+  <data key="d14">1</data>
+</edge>
+<edge source="(1, '41')" target="(1, '-30')">
+  <data key="d14">1</data>
+</edge>
+<edge source="(1, '54')" target="(1, '-30')"/>
+<edge source="(1, '-30')" target="(1, '-10')">
+  <data key="d14">1</data>
+</edge>
+<edge source="(1, '-10')" target="(1, '-3')">
+  <data key="d17">1</data>
+</edge>
+<edge source="(1, '-10')" target="(1, '58')">
+  <data key="d16">1</data>
+</edge>
+<edge source="(1, '58')" target="(1, '-10')">
+  <data key="d15">1</data>
+</edge>
+<edge source="(1, '58')" target="(1, '-3')">
+  <data key="d16">1</data>
+</edge>
+<edge source="(1, '67')" target="(1, '76')"/>
+<edge source="(1, '67')" target="(1, '87')"/>
+<edge source="(1, '76')" target="(1, '-67')"/>
+<edge source="(1, '87')" target="(1, '-67')"/>
+<edge source="(1, '-67')" target="(1, '91')"/>
+<edge source="(1, '91')" target="(1, '-3')"/>
+<edge source="(1, '-3')" target="(1, '-1')">
+  <data key="d14">1</data>
+</edge>
+</graph></graphml>
