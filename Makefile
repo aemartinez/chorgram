@@ -39,6 +39,7 @@ all:
 	$(ccmd) gg2pom.hs &&\
 	$(ccmd) pom2gg.hs &&\
 	$(ccmd) gg2fsa.hs
+	$(ccmd) chor2dot.hs &&\
 	$(ccmd) gg2gml.hs
 
 debug:
@@ -54,7 +55,8 @@ debug:
 	$(ccdebug) sysparser.hs\
 	$(ccdebug) gg2pom.hs &&\
 	$(ccdebug) pom2gg.hs &&\
-	$(ccdebug) gg2fsa.hs
+	$(ccdebug) gg2fsa.hs &&\
+	$(ccmd) chor2dot.hs &&\
 	$(ccdebug) gg2gml.hs
 
 # To get the stack trace, add +RTS -xc at the end of the gmc or BuildGlobal command

@@ -16,12 +16,15 @@ import SyntacticGlobalGraphs
 import Text.XML.HXT.Parser.XmlParsec(xreadDoc)
 import Data.Tree.NTree.TypeDefs
 import Text.XML.HXT.DOM.TypeDefs
--- import Text.XML.HXT.DOM.QualifiedName
+import DotStuff
 
 type Event = Int
 type Lab   = Map Event Action
 type Pomset = (Set Event, Set (Event, Event), Lab)
-
+data LabelFormat =
+  Interaction |
+  Communication
+  
 emptySem :: Event -> (Set Pomset, Event)
 -- emptySem e = (S.singleton (S.singleton e, S.empty, M.fromList [(e, (("?","?"), Tau, "?"))]), e+1)
 emptySem e = (S.empty, e)
@@ -230,6 +233,13 @@ checkTag tag val expr =
     expr
   else error (msgFormat POM2GG "Bad " ++ val)
 
+addKey :: [NTree XNode] -> Map String String -> Map String String
+addKey xkey dict =
+  case xkey of
+    [NTree (XAttr attrtag) [NTree (XText k) _], _, _, NTree (XAttr idtag) [NTree (XText v) _]] ->
+      checkTag attrtag "attr.name" (checkTag idtag "id" (M.insert v k dict))
+    _ -> error (msgFormat POM2GG "Bad key " ++ (show xkey))
+
 xgml2pomset :: String -> Pomset
 xgml2pomset xml = aux (xreadDoc xml) M.empty
   where
@@ -246,11 +256,6 @@ xgml2pomset xml = aux (xreadDoc xml) M.empty
             "edge" -> addEdge xtree (aux rest m)
             _ -> error (msgFormat POM2GG "Bad Tag " ++ (localPart tag))
         _:rest -> aux rest m
-    addKey xkey dict =
-      case xkey of
-        [NTree (XAttr attrtag) [NTree (XText k) _], _, _, NTree (XAttr idtag) [NTree (XText v) _]] ->
-          checkTag attrtag "attr.name" (checkTag idtag "id" (M.insert v k dict))
-        _ -> error (msgFormat POM2GG "Bad key " ++ (show xkey))
     addEdge e (events, rel, lab) =
       case e of
         [NTree (XAttr srctag) [NTree (XText s) []], NTree (XAttr tgttag) [NTree (XText t) _]] ->
@@ -285,3 +290,72 @@ xgml2pomset xml = aux (xreadDoc xml) M.empty
           else ((tmpMap!"subject",tmpMap!"partner"), Send, tmpMap!"out")
       in
         (S.insert nodeid events, rel, M.insert nodeid action lab)
+
+xgml2dot :: String -> String -> Map String String -> DotString
+xgml2dot name xml flines =
+  "digraph " ++ name ++ " {\n\tnode [width="
+  ++ flines!ggsizenode ++ ", height="
+  ++ flines!ggsizenode ++ "]\n"
+  ++ (aux (xreadDoc xml) M.empty)
+  ++ "}\n"
+  where
+    aux t m =
+      case t of
+        [] -> ""
+        (NTree (XPi _ _ ) _):rest -> aux rest m
+        (NTree (XTag tag xtree) xtree'):rest ->
+          case localPart tag of
+            "key" -> aux rest (addKey xtree m)
+            "graph" -> aux xtree' m
+            "graphml" -> aux xtree' m
+            "node" -> addNode xtree xtree' m (aux rest m)
+            "edge" -> addEdge xtree (aux rest m)
+            _ -> error (msgFormat POM2GG "Bad Tag " ++ (localPart tag))
+        _:rest -> aux rest m
+    addEdge e dot =
+      case e of
+        [NTree (XAttr srctag) [NTree (XText s) []], NTree (XAttr tgttag) [NTree (XText t) _]] ->
+          checkTag srctag "source" (checkTag tgttag "target" (dot ++ "\t" ++ s ++ " -> " ++ t ++ "\n"))
+        _ -> error (msgFormat POM2GG "Bad edge " ++ (show e))
+    addNode n d dict dot =
+      let
+        nodeid = 
+          case n of
+            [NTree _ [NTree (XText xid) _]] -> xid
+            _ -> error (msgFormat POM2GG "Bad node")
+        getData pairs datum =
+          case datum of
+            [] -> pairs
+            (NTree (XTag tag xkey) xval):ds ->
+              checkTag tag "data" (
+              let
+                getPair k v =
+                  case (k, v) of
+                    ([NTree (XAttr tag') [NTree (XText k') _]], [NTree (XText v') _]) ->
+                      checkTag tag' "key" (dict!k', v')
+                    _ -> error (msgFormat POM2GG "Bad key at node " ++ nodeid)
+              in (getPair xkey xval):(getData pairs ds)
+              )
+            (NTree (XText _) _):ds -> (getData pairs ds)
+            _ -> error (msgFormat POM2GG "Bad action at node " ++ nodeid ++ "\t" ++ (show datum))
+        dotline datum = nodeid ++ " " ++ 
+          let
+            tmpMap = M.fromList (getData [] d)
+            xkeys = M.keys tmpMap
+          in if L.elem "open" xkeys then
+               case tmpMap!"open" of
+                 "Source" -> sourceV
+                 "Branch" -> branchV
+                 "Fork" -> forkV
+                 _ -> error (msgFormat POM2GG "Bad opening gate at node " ++ nodeid ++ "\t" ++ (show datum))
+             else
+               if L.elem "close" xkeys then
+                 case tmpMap!"close" of
+                   "Sink" -> sinkV
+                   "Merge" -> mergeV
+                   "Join" -> joinV
+                   _ -> error (msgFormat POM2GG "Bad closing gate at node " ++ nodeid ++ "\t" ++ (show datum))
+               else if L.elem "payload" xkeys then
+                 "[label = \"" ++ tmpMap!"sender" ++ flines!ggarr ++ tmpMap!"receiver" ++ ":" ++ tmpMap!"payload" ++ "\", shape=rectangle, fontname=" ++ flines!nodefont ++ ", fontcolor=MidnightBlue]\n"
+               else error (msgFormat POM2GG "Bad element at node " ++ nodeid ++ "\t" ++ (show datum))
+      in dot ++ (dotline d)

@@ -16,7 +16,7 @@ type Message             = String
 type Edge vertex label = (vertex, label, vertex)
 type Graph vertex label = (Set vertex, vertex, Set label, Set(Edge vertex label))
 
-data Command = GMC | GG | SGG | GG2FSA | GG2POM | POM2GG | GG2GML | SYS | MIN | PROD | HGSEM
+data Command = GMC | GG | SGG | CHOR2DOT | GG2FSA | GG2POM | POM2GG | GG2GML | SYS | MIN | PROD | HGSEM
 data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
 
 -- Some useful functions
@@ -202,60 +202,67 @@ usage :: Command -> String
 -- Message on how to use a command
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
-               GMC   -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ~/.chorgram.config \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
-               GG    -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               SGG   -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               GG2FSA-> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               GG2POM-> "gg2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
-               POM2GG-> "pom2gg [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
-               GG2GML-> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
-               SYS   -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               MIN   -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
-               PROD  -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               HGSEM -> "hgsem [-d dirpath] [-v] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
+               GMC      -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ~/.chorgram.config \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
+               GG       -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               SGG      -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               CHOR2DOT -> "chor2dot [-d dirpath] [-fmt gml | -fmt sgg | -fmt sloppygml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t-fmt = sgg\n\t"
+               GG2FSA   -> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               GG2POM   -> "gg2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
+               POM2GG   -> "pom2gg [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
+               GG2GML   -> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
+               SYS      -> "systemparser [-d dirpath] [-v] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               MIN      -> "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
+               PROD     -> "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               HGSEM    -> "hgsem [-d dirpath] [-v] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
                
+
+cmdName :: Command -> String
+cmdName cmd =
+  case cmd of
+    GMC      -> "gmc"
+    GG       -> "gg"
+    SGG      -> "sgg"
+    CHOR2DOT -> "chor2dot"
+    GG2FSA   -> "gg2fsa"
+    GG2POM   -> "gg2pom"
+    POM2GG   -> "pom2gg"
+    GG2GML   -> "gg2gml"
+    SYS      -> "systemparser"
+    MIN      -> "minimise"
+    PROD     -> "cfsmprod"
+    HGSEM    -> "hgsem"
+
+
 msgFormat :: Command -> String -> String
 msgFormat cmd msg =
-  let pre = case cmd of
-              GMC   -> "gmc:\t"
-              GG    -> "gg:\t"
-              SGG   -> "sgg:\t"
-              GG2FSA-> "gg2fsa:\t"
-              GG2POM-> "gg2pom:\t"
-              POM2GG-> "pom2gg:\t"
-              GG2GML-> "gg2gml:\t"
-              SYS   -> "systemparser:\t"
-              MIN   -> "minimise:\t"
-              PROD  -> "cfsmprod:\t"
-              HGSEM -> "hgsem:\t"
-
-  in pre ++ msg
+  (cmdName cmd) ++ ":\t" ++ msg
 
 
 defaultFlags :: Command -> Map String String
 -- The default argument of each command
 defaultFlags cmd = case cmd of
-                     GMC   -> M.fromList [("-d",dirpath),
-                                          ("-c", "~/.chorgram.config"),
-                                          ("-v",""),
-                                          ("-m","0"),   -- multiplicity **deprecated**
-                                          ("-ts",""),
-                                          ("-b","0"),
-                                          ("-cp", ""),
-                                          ("-tp", "- - - -"),
-                                          ("-p", ""),
-                                          ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
-                                         ]
-                     GG    -> M.fromList [("-d",dirpath), ("-v","")]
-                     SGG   -> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2FSA-> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2POM-> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
-                     POM2GG-> M.fromList [("-d",dirpath)]
-                     GG2GML-> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
-                     SYS   -> M.fromList [("-d",dirpath), ("-v","")]
-                     MIN   -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
-                     PROD  -> M.fromList [("-d",dirpath), ("-v","")]
-                     HGSEM -> M.fromList [("-d",dirpath), ("-v","")]
+                     GMC      -> M.fromList [("-d",dirpath),
+                                             ("-c", "~/.chorgram.config"),
+                                             ("-v",""),
+                                             ("-m","0"),   -- multiplicity **deprecated**
+                                             ("-ts",""),
+                                             ("-b","0"),
+                                             ("-cp", ""),
+                                             ("-tp", "- - - -"),
+                                             ("-p", ""),
+                                             ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
+                                            ]
+                     GG       -> M.fromList [("-d",dirpath), ("-v","")]
+                     SGG      -> M.fromList [("-d",dirpath), ("-v","")]
+                     CHOR2DOT -> M.fromList [("-d",dirpath), ("-fmt","sgg")]
+                     GG2FSA   -> M.fromList [("-d",dirpath), ("-v","")]
+                     GG2POM   -> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
+                     POM2GG   -> M.fromList [("-d",dirpath)]
+                     GG2GML   -> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
+                     SYS      -> M.fromList [("-d",dirpath), ("-v","")]
+                     MIN      -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
+                     PROD     -> M.fromList [("-d",dirpath), ("-v","")]
+                     HGSEM    -> M.fromList [("-d",dirpath), ("-v","")]
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
@@ -291,6 +298,11 @@ getFlags cmd args =
       "-rg":xs      -> M.insert "-rg" yes      (getFlags cmd xs)
       "-v":xs       -> M.insert "-v" yes       (getFlags cmd xs)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
+      _             -> error $ usage(cmd)
+    CHOR2DOT -> case args of
+      []            -> defaultFlags(cmd)
+      "-fmt":y:xs   -> M.insert "-fmt" y (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GG2FSA -> case args of
       []            -> defaultFlags(cmd)
