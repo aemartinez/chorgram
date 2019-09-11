@@ -25,8 +25,9 @@ main = do progargs <- getArgs
               createDirectoryIfMissing True dir
               let ( gg, _ ) =
                     (gggrammar . GGparser.lexer) ggtxt
+              let iter = (read (flags!"-l"))::Int
               let ( pomsets, _ ) =
-                    pomsetsOf gg 0 0
+                    pomsetsOf gg iter 0
               let aux b ps i =
                     let (f, ext) = if flags!"--gml" == "yes"
                                    then (pomset2gml, ".graphml")
@@ -34,4 +35,4 @@ main = do progargs <- getArgs
                     in case ps of
                          [] -> return ()
                          p:ps' -> writeToFile (dir ++ b ++ (show i) ++ ext) (f p) >>= \_ -> aux b ps' (i+1)
-              aux baseName (S.toList pomsets) (0 :: Int)
+              aux baseName (S.toList pomsets) 0

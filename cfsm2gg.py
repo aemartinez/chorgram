@@ -109,8 +109,8 @@ parser.add_argument("-gmc",
                     dest = "gmc",
                     help = "Specify the path to gmc   {default: " + GMC + "}"
 )
-parser.add_argument("-gg",
-                    dest = "gg",
+parser.add_argument("-bg",
+                    dest = "bg",
                     help = "Specify the path to BuildGlobal   {default: " + BG + "}"
 )
 parser.add_argument("-dir",
@@ -135,7 +135,7 @@ args = parser.parse_args()
 if args.hkc: HKC   = args.hkc
 if args.pn:  PETRY = args.pn
 if args.gmc: GMC   = args.gmc
-if args.gg:  BG    = args.gg
+if args.bg:  BG    = args.bg
 
 basename_ = os.path.basename((os.path.splitext(args.filename))[0])
 dir = args.dir + ("" if (args.dir)[-1] == os.sep else os.sep) + basename_ + os.sep

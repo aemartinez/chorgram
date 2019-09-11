@@ -50,7 +50,7 @@ pomsetsOf gg iter e =
   -- POST: returns the set of pomsets [[gg]] with n-unfolds of each loop for n = |iter|
   --       (eventually) well-formedness is checked iff iter >= 0
   -- e is the 'counter' of the events
-  let unfold g n = Seq (L.replicate (abs n) g)
+  let unfold g n = if n==0 then Emp else Seq (L.replicate (abs n) g)
       -- TODO: uniform unfoldind for the moment. Eventually to generate random numbers between 0 and iter.
   in
     case gg of
@@ -293,8 +293,11 @@ xgml2pomset xml = aux (xreadDoc xml) M.empty
 
 xgml2dot :: String -> String -> Map String String -> DotString
 xgml2dot name xml flines =
-  "digraph " ++ name ++ " {\n\tnode [width="
-  ++ flines!ggsizenode ++ ", height="
+  -- transforms a graphml file representing a choreography (possibly
+  -- violating the sgg format) in dot format
+  --
+  "digraph " ++ name ++ " {\n\tnode [width="    -- The string is just a dot notation with nodes and
+  ++ flines!ggsizenode ++ ", height="           -- edges computed by the auxiliary function aux
   ++ flines!ggsizenode ++ "]\n"
   ++ (aux (xreadDoc xml) M.empty)
   ++ "}\n"

@@ -256,7 +256,7 @@ defaultFlags cmd = case cmd of
                      SGG      -> M.fromList [("-d",dirpath), ("-v","")]
                      CHOR2DOT -> M.fromList [("-d",dirpath), ("-fmt","sgg")]
                      GG2FSA   -> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2POM   -> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
+                     GG2POM   -> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no"), ("-l","1")]
                      POM2GG   -> M.fromList [("-d",dirpath)]
                      GG2GML   -> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
                      SYS      -> M.fromList [("-d",dirpath), ("-v","")]
@@ -338,9 +338,9 @@ getFlags cmd args =
       _         -> error $ usage(cmd) ++ "\tbad pattern"
     GG2POM -> case args of
       []            -> defaultFlags(cmd)
-      "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       "--gml":xs    -> M.insert "--gml" yes    (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+      "-l":y:xs     -> M.insert "-l"  y        (getFlags cmd xs)
       _         -> error $ usage(cmd)
     POM2GG -> case args of
       []            -> defaultFlags(cmd)
