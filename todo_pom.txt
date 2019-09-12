@@ -6,6 +6,21 @@
 
 - diff di grapi
 
-- esportare i gml in dot senza passare da sgg
-
 - GUI
+
+- Nome
+  key/buzzwords
+  - Analiser
+  - Pomset
+  - Choreography
+  - Global Graphs
+  - Partial Order
+  - Tool(kit)
+
+  Possibilita'
+  - pomcho (pun with poncho)
+  - poch (vulgar for T-bag, card game of chance)
+  - panchor
+  - p4c
+  
+  

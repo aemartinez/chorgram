@@ -379,13 +379,14 @@ xgmldiff2dot name xml flines =
             "edge" -> addEdge xtree xtree' (aux rest m) m
             _ -> error (msgFormat POM2GG "Bad Tag " ++ (localPart tag))
         _:rest -> aux rest m
-    diffkeys = ["deleted", "changed", "kept", "added"]
+    diffkeys = ["deleted", "changed", "kept", "added", "payload-change-to"]
     diffRender f l
       | l == [] = "\n"
-      | l == ["deleted"] = "[style=" ++ f ++ ", fillcolor=lightgray,color=lightgray]\n"
-      | l == ["changed"] = "[style=" ++ f ++ ", fillcolor=lightblue,color=lightblue]\n"
-      | l == ["added"] = "[style=" ++ f ++ ", fillcolor=cyan,color=cyan]\n"
-      | l == ["kept"] = "[style=" ++ f ++ ", fillcolor=yellow,color=lightyellow]\n"
+      | L.elem "deleted" l = "[style=" ++ f ++ ", fillcolor=cornsilk4,color=cornsilk4]\n"
+      | L.elem "changed" l = "[style=" ++ f ++ ", fillcolor=lightblue,color=lightblue]\n"
+      | L.elem "added" l = "[style=" ++ f ++ ", fillcolor=blue2,color=blue2]\n"
+      | L.elem "kept" l = "[style=" ++ f ++ ", fillcolor=darkolivegreen3,color=darkolivegreen3]\n"
+      | L.elem "payload-change-to" l = "[style=" ++ f ++ ", fillcolor=aquamarine1,color=aquamarine1]\n"
       | True = error (msgFormat POM2GG "Bad key " ++ (show l))
     addEdge e d dot dict =
       let
@@ -396,7 +397,7 @@ xgmldiff2dot name xml flines =
             NTree (XAttr tgttag) [NTree (XText t) _]] ->
              checkTag srctag "source" (
              checkTag tgttag "target" (
-                 dot ++ "\t" ++ "node" ++ s ++ " -> " ++ "node" ++ t ++ (diffRender "dotted" (L.intersect xkeys diffkeys))
+                 dot ++ "\t" ++ "node" ++ s ++ " -> " ++ "node" ++ t ++ (diffRender "dashed" (L.intersect xkeys diffkeys))
                  )
              )
            _ -> error (msgFormat POM2GG "Bad edge " ++ (show e))
