@@ -36,6 +36,7 @@ def ndc(n):
     return 0.45
 def nic(n):
     return 0.45
+
 def edc(n):
     return 0
 def eic(n):
@@ -211,48 +212,6 @@ def from_diff_to_graph(g1, g2, g3, diffs, brs):
         external_mins = [a for a in new_external_succs if len(new_succ_order.in_edges(a)) == 0]
         for n in external_mins:
             add_edge_and_attr(merge, reverse_map[n])
-                
-        # for n1 in maxs:
-        #     for n2 in mins:
-        #         (source, target) = (reverse_map[n1], branch)
-        #         g.add_edge((1, source), (1,target))
-        #         if (source, target) in g1.out_edges():
-        #             g.edges[(1, source), (1,target)]["kept"]="1"
-        #         else:
-        #             g.edges[(1, source), (1,target)]["added"]="1"
-
-        #         (source, target) = (branch, reverse_map[n2])
-        #         g.add_edge((1, source), (1,target))
-        #         if (source, target) in g1.out_edges():
-        #             g.edges[(1, source), (1,target)]["kept"]="1"
-        #         else:
-        #             g.edges[(1, source), (1,target)]["added"]="1"
-
-        # # connect merge
-        # old_preds = [a for (a,x) in old_order.in_edges(merge) if not (a, branch) in old_order.in_edges(branch) and a != branch]
-        # old_succs = [b for (x,b) in old_order.out_edges(merge)]
-        # new_preds = [a1 for a1 in new_order.nodes() if a1 in reverse_map and reverse_map[a1] in old_preds]
-        # new_succs = [a1 for a1 in new_order.nodes() if a1 in reverse_map and reverse_map[a1] in old_succs]
-        # new_orderA = nx.subgraph(new_order, new_preds)
-        # new_orderB = nx.subgraph(new_order, new_succs)
-        # maxs = [a for a in new_preds if len(new_orderA.out_edges(a)) == 0]
-        # mins = [a for a in new_succs if len(new_orderB.in_edges(a)) == 0]
-        # for n1 in maxs:
-        #     for n2 in mins:
-        #         (source, target) = (reverse_map[n1], merge)
-        #         g.add_edge((1, source), (1,target))
-        #         if (source, target) in g1.out_edges():
-        #             g.edges[(1, source), (1,target)]["kept"]="1"
-        #         else:
-        #             g.edges[(1, source), (1,target)]["added"]="1"
-
-        #         (source, target) = (merge, reverse_map[n2])
-        #         g.add_edge((1, source), (1,target))
-        #         if (source, target) in g1.out_edges():
-        #             g.edges[(1, source), (1,target)]["kept"]="1"
-        #         else:
-        #             g.edges[(1, source), (1,target)]["added"]="1"
-
     # connect the missing edges
     temp_order = nx.transitive_closure(g)
     for (n1,n2) in g2.edges():
@@ -269,54 +228,24 @@ def from_diff_to_graph(g1, g2, g3, diffs, brs):
         if not ((1,n1), (1, n2)) in g.edges():
             g.add_edge((1,n1), (1, n2))
             g.edges[(1,n1), (1, n2)]["deleted"] = 1
-            
-                
-    # 
-    # for b in brs:
-    #     A = [a for (a,x) in old_order.in_edges(b)]
-    #     B = [b for (x,b) in old_order.out_edges(b)]
-    #     A1 = [a1 for a1 in new_order.nodes() if a1 in reverse_map and reverse_map[a1] in A]
-    #     B1 = [a1 for a1 in new_order.nodes() if a1 in reverse_map and reverse_map[a1] in B]
-    #     print(A1,B1)
-    #     new_orderA = nx.subgraph(new_order, A1)
-    #     new_orderB = nx.subgraph(new_order, B1)
-    #     A2 = [a for a in A1 if len(new_orderA.out_edges(a)) == 0]
-    #     B2 = [a for a in B1 if len(new_orderB.in_edges(a)) == 0]
-    #     print(A2,B2)
-    #     print([new_order.nodes[a] for a in A2])
-    #     print([new_order.nodes[a] for a in B2])
-    #     print([new_order.nodes[a] for a in B1])
-    
-    # for (e1, e2) in diffs[0][1]:
-    #     if (not e1 is None) and (not e2 is None):
-    #         if ((1,e1[0]), (1,e1[1])) in g.out_edges():
-    #             g.edges[(1,e1[0]), (1,e1[1])]["kept"]="1"
-    #     # elif (not e1 is None) and (e2 is None):
-    #     #     if ((1,e1[0]), (1,e1[1])) in g.out_edges():
-    #     #         g.edges[(1,e1[0]), (1,e1[1])]["deleted"]="1"
-    #     # elif (e1 is None) and (not e2 is None):
-    #     #     (n1,n2) = e2
-    #     #     node1 = (2,n1)
-    #     #     node2 = (2,n2)
-    #     #     if n1 in reverse_map:
-    #     #         node1 = (1,reverse_map[n1])
-    #     #         for b in brs:
-    #     #             if node1 in g.predecessors((1,b)):
-    #     #                 node1 = (1,b)
-    #     #     if n2 in reverse_map:
-    #     #         node2 = (1,reverse_map[n2])
-    #     #         for b in mrs:
-    #     #             if node2 in g.successors((1,b)):
-    #     #                 node2 = (1,b)
-    #     #     g.add_edge(node1, node2, added="1")
     return g
 
 
-
+def clone_graph(g):
+    g1 = nx.DiGraph()
+    node_mapping = {}
+    iNode = 0
+    for n in g.nodes():
+        node_mapping[n] = iNode
+        g1.add_node(iNode, **g.nodes[n])
+        iNode +=1
+    for (n1,n2) in g.edges():
+        g1.add_edge(node_mapping[n1], node_mapping[n2], **g.edges[n1,n2])
+    return g1
 
 
 g1 = nx.readwrite.graphml.read_graphml("graphs/global.graphml")
-g2 = nx.readwrite.graphml.read_graphml("graphs/1/1.graphml")
+g2 = nx.readwrite.graphml.read_graphml("graphs/0/0.graphml")
 paths = gen_all_choices(g1)
 
 for i in range(len(paths)):
@@ -326,7 +255,8 @@ for i in range(len(paths)):
     diffs, cost = nx.algorithms.similarity.optimal_edit_paths(new_graph, g2, node_ins_cost=nic, node_del_cost=ndc, node_subst_cost=nsc, edge_del_cost=edc, edge_ins_cost=eic)
     print((i, cost))
     g = from_diff_to_graph(g1, g2, new_graph, diffs, path)
-    nx.readwrite.graphml.write_graphml(g, "graphs/res-%d.graphml" % i)
+    g = clone_graph(g)
+    nx.readwrite.graphml.write_graphml(g, "graphs/res_%d.graphml" % i)
 
     
 exit(0)
