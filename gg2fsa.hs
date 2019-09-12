@@ -22,10 +22,12 @@ main = do progargs <- getArgs
             then error $ usage(GG2FSA)
             else do
               let ( sourcefile, flags ) =
-                    (last progargs, getFlags GMC (take ((length progargs) - 1) progargs))
+                    (last progargs, getFlags GG2FSA (take ((length progargs) - 1) progargs))
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
-                    setFileNames sourcefile flags
+                    if ("" == flags!"-o")
+                    then setFileNames sourcefile flags
+                    else setFileNames (flags!"-o") flags
               createDirectoryIfMissing True dir
               let ( gg, names ) =
                     (gggrammar . GGparser.lexer) ggtxt
@@ -37,11 +39,17 @@ main = do progargs <- getArgs
 --                    L.map (determinise . fst) (L.map (\p -> proj False gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
               -- let sys =
               --       CFSM.parseFSA ((L.map (\(i,m) -> lines (CFSM.cfsm2String i m))) (L.zip ptps cfsms))
-              writeToFile (dir ++ baseName ++ ".fsa") (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))
+              let fsa = (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))
+              if ("" == flags!"-o")
+                then putStrLn fsa
+                else writeToFile (dir ++ baseName ++ ".fsa") fsa
+              let hs = L.concat $ L.map (\(p, m) -> "m_" ++ p ++ " = " ++ (show m) ++ "\n\n") (L.zip ptps cfsms)
               if not(flags!"-v" == "")
-                then writeToFile (dir ++ baseName ++ ".hs")  (L.concat $ L.map (\(p, m) -> "m_" ++ p ++ " = " ++ (show m) ++ "\n\n") (L.zip ptps cfsms))
+                then writeToFile (dir ++ baseName ++ ".hs") hs
                      >>=
-                     \_ -> myPrint flags GG2FSA ("\tresult in " ++ dir ++ baseName ++ ".fsa and in " ++ dir ++ baseName ++ ".hs")
-                else myPrint flags GG2FSA ("\tresult in " ++ dir ++ baseName ++ ".fsa")
+                     \_ -> myPrint flags GG2FSA ("\tThe result in " ++ dir ++ baseName ++ ".fsa")
+                     >>=
+                     \_ -> myPrint flags GG2FSA ("\tThe haskell representation of the system is in " ++ dir ++ baseName ++ ".hs")
+                else putStr "" --myPrint flags GG2FSA ("\tresult in " ++ dir ++ baseName ++ ".fsa")
 
 
