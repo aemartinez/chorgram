@@ -382,11 +382,16 @@ xgmldiff2dot name xml flines =
     diffkeys = ["deleted", "changed", "kept", "added", "payload-change-to"]
     diffRender f l
       | l == [] = "\n"
-      | L.elem "deleted" l = "[style=" ++ f ++ ", fillcolor=cornsilk4,color=cornsilk4]\n"
-      | L.elem "changed" l = "[style=" ++ f ++ ", fillcolor=lightblue,color=lightblue]\n"
-      | L.elem "added" l = "[style=" ++ f ++ ", fillcolor=blue2,color=blue2]\n"
-      | L.elem "kept" l = "[style=" ++ f ++ ", fillcolor=darkolivegreen3,color=darkolivegreen3]\n"
-      | L.elem "payload-change-to" l = "[style=" ++ f ++ ", fillcolor=aquamarine1,color=aquamarine1]\n"
+      | L.elem "deleted" l =
+        "[style=" ++ f ++ ", fillcolor=" ++ flines!"gmldiffdel" ++ ", color=" ++ flines!"gmldiffdel" ++ "]\n"
+      | L.elem "changed" l =
+        "[style=" ++ f ++ ", fillcolor=" ++ flines!"gmldiffcng" ++ ", color=" ++ flines!"gmldiffcng" ++ "]\n"
+      | L.elem "added" l =
+        "[style=" ++ f ++ ", fillcolor=" ++ flines!"gmldiffadd" ++ ", color=" ++ flines!"gmldiffadd" ++ "]\n"
+      | L.elem "kept" l =
+        "[style=" ++ f ++ ", fillcolor=" ++ flines!"gmldiffkep" ++ ", color=" ++ flines!"gmldiffkep" ++ "]\n"
+      | L.elem "payload-change-to" l =
+        "[style=" ++ f ++ ", fillcolor=" ++ flines!"gmldiffpay" ++ ", color=" ++ flines!"gmldiffpay" ++ "]\n"
       | True = error (msgFormat POM2GG "Bad key " ++ (show l))
     addEdge e d dot dict =
       let
