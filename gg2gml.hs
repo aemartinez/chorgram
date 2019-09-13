@@ -29,7 +29,8 @@ main = do progargs <- getArgs
               let ptps =
                     Data.Set.toList names
               let gml = gg2graphml gg
-              putStrLn gml  -- to be removed
-              writeToFile (dir ++ baseName ++ ".graphml") gml
+              if ("" == flags!"-o")
+                then putStrLn gml
+                else writeToFile (dir ++ baseName) gml
 
 

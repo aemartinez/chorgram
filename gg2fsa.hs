@@ -8,7 +8,7 @@
 import Misc
 import GGparser
 import CFSM (cfsm2String)
-import FSA (minimise,determinise)
+import FSA (minimise)
 import Data.Set (toList)
 import Data.List as L
 import Data.Map.Strict as M
@@ -25,9 +25,7 @@ main = do progargs <- getArgs
                     (last progargs, getFlags GG2FSA (take ((length progargs) - 1) progargs))
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
-                    if ("" == flags!"-o")
-                    then setFileNames sourcefile flags
-                    else setFileNames (flags!"-o") flags
+                    setFileNames sourcefile flags
               createDirectoryIfMissing True dir
               let ( gg, names ) =
                     (gggrammar . GGparser.lexer) ggtxt
@@ -36,9 +34,6 @@ main = do progargs <- getArgs
               -- TODO: fix this String -> [CFSM] -> [[String]] -> System inefficiency 
               let cfsms =
                     L.map (minimise . fst) (L.map (\p -> proj False gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
---                    L.map (determinise . fst) (L.map (\p -> proj False gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
-              -- let sys =
-              --       CFSM.parseFSA ((L.map (\(i,m) -> lines (CFSM.cfsm2String i m))) (L.zip ptps cfsms))
               let fsa = (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))
               if ("" == flags!"-o")
                 then putStrLn fsa
