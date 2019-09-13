@@ -38,6 +38,9 @@ main = do progargs <- getArgs
                   case pomset2gg $ xgml2pomset xml of
                     Nothing -> writeToFile (dir ++ baseName ++ ".dot") "Nothing"
                     Just gg' -> writeToFile (dir ++ baseName ++ ".dot") (gg2dot gg' baseName sizeNode)
+                "gmldiff" -> do
+                  xml <- readFile sourcefile
+                  writeToFile (dir ++ baseName ++ ".dot") (xgmldiff2dot baseName xml flines)
                 "sloppygml" -> do
                   xml <- readFile sourcefile
                   writeToFile (dir ++ baseName ++ ".dot") (xgml2dot baseName xml flines)

@@ -186,10 +186,15 @@ mkSep l sep =
 setFileNames :: String -> Map String String -> (String, String, String, String)
 setFileNames f flags = (dir, dir ++ baseFile, baseFile, takeExtension f)
   where baseFile = takeBaseName f
-        dir      = let d = flags!"-d" in
-                    case d of
-                     "" -> dirpath
-                     _  -> (if (d!!((length d) - 1) == pathSeparator) then d else d ++ [pathSeparator]) ++ baseFile ++ [pathSeparator]
+        dir      =
+          let
+            d = flags!"-d"
+          in
+            case d of
+              "" -> if flags!"-o" == "" then
+                      dirpath
+                    else "."
+              _  -> (if (d!!((length d) - 1) == pathSeparator) then d else d ++ [pathSeparator]) ++ baseFile ++ [pathSeparator]
 
 rmExtension :: String -> String -> String
 rmExtension ext s = if (drop i s == ext) then fst $ splitAt i s else s
@@ -206,7 +211,7 @@ usage cmd = "Usage: " ++ msg
                GG       -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG      -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                CHOR2DOT -> "chor2dot [-d dirpath] [-fmt gml | -fmt sgg | -fmt sloppygml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t-fmt = sgg\n\t"
-               GG2FSA   -> "gg2fsa [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               GG2FSA   -> "gg2fsa [-v] [-d dirpath | -o output-file] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2POM   -> "gg2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
                POM2GG   -> "pom2gg [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
                GG2GML   -> "gg2gml [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
@@ -255,8 +260,8 @@ defaultFlags cmd = case cmd of
                      GG       -> M.fromList [("-d",dirpath), ("-v","")]
                      SGG      -> M.fromList [("-d",dirpath), ("-v","")]
                      CHOR2DOT -> M.fromList [("-d",dirpath), ("-fmt","sgg")]
-                     GG2FSA   -> M.fromList [("-d",dirpath), ("-v","")]
-                     GG2POM   -> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no")]
+                     GG2FSA   -> M.fromList [("-d",dirpath), ("-o",""), ("-v","")]
+                     GG2POM   -> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no"), ("-l","1")]
                      POM2GG   -> M.fromList [("-d",dirpath)]
                      GG2GML   -> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
                      SYS      -> M.fromList [("-d",dirpath), ("-v","")]
@@ -308,6 +313,7 @@ getFlags cmd args =
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
+      "-o":y:xs     -> M.insert "-o" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GG2GML -> case args of
       []            -> defaultFlags(cmd)
@@ -338,9 +344,9 @@ getFlags cmd args =
       _         -> error $ usage(cmd) ++ "\tbad pattern"
     GG2POM -> case args of
       []            -> defaultFlags(cmd)
-      "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       "--gml":xs    -> M.insert "--gml" yes    (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+      "-l":y:xs     -> M.insert "-l"  y        (getFlags cmd xs)
       _         -> error $ usage(cmd)
     POM2GG -> case args of
       []            -> defaultFlags(cmd)
