@@ -390,37 +390,30 @@ xgmldiff2dot name xml flines =
               Node n -> n ++ " "
       in line ++ auxDiff o l
       where
-        f s ls = let diffMark = "^" in if L.elem s ls then diffMark else ""
+        mark s ls = let diffMark = "^" in if L.elem s ls then diffMark else ""
+        mkdot s k = "[style=" ++ s ++ ", fillcolor=" ++ flines!k ++ ", color=" ++ flines!k ++ "]\n"
         auxDiff (Node n) ls
           | l == [] = "\n"
-          | L.elem "deleted" ls =
-            "[style=filled" ++ ", fillcolor=" ++ flines!"gmldiffdel" ++ ", color=" ++ flines!"gmldiffdel" ++ "]\n"
-          | L.elem "changed" ls =
-              "[style=filled" ++ ", fillcolor=" ++ flines!"gmldiffcng" ++ ", color=" ++ flines!"gmldiffcng" ++ "]\n"
+          | L.elem "deleted" ls = mkdot "filled" "gmldiffdel"
+          | L.elem "changed" ls = mkdot "filled" "gmldiffcng"
               ++ n ++ " [label=\""
-              ++ f "subject-change-to" ls
+              ++ mark "subject-change-to" ls
               ++ m!"sender" ++ flines!ggarr
-              ++ f "partner-change-to" ls
+              ++ mark "partner-change-to" ls
               ++ m!"receiver"
               ++ ":"
-              ++ f "payload-change-to" ls
+              ++ mark "payload-change-to" ls
               ++ m!"payload"
               ++ "\"]\n"
-          | L.elem "added" ls =
-            "[style=filled" ++ ", fillcolor=" ++ flines!"gmldiffadd" ++ ", color=" ++ flines!"gmldiffadd" ++ "]\n"
-          | L.elem "kept" ls =
-            "[style=filled" ++ ", fillcolor=" ++ flines!"gmldiffkep" ++ ", color=" ++ flines!"gmldiffkep" ++ "]\n"
+          | L.elem "added" ls = mkdot "filled" "gmldiffadd"
+          | L.elem "kept" ls = mkdot "filled" "gmldiffkep"
           | True = error (msgFormat POM2GG "Bad key " ++ (show l))
         auxDiff (Edge _ _) ls
           | l == [] = "\n"
-          | L.elem "deleted" ls =
-            "[style=dashed" ++ ", fillcolor=" ++ flines!"gmldiffdel" ++ ", color=" ++ flines!"gmldiffdel" ++ "]\n"
-          | L.elem "changed" ls =
-            "[style=filled" ++ ", fillcolor=" ++ flines!"gmldiffcng" ++ ", color=" ++ flines!"gmldiffcng" ++ "]\n"
-          | L.elem "added" ls =
-            "[style=filled" ++ ", fillcolor=" ++ flines!"gmldiffadd" ++ ", color=" ++ flines!"gmldiffadd" ++ "]\n"
-          | L.elem "kept" ls =
-            "[style=filled" ++ ", fillcolor=" ++ flines!"gmldiffkep" ++ ", color=" ++ flines!"gmldiffkep" ++ "]\n"
+          | L.elem "deleted" ls = mkdot "dashed" "gmldiffdel"
+          | L.elem "changed" ls = mkdot "filled" "gmldiffcng"
+          | L.elem "added" ls = mkdot "filled" "gmldiffadd"
+          | L.elem "kept" ls = mkdot "filled" "gmldiffkep"
           | True = error (msgFormat POM2GG "Bad key " ++ (show l))
     addEdge e d dot dict =
       let
