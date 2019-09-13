@@ -122,9 +122,9 @@ def from_diff_to_graph(g1, g2, g3, diffs, brs):
                     g.nodes[n][k + "-add"] = g2.nodes[node2][k]
                     changed = True
             if changed:
-                g.nodes[n]["changed"] = 1
+                g.nodes[n]["changed"] = "1"
             else:
-                g.nodes[n]["kept"] = 1
+                g.nodes[n]["kept"] = "1"
             g.nodes[n]["src-node"] = node1
             g.nodes[n]["target-node"] = node2
             g.nodes[n]["node-id"] = "%s-%s"%((1,node1))
@@ -147,10 +147,10 @@ def from_diff_to_graph(g1, g2, g3, diffs, brs):
     # keep selected branches and merges
     all_mething_merges = []
     for b in brs:
-        g.nodes[(1,b)]["kept"] = 1
+        g.nodes[(1,b)]["kept"] = "1"
         all_mething_merges += brs[b][1]
     for m in all_mething_merges:
-        g.nodes[(1,m)]["kept"] = 1
+        g.nodes[(1,m)]["kept"] = "1"
 
     # first we add edges for every node that has not been chosen
     # g3 is the subchoice choreography
@@ -223,11 +223,11 @@ def from_diff_to_graph(g1, g2, g3, diffs, brs):
             node2 = (1,reverse_map[n2])
         if not (node1, node2) in temp_order.out_edges(node1):
             g.add_edge(node1, node2)
-            g.edges[node1,node2]["added"] = 1
+            g.edges[node1,node2]["added"]="1"
     for (n1,n2) in g1.edges():
         if not ((1,n1), (1, n2)) in g.edges():
             g.add_edge((1,n1), (1, n2))
-            g.edges[(1,n1), (1, n2)]["deleted"] = 1
+            g.edges[(1,n1), (1, n2)]["deleted"]="1"
     return g
 
 

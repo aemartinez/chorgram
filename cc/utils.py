@@ -35,6 +35,37 @@ def debug_graph(gr, name="G"):
     os.system('dot -Tpng %s.cluster.dot -o %s.png' % (name, name))
     return ("%s.png" % name)
 
+def debug_pomset(pomset, name):
+    f = open("%s.dot"%name, "w")
+    f.write("""
+strict digraph "" {
+	graph [edge_default="{}",
+		node_default="{}"
+	];
+	node [label="\\N"];
+""")
+    for n in pomset.nodes():
+        label = None
+        if "in" in pomset.nodes[n]:
+            label = "%s%s?%s"%(
+                pomset.nodes[n]["partner"],
+                pomset.nodes[n]["subject"],
+                pomset.nodes[n]["in"]
+            )
+        if "out" in pomset.nodes[n]:
+            label = "%s%s!%s"%(
+                pomset.nodes[n]["subject"],
+                pomset.nodes[n]["partner"],
+                pomset.nodes[n]["out"]
+            )
+        f.write('subgraph cluster_%s {%s\t[label="%s"];}\n'%(pomset.nodes[n]["subject"], n, label))
+    for (e1, e2) in pomset.edges():
+        f.write('%s -> %s;\n'%(e1, e2))
+    f.write('}\n')
+    f.close()
+    os.system('dot -Tpng %s.dot -o %s.png' % (name, name))
+    return
+
 def debug_graphs(grs, prefix):
     try:
         shutil.rmtree(prefix)
