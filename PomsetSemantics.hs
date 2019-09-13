@@ -390,20 +390,20 @@ xgmldiff2dot name xml flines =
               Node n -> n ++ " "
       in line ++ auxDiff o l
       where
-        mark s ls = let diffMark = "^" in if L.elem s ls then diffMark else ""
+        mark s ls = if L.elem s ls then " / " ++ m!s else ""
         mkdot s k = "[style=" ++ s ++ ", fillcolor=" ++ flines!k ++ ", color=" ++ flines!k ++ "]\n"
         auxDiff (Node n) ls
           | l == [] = "\n"
           | L.elem "deleted" ls = mkdot "filled" "gmldiffdel"
           | L.elem "changed" ls = mkdot "filled" "gmldiffcng"
               ++ n ++ " [label=\""
-              ++ mark "subject-change-to" ls
               ++ m!"sender" ++ flines!ggarr
-              ++ mark "partner-change-to" ls
+              ++ mark "subject-change-to" ls
               ++ m!"receiver"
+              ++ mark "partner-change-to" ls
               ++ ":"
-              ++ mark "payload-change-to" ls
               ++ m!"payload"
+              ++ mark "payload-change-to" ls
               ++ "\"]\n"
           | L.elem "added" ls = mkdot "filled" "gmldiffadd"
           | L.elem "kept" ls = mkdot "filled" "gmldiffkep"
