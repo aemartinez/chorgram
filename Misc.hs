@@ -169,11 +169,11 @@ dirpath = "experiments/results/"
 nop :: IO ()
 nop = sequence_ []
 
-verbose :: Map String String -> String -> String -> String -> t -> IO()
-verbose m f v s = do \_ -> if m ! f == v then (putStrLn $ s) else nop
-
 myPrint :: Map String String -> Command -> String -> IO ()
 myPrint flags cmd msg = if not(flags!"-v" == "") then putStrLn $ msgFormat cmd msg else return ()
+
+myError :: Command -> String -> String
+myError cmd msg = error $ msgFormat cmd msg
 
 mkSep :: [String] -> String -> String
 mkSep l sep =

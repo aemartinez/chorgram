@@ -222,7 +222,7 @@ pomset2gml (events, rel, lab) =
                   Just ((s,r), Receive, m) -> (datatag subjkey r) ++ (datatag othkey s) ++ (datatag inkey m)
                   Just ((s,r), Send,    m) -> (datatag subjkey s) ++ (datatag othkey r) ++ (datatag outkey m)
                   Just ((s,_), Tau, _)     -> (datatag subjkey s)
-                  _                        -> error (msgFormat GG2POM "Unknown action: " ++ (show (M.lookup e lab)))
+                  _                        -> myError GG2POM ("Unknown action: " ++ (show (M.lookup e lab)))
   in mlpref ++ (L.foldr (++) "" (S.map nodeGL events)) ++ (L.foldr (++) "" (S.map edgeGL rel)) ++ mlsuff
 
 -- gml2pomset :: String -> Pomset
@@ -345,7 +345,7 @@ xgml2dot name xml flines =
                  "Source" -> sourceV
                  "Branch" -> branchV
                  "Fork" -> forkV
-                 _ -> error (msgFormat POM2GG "Bad opening gate at node " ++ nodeId ++ "\t" ++ (show datum))
+                 _ -> myError POM2GG ("Bad opening gate at node " ++ nodeId ++ "\t" ++ (show datum))
              else
                if L.elem "close" xkeys then
                  case tmpMap!"close" of
@@ -355,8 +355,8 @@ xgml2dot name xml flines =
                    _ -> error (msgFormat POM2GG "Bad closing gate at node " ++ nodeId ++ "\t" ++ (show datum))
                else if L.elem "payload" xkeys then
                  "[label = \"" ++ tmpMap!"sender" ++ flines!ggarr ++ tmpMap!"receiver" ++ ":" ++ tmpMap!"payload" ++ "\", shape=rectangle, fontname=" ++ flines!nodefont ++ ", fontcolor=MidnightBlue]\n"
-               else error (msgFormat POM2GG "Bad element at node " ++ nodeId ++ "\t" ++ (show datum))
-      in dot ++ (dotline d) -- ++ (diffNode d)
+               else myError POM2GG ("Bad element at node " ++ nodeId ++ "\t" ++ (show datum))
+      in dot ++ (dotline d)
 
 
 xgmldiff2dot :: String -> String -> Map String String -> DotString
@@ -407,14 +407,14 @@ xgmldiff2dot name xml flines =
               ++ "\"]\n"
           | L.elem "added" ls = mkdot "filled" "gmldiffadd"
           | L.elem "kept" ls = mkdot "filled" "gmldiffkep"
-          | True = error (msgFormat POM2GG "Bad key " ++ (show l))
+          | True = myError POM2GG ("Bad key " ++ (show l))
         auxDiff (Edge _ _) ls
           | l == [] = "\n"
           | L.elem "deleted" ls = mkdot "dashed" "gmldiffdel"
           | L.elem "changed" ls = mkdot "filled" "gmldiffcng"
           | L.elem "added" ls = mkdot "filled" "gmldiffadd"
           | L.elem "kept" ls = mkdot "filled" "gmldiffkep"
-          | True = error (msgFormat POM2GG "Bad key " ++ (show l))
+          | True = myError POM2GG ("Bad key " ++ (show l))
     addEdge e d dot dict =
       let
         tmpMap = M.fromList (getData [] d () dict)
@@ -427,13 +427,13 @@ xgmldiff2dot name xml flines =
                  dot ++ (diffRender M.empty (Edge s t) (L.intersect xkeys diffkeys))
                  )
              )
-           _ -> error (msgFormat POM2GG "Bad edge " ++ (show e))
+           _ -> myError POM2GG ("Bad edge " ++ (show e))
     addNode n d dict dot =
       let
         nodeId = "node" ++
           case n of
             [NTree _ [NTree (XText xid) _]] -> xid
-            _ -> error (msgFormat POM2GG "Bad node")
+            _ -> myError POM2GG "Bad node"
         tmpMap = M.fromList (getData [] d nodeId dict)
         xkeys = M.keys tmpMap
         dotline datum = nodeId ++ " " ++
@@ -442,15 +442,15 @@ xgmldiff2dot name xml flines =
                  "Source" -> sourceV
                  "Branch" -> branchV
                  "Fork" -> forkV
-                 _ -> error (msgFormat POM2GG "Bad opening gate at node " ++ nodeId ++ "\t" ++ (show datum))
+                 _ -> myError POM2GG ("Bad opening gate at node " ++ nodeId ++ "\t" ++ (show datum))
              else
                if L.elem "close" xkeys then
                  case tmpMap!"close" of
                    "Sink" -> sinkV
                    "Merge" -> mergeV
                    "Join" -> joinV
-                   _ -> error (msgFormat POM2GG "Bad closing gate at node " ++ nodeId ++ "\t" ++ (show datum))
+                   _ -> myError POM2GG ("Bad closing gate at node " ++ nodeId ++ "\t" ++ (show datum))
                else if L.elem "payload" xkeys then
                  "[label = \"" ++ tmpMap!"sender" ++ flines!ggarr ++ tmpMap!"receiver" ++ ":" ++ tmpMap!"payload" ++ "\", shape=rectangle, fontname=" ++ flines!nodefont ++ ", fontcolor=MidnightBlue]\n"
-               else error (msgFormat POM2GG "Bad element at node " ++ nodeId ++ "\t" ++ (show datum))
+               else myError POM2GG ("Bad element at node " ++ nodeId ++ "\t" ++ (show datum))
       in dot ++ (dotline d) ++ (diffRender tmpMap (Node nodeId) (L.intersect diffkeys xkeys))

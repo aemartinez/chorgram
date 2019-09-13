@@ -36,26 +36,27 @@ main = do progargs <- getArgs
               createDirectoryIfMissing True dir              
               if (M.notMember "-rg" flags)
                 then do
-                (verbose flags "-v" "yes" (msgFormat SGG "start"))()
+                myPrint flags SGG "start"
                 let ( gg, names ) =
                       (gggrammar . GGparser.lexer) ggtxt
                 let ptps =
                       list2map $ S.toList names
                 writeToFile (dir ++ "in_sgg_parsed.txt") ("Input @ " ++ sourcefile ++ "\n\n" ++ show gg)
-                  >>= verbose flags "-v" "yes" ("\t" ++ dir ++ "in_sgg_parsed.txt: is the abstract syntax tree of the gg in input")
+                  >>= \_ -> myPrint flags SGG ("\t" ++ dir ++ "in_sgg_parsed.txt: is the abstract syntax tree of the gg in input")
                 -- let norm = normGG gg
                 -- let fact = factorise norm
                 -- let fact = factorise gg
                 let sgg2file s s' graph =
                       writeToFile (dir ++ s) (gg2dot graph (baseName ++ s') (flines!ggsizenode))
-                sgg2file "graph_sgg.dot" ""  gg   >>= verbose flags "-v" "yes" ("\t" ++ dir ++ "graph_sgg.dot: is the input gg")
+                sgg2file "graph_sgg.dot" ""  gg   >>= \_ -> myPrint flags SGG ("\t" ++ dir ++ "graph_sgg.dot: is the input gg")
                 -- sgg2file "norm_sgg.dot" "norm" norm >>= \_ -> putStrLn $ "\t" ++ dir ++ "norm_sgg.dot:  is the normalised initial gg"
                 -- sgg2file "fact_sgg.dot" "fact" fact >>= \_ -> putStrLn $ "\t" ++ dir ++ "fact_sgg.dot:  is the factorised initial gg"
                 let ( _, hg ) =
                       -- sem (M.member "--sloppy" flags) (-1) fact ptps
                       sem (M.member "--sloppy" flags) (-1) gg ptps
-                writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines) >>=
-                  verbose flags "-v" "yes" ("\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg")
+                writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines)
+                  >>=
+                  \_ -> myPrint flags SGG ("\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg")
                 let path i ext =
                       mkFileName (ptps!i) dir "cfsm" ext
                 let legend m i =
@@ -69,8 +70,8 @@ main = do progargs <- getArgs
                       else ""
                 let output l =
                       case l of
-                        []   -> (verbose flags "-v" "yes" (msgFormat SGG "end" ++ (show names)))()
-                        i:ls -> (verbose flags "-v" "yes" ("\t" ++ (path i "") ++ " is the machine for participant " ++ (ptps!i) ++ " in both .fsa and .aut format"))()
+                        []   -> (myPrint flags SGG "end")
+                        i:ls -> (myPrint flags SGG ("\t" ++ (path i "") ++ " is the machine for participant " ++ (ptps!i) ++ " in both .fsa and .aut format"))
                           >>= (\_ -> writeToFile (path i ".dot") (dottifyCfsm cfsm (ptps!i) (legend cfsm i) flines) )
                           >>= (\_ -> writeToFile (path i ".aut") (cfsm2bcg cfsm flines) )
                           >>= (\_ -> writeToFile (path i ".fsa") (cfsm2String (ptps!i) cfsm) )

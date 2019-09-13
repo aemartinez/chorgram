@@ -24,7 +24,7 @@ main = do progargs <- getArgs
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
               createDirectoryIfMissing True dir
-              (verbose flags "-v" "yes" (msgFormat HGSEM "start"))()
+              myPrint flags HGSEM "start"
               let ( gg, names ) =
                     (gggrammar . GGparser.lexer) ggtxt
               let ptps =
@@ -32,5 +32,6 @@ main = do progargs <- getArgs
               let ( _, hg ) =
                     -- sem (M.member "--sloppy" flags) (-1) fact ptps
                     sem (M.member "--sloppy" flags) (-1) gg ptps
-              writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines) >>=
-                verbose flags "-v" "yes" ("\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg")
+              writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines)
+                >>=
+                \_ -> myPrint flags SGG ("\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg")
