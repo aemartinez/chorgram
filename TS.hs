@@ -66,7 +66,7 @@ renameNodes sigma (confs, n0, events, trans) = (confs', n0', events, trans')
   where confs'     = S.map aux confs
         n0'        = aux n0
         trans'     = S.map (\(n, e, n') -> (aux n, e, aux n')) trans
-        aux (ls,b) = if M.member ls sigma then (sigma!ls, b) else (ls,b)
+        aux (ls,b) = (if M.member ls sigma then sigma!ls else ls, b)
 
 
 sender :: KEvent -> Ptp

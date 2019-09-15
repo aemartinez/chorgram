@@ -283,7 +283,7 @@ getFlags cmd args =
       "-l":xs            -> M.insert "-l" "no"    (getFlags cmd xs)
       "-rg":xs           -> M.insert "-rg" "rg"   (getFlags cmd xs) -- for reversible ggs TODO: add to manual
       "-ts":xs           -> M.insert "-ts" "ts"   (getFlags cmd xs)
-      "-sn":xs           -> M.insert "-sn" "no"   (getFlags cmd xs)      
+      "-sn":xs           -> M.insert "-sn" yes    (getFlags cmd xs)      
       "-D":y:xs          -> M.insert "-D"  y      (getFlags cmd xs)
       "-b":y:xs          -> M.insert "-b"  y      (getFlags cmd xs)
       "-m":y:xs          -> M.insert "-m"  y      (getFlags cmd xs)

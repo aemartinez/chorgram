@@ -241,7 +241,8 @@ for i in range(machine_number):
     hkc_boolean_position = 1                              # position of the boolean returned by hkc after the split
     res = spa[hkc_boolean_position].split(',')[0]
     tmpbool = tmpbool and (res == "<<< true >>>")
-    debugMsg(args.debug, cmdname, "Machine " + str(i) + " is " + (" not " if not tmpbool else "") + "equivalent to its projection")
+    txt = "Machine " + str(i) + " is " + (" not " if not tmpbool else "") + "equivalent to its projection"
+    debugMsg(args.debug, cmdname, txt)
 
 txt = "Language-equivalence (Representability part (i))? " + str(tmpbool)
 debugMsg(args.debug, cmdname, txt, True)
@@ -251,7 +252,6 @@ logexperiment(loginfo, "Lang. eq: " + str(tmpbool))
 
 ### PETRIFY
 
-debugMsg(args.debug, cmdname, "Calling petrify...")
 start = time.time()
 try:
     petricmd = [PETRY, "-dead","-ip", "-efc", basename + "_toPetrify", "-o" , dir + TEMP]

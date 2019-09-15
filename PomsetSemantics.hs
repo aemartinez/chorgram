@@ -19,7 +19,7 @@ import Text.XML.HXT.DOM.TypeDefs
 import DotStuff
 
 type Event = Int
-type Lab   = Map Event Action
+type Lab = Map Event Action
 type Pomset = (Set Event, Set (Event, Event), Lab)
 data LabelFormat =
   Interaction |

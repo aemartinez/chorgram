@@ -76,8 +76,10 @@ main =  do progargs <- getArgs
                             "det" -> L.map FSA.determinise sys
                             "no"  -> sys
                             _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
-               let sigma (states, _, _, _) = M.fromList [((S.toList states)!!i, "q" ++ show i) | i <- range (S.size states)]
-               let system = (if (M.member "-sn" flags) then (L.map (\cfsm -> (grenameVertex (sigma cfsm) cfsm)) sys') else sys', ptps)
+               let sigma (states, _, _, _) =
+                     M.fromList [((S.toList states)!!i, "q" ++ show i) | i <- range (S.size states)]
+               let system =
+                     (if (M.member "-sn" flags) then (L.map (\cfsm -> (grenameVertex (sigma cfsm) cfsm)) sys') else sys', ptps)
                createDirectoryIfMissing True dir
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (cfsmsIds system)) -- (L.map snd (M.assocs $ snd system)))
                let bufferSize =
@@ -93,22 +95,22 @@ main =  do progargs <- getArgs
                     ts2file destfile sourcefile 0 system ts0 flags [] []
                     ts2file destfile sourcefile (read (flags ! "-b") :: Int) system tsb flags [] []
                  else do
-                    flines  <- getDotConf
-                    repbra  <- newEmptyMVar
+                    flines <- getDotConf
+                    repbra <- newEmptyMVar
                     braprop <- newEmptyMVar
-                    proj    <- newEmptyMVar
-                    prnt    <- newEmptyMVar
+                    proj <- newEmptyMVar
+                    prnt <- newEmptyMVar
                     createDirectoryIfMissing True dir
-                    _       <- forkIO $ representabilityThread system ts0 repbra
-                    _       <- forkIO $ projectionThread (dir ++ basename) system ts0 proj
-                    _       <- forkIO $ printingThread system ts0 (dir ++ basename) flines prnt
+                    _ <- forkIO $ representabilityThread system ts0 repbra
+                    _ <- forkIO $ projectionThread (dir ++ basename) system ts0 proj
+                    _ <- forkIO $ printingThread system ts0 (dir ++ basename) flines prnt
                     branchingPropertyThread system ts0 braprop
                     v1 <- takeMVar repbra
                     v2 <- takeMVar braprop
                     myPrint flags GMC ("Branching representability:\t" ++ (show v1))
                     myPrint flags GMC ("Branching Property (part (ii)):\t" ++ (rmChar '\"' $ show v2))
-                    _  <- takeMVar proj
-                    _  <- takeMVar prnt
+                    _ <- takeMVar proj
+                    _ <- takeMVar prnt
                     -- TODO: colour bad states
                     ts2file destfile sourcefile 0 system ts0 flags v2 v1
                     ts2file destfile sourcefile (read (flags ! "-b") :: Int) system tsb flags v2 v1

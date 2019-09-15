@@ -16,7 +16,7 @@ import Misc
 
 
 state2petrify :: State -> String
-state2petrify s = rmChar '\"' (show s)
+state2petrify s = rmChar '*' $ rmChar '\"' (show s)
 
 event2petrify :: (Show a1, Show a) => (State, State, a, a1, Dir, Message) -> String
 event2petrify (q1,q2,m1,m2,_,msg) =
