@@ -12,7 +12,7 @@ import utils
 import shutil
 import pomset
 from ccpom import *
-
+from diff import run_diff
 
 class Workspace():
     def __init__(self, sgg_path):
@@ -84,6 +84,7 @@ class Workspace():
             return
         self.delete_folder(self.get_cc2_folder())
         os.makedirs(join(self.get_cc2_folder(),  "closure"))
+        os.makedirs(join(self.get_cc2_folder(),  "synthesis"))
         
         pomsets = [self.semantics[f] for f in self.semantics]
         cc2c = cc2closure(pomsets)
@@ -92,6 +93,7 @@ class Workspace():
         i = 0
         for pm in cc2c:
             # TODO: we should use the transitive reduction, but it does not work
+            nx.readwrite.graphml.write_graphml(pm, join(self.get_cc2_folder(),  "closure", "%d.graphml"%i))
             utils.debug_pomset(pm, join(self.get_cc2_folder(),  "closure", "%d"%i))
             self.cc2["closure"][i] = pm
             if not cc2res[i] is None:
@@ -101,10 +103,48 @@ class Workspace():
     def get_cc2_closure_png_path(self, i):
         return join(self.get_cc2_folder(),  "closure", "%d.png"%i)
 
+    def get_cc2_counter_choreography_folder(self, pm_idx):
+        return join(self.get_cc2_folder(),  "synthesis", "%d"%pm_idx)
+    def get_cc2_counter_choreography_png(self, pm_idx):
+        return join(self.get_cc2_counter_choreography_folder(pm_idx), "%d.png"%pm_idx)
+    
+    def gen_cc2_choreography(self, pm_idx):
+        if self.cc2 is None:
+            return
+        if not pm_idx in self.cc2["closure"]:
+            return
+        pm = self.cc2["closure"][pm_idx]
+        os.system('../pom2gg -d %s %s' % (
+            join(self.get_cc2_folder(),  "synthesis"),
+            join(self.get_cc2_folder(),  "closure", "%d.graphml"%pm_idx)
+        ))
+        os.system('dot -Tpng %s.dot -o %s' % (
+            join(self.get_cc2_counter_choreography_folder(pm_idx), "%d"%pm_idx),
+            self.get_cc2_counter_choreography_png(pm_idx))
+        )
+    def gen_cc2_diff(self, pm_idx):
+        if self.cc2 is None:
+            return
+        if not pm_idx in self.cc2["closure"]:
+            return
+        pm = self.cc2["closure"][pm_idx]
+        g1 = nx.readwrite.graphml.read_graphml(self.get_root_folder() + "/choreography.graphml")
+        g2 = nx.readwrite.graphml.read_graphml(join(self.get_cc2_folder(),  "closure", "%d.graphml"%pm_idx))
+        res = run_diff(g1, g2, self.get_cc2_counter_choreography_folder(pm_idx))
+        for i in res:
+            os.system("../chor2dot -d %s/ -fmt sloppygml %s/diff_%d.graphml" % (
+                self.get_cc2_counter_choreography_folder(pm_idx), 
+                self.get_cc2_counter_choreography_folder(pm_idx),
+                i
+            ))
+            os.system('dot -Tpng %s/diff_%d.dot -o %s/diff_%d.png' % (
+                self.get_cc2_counter_choreography_folder(pm_idx),
+                i,
+                self.get_cc2_counter_choreography_folder(pm_idx),
+                i
+            ))
+            
         
-
-
-
 
 UI_INFO = """
 <ui>
@@ -120,6 +160,8 @@ UI_INFO = """
       <menuitem action='FileGenSemantics' />
       <separator />
       <menuitem action='CC2' />
+      <menuitem action='pom2sgg' />
+      <menuitem action='sgg2diff' />
       <separator />
       <menuitem action='FileQuit' />
     </menu>
@@ -242,12 +284,20 @@ class MainWindow(Gtk.Window):
 
         action_semantics = Gtk.Action("FileGenSemantics", "Generate _Semantics", "Generate Pomset Semantics", None)
         action_semantics.connect("activate", self.on_menu_gen_semantics)
-        action_group.add_action_with_accel(action_semantics)
+        action_group.add_action_with_accel(action_semantics, "<Control>s")
 
         action_cc2 = Gtk.Action("CC2", "CC_2", "Closure Condition 2", None)
         action_cc2.connect("activate", self.on_menu_cc2)
-        action_group.add_action_with_accel(action_cc2)
+        action_group.add_action_with_accel(action_cc2, "<Control>2")
 
+        action_pom2sgg = Gtk.Action("pom2sgg", "Generate Choreography", "Generate Choreography", None)
+        action_pom2sgg.connect("activate", self.on_menu_pom2sgg)
+        action_group.add_action_with_accel(action_pom2sgg, "<Control>p")
+
+        action_sgg2diff = Gtk.Action("sgg2diff", "Compare", "Compare Choreography", None)
+        action_sgg2diff.connect("activate", self.on_menu_sgg2diff)
+        action_group.add_action_with_accel(action_sgg2diff, "<Control>d")
+        
     def create_ui_manager(self):
         uimanager = Gtk.UIManager()
 
@@ -331,6 +381,37 @@ class MainWindow(Gtk.Window):
                 store_name = "cc2-counterexample-%d"%pm
                 self.store.append(counterexamples_list, [store_name, str_view])
                 self.tree_cc2_counterexamples_mapping[store_name] = pm
+
+    def on_menu_pom2sgg(self, widget):
+        model, treeiter = self.selection.get_selected()
+        if treeiter is None:
+            return
+        if not model[treeiter][0] in self.tree_cc2_counterexamples_mapping:
+            return
+
+        pom = self.tree_cc2_counterexamples_mapping[model[treeiter][0]]
+        self.workspace.gen_cc2_choreography(
+            pom
+        )
+
+        self.store.append(treeiter, ["cc2-counterexample-graph-%d"%pom, "graph"])
+        self.change_main_view(
+            Gtk.Image.new_from_file(
+                self.workspace.get_cc2_counter_choreography_png(pom)
+            ))
+        return
+                
+    def on_menu_sgg2diff(self, widget):
+        model, treeiter = self.selection.get_selected()
+        if treeiter is None:
+            return
+        if not model[treeiter][0] in self.tree_cc2_counterexamples_mapping:
+            return
+
+        pom = self.tree_cc2_counterexamples_mapping[model[treeiter][0]]
+        self.workspace.gen_cc2_diff(
+            pom
+        )
 
     def change_main_view(self, widget):
         old_views = self.scrolled_window.get_children()
