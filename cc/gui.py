@@ -10,7 +10,101 @@ import subprocess
 import networkx as nx
 import utils
 import shutil
+import pomset
 from ccpom import *
+
+
+class Workspace():
+    def __init__(self, sgg_path):
+        self.sgg_absolute_path = sgg_path
+        self.semantics = None
+        self.cc2 = None
+        self.cc3 = None
+        self.projections = None
+
+    def get_root_folder(self):
+        return os.path.dirname(self.sgg_absolute_path)
+    
+    def gen_choreography_graphml(self):
+        os.system("../gg2gml %s > %s" % (
+            self.sgg_absolute_path,
+            self.get_root_folder() + "/choreography.graphml"
+        ))
+
+    def get_choreography_png_path(self):
+        return self.get_root_folder() + "/choreography.png"
+    
+    def gen_choreography_png(self):
+        self.gen_choreography_graphml()
+        os.system("../chor2dot -d %s/ -fmt sloppygml %s/choreography.graphml" % (
+            self.get_root_folder(), 
+            self.get_root_folder()
+        ))
+        os.system('dot -Tpng %s/choreography.dot -o %s' % (
+            self.get_root_folder(),
+            self.get_choreography_png_path())
+        )
+
+    def get_semantics_folder(self):
+        return self.sgg_absolute_path.split(".")[0]
+
+    def list_files_in_folder(self, folder):
+        files = [f for f in listdir(folder) if isfile(join(folder, f))]
+        return files
+
+    def get_semantics_png_path(self, f):
+        return self.get_semantics_folder() + "/%s.png" % f
+
+
+    def delete_folder(self, folder):
+        try:
+            shutil.rmtree(folder)
+        except:
+            pass
+    
+    def gen_semantics(self):
+        # I should ensure this goes in the third position and remove all the past semantics from the tree
+        self.delete_folder(self.get_semantics_folder())
+        cmd = "../gg2pom -d %s/ --gml %s" % (
+            self.get_root_folder(), 
+            self.sgg_absolute_path
+        )
+        os.system(cmd)
+        self.semantics = {}
+        for f in self.list_files_in_folder(self.get_semantics_folder()):
+            graph = nx.readwrite.graphml.read_graphml(join(self.get_semantics_folder(), f))
+            self.semantics[f] = graph
+            utils.debug_pomset(graph, join(self.get_semantics_folder(), f))
+
+    def get_cc2_folder(self):
+        return self.get_root_folder() + "/cc2"
+    
+    def gen_cc2(self):
+        if self.semantics is None:
+            return
+        self.delete_folder(self.get_cc2_folder())
+        os.makedirs(join(self.get_cc2_folder(),  "closure"))
+        
+        pomsets = [self.semantics[f] for f in self.semantics]
+        cc2c = cc2closure(pomsets)
+        self.cc2 = {"closure": {}, "mapping": {}}
+        cc2res = cc2pom(cc2c, pomsets)
+        i = 0
+        for pm in cc2c:
+            # TODO: we should use the transitive reduction, but it does not work
+            utils.debug_pomset(pm, join(self.get_cc2_folder(),  "closure", "%d"%i))
+            self.cc2["closure"][i] = pm
+            if not cc2res[i] is None:
+                self.cc2["mapping"][i] = cc2res[i]
+            i+=1
+
+    def get_cc2_closure_png_path(self, i):
+        return join(self.get_cc2_folder(),  "closure", "%d.png"%i)
+
+        
+
+
+
 
 UI_INFO = """
 <ui>
@@ -37,13 +131,20 @@ UI_INFO = """
 </ui>
 """
 
+
+
+
 class MainWindow(Gtk.Window):
 
     def __init__(self):
         Gtk.Window.__init__(self, title="PomChor 0.99 Beta 2")
 
-        self.choography_file_path = None
-
+        self.workspace = None
+        # reverse mapping for tree-vew
+        self.tree_semantics_mapping = {}
+        self.tree_cc2_closure_mapping = {}
+        self.tree_cc2_counterexamples_mapping = {}
+        
         self.set_default_size(600, 400)
 
         action_group = Gtk.ActionGroup("my_actions")
@@ -73,8 +174,6 @@ class MainWindow(Gtk.Window):
         # create a treeview on the model self.store
         view = Gtk.TreeView()
         view.set_model(self.store)
-        self.pomset_mapping = {}
-        self.cc2_closure = {}
 
         # the cellrenderer for the first column - text
         renderer_books = Gtk.CellRendererText()
@@ -90,26 +189,29 @@ class MainWindow(Gtk.Window):
         # add the treeview to the window
         self.vp.add1(view)
 
-        label1 = Gtk.Label("Right-click to see the popup menu.")
-        self.vp.add2(label1)
+        self.scrolled_window = Gtk.ScrolledWindow()
+        self.scrolled_window.set_border_width(5)
+        # we scroll only if needed
+        self.scrolled_window.set_policy(
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        self.vp.add2(self.scrolled_window)
 
         self.add(box)
 
     def on_tree_selection_changed(self, selection):
         model, treeiter = self.selection.get_selected()
         if treeiter is None:
-            return
-        print("You selected", model[treeiter][0])
-        if model[treeiter][0] == "choreography":
+            pass
+        elif model[treeiter][0] == "root":
             self.show_choreography_source()
-            return
-        if model[treeiter][0] == "choreography-graph":
+        elif model[treeiter][0] == "choreography-graph":
             self.show_choreography_graph()
-            return
-        if model[treeiter][0] in self.pomset_mapping:
-            self.show_pomset_graph(self.pomset_mapping[model[treeiter][0]])
-        if model[treeiter][0] in self.cc2_closure:
-            self.show_cc2_closure(self.cc2_closure[model[treeiter][0]])
+        elif model[treeiter][0] in self.tree_semantics_mapping:
+            self.show_pomset_graph(self.tree_semantics_mapping[model[treeiter][0]])
+        elif model[treeiter][0] in self.tree_cc2_closure_mapping:
+            self.show_cc2_closure(self.tree_cc2_closure_mapping[model[treeiter][0]])
+        elif model[treeiter][0] in self.tree_cc2_counterexamples_mapping:
+            self.show_cc2_closure(self.tree_cc2_counterexamples_mapping[model[treeiter][0]])
 
     def add_file_menu_actions(self, action_group):
         action_filemenu = Gtk.Action("FileMenu", "File", None, None)
@@ -136,15 +238,15 @@ class MainWindow(Gtk.Window):
 
         action_fileopen = Gtk.Action("FileOpenChoreography", "_Open", "Open .sgg", Gtk.STOCK_OPEN)
         action_fileopen.connect("activate", self.on_menu_file_open)
-        action_group.add_action(action_fileopen)
+        action_group.add_action_with_accel(action_fileopen)
 
         action_semantics = Gtk.Action("FileGenSemantics", "Generate _Semantics", "Generate Pomset Semantics", None)
         action_semantics.connect("activate", self.on_menu_gen_semantics)
-        action_group.add_action(action_semantics)
+        action_group.add_action_with_accel(action_semantics)
 
         action_cc2 = Gtk.Action("CC2", "CC_2", "Closure Condition 2", None)
         action_cc2.connect("activate", self.on_menu_cc2)
-        action_group.add_action(action_cc2)
+        action_group.add_action_with_accel(action_cc2)
 
     def create_ui_manager(self):
         uimanager = Gtk.UIManager()
@@ -161,139 +263,105 @@ class MainWindow(Gtk.Window):
         print("A File|New menu item was selected.")
 
     def on_menu_file_open(self, widget):
-        print("A File|Open file.")
-        dialog = Gtk.FileChooserDialog("Please choose a file", self,
+        dialog = Gtk.FileChooserDialog("Please choose a choreography", self,
             Gtk.FileChooserAction.OPEN,
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-
         self.add_filters(dialog)
-
         response = dialog.run()
+        
         if response == Gtk.ResponseType.OK:
-            print("Open clicked")
-            self.choography_file_path = dialog.get_filename()
+            self.workspace = Workspace(dialog.get_filename())
             dialog.destroy()
         elif response == Gtk.ResponseType.CANCEL:
-            print("Cancel clicked")
             dialog.destroy()
             return
 
         self.store.clear()
-        choreography = self.store.append(None, ["choreography", os.path.basename(self.choography_file_path)])
-        choreography_png = self.store.append(choreography,
-                                             ["choreography-graph", "graph"])
-
-
-        os.system("../gg2gml %s > %s" % (
-            self.choography_file_path,
-            os.path.dirname(self.choography_file_path) + "/choreography.graphml"
-        ))
-        # this is already a png
-        os.system("../chor2dot -d %s -fmt sloppygml %s" % (
-            os.path.dirname(self.choography_file_path) + "/", 
-            os.path.dirname(self.choography_file_path) + "/choreography.graphml"
-        ))
-
-        os.system('dot -Tpng %s -o %s' % (
-            os.path.dirname(self.choography_file_path) + "/choreography.dot",
-            os.path.dirname(self.choography_file_path) + "/choreography.png"))
+        self.workspace.gen_choreography_png()
+        
+        choreography = self.store.append(
+            None,
+            ["root", self.workspace.get_root_folder()])
+        choreography_png = self.store.append(
+            choreography,
+            ["choreography-graph", "graph"])
 
         self.show_choreography_source()
 
-    def list_files_in_folder(self, folder):
-        files = [f for f in listdir(folder) if isfile(join(folder, f))]
-        return files
-
-    def get_semantics_folder(self):
-        return self.choography_file_path.split(".")[0]
+    def remove_tree_root_section(self, section):
+        it = self.store.get_iter_first()
+        while (not it is None):
+            if self.store[it][0] == section:
+                self.store.remove(it)
+                break
+            it = self.store.iter_next(it)
+        
 
     def on_menu_gen_semantics(self, widget):
-        # I should ensure this goes in the third position and remove all the past semantics from the tree
-        shutil.rmtree(self.get_semantics_folder())
-        cmd = "../gg2pom -d %s --gml %s" % (
-            os.path.dirname(self.choography_file_path) + "/", 
-            self.choography_file_path
-        )
-        os.system(cmd)
+        self.workspace.gen_semantics()
+        self.remove_tree_root_section("semantics")
         semantics = self.store.append(None, ["semantics", "semantics"])
-        i = 4
-        self.pom_semantics = []
-        for f in self.list_files_in_folder(self.get_semantics_folder()):
+        self.tree_semantics_mapping = {}
+        i = 0
+        for f in self.workspace.semantics:
             store_name = "semantics-%d"%i
             self.store.append(semantics, [store_name, f])
-            graph = nx.readwrite.graphml.read_graphml(join(self.get_semantics_folder(), f))
-            utils.debug_pomset(graph, join(self.get_semantics_folder(), f))
-            self.pomset_mapping[store_name] = f
-            self.pom_semantics.append(graph)
+            self.tree_semantics_mapping[store_name] = f
             i+=1
         
     def on_menu_cc2(self, widget):
-        cc2c = cc2closure(self.pom_semantics)
-        # cc2res = cc2pom(cc2c, global_view)
-        # cc2err = counterexamples(cc2c, cc2res)
-        analysis_list = self.store.append(None, ["analysis", "analysis"])
-        cc2_list = self.store.append(analysis_list, ["cc2", "CC 2"])
+        self.workspace.gen_cc2()
+        self.remove_tree_root_section("cc2")
+        cc2_list = self.store.append(None, ["cc2", "CC 2"])
         closure_list = self.store.append(cc2_list, ["cc2-closure", "closure"])
-        i = 0
-        self.cc2_closure = {}
-        for pomset in cc2c:
-            store_name = "cc2-closure-%d"%i
-            self.store.append(closure_list, [store_name, "pomset%d"%i])
-            utils.debug_pomset(pomset, join(os.path.dirname(self.choography_file_path) + "/cc2/closure/", "%d"%i))
-            self.cc2_closure[store_name] = i
-            i+=1
-    
+        counterexamples_list = self.store.append(cc2_list, ["cc2-counterexamples", "counterexamples"])
+
+        self.tree_cc2_closure_mapping = {}
+        self.tree_cc2_counterexamples_mapping = {}
+        
+        for pm in self.workspace.cc2["closure"]:
+            store_name = "cc2-closure-%d"%pm
+            str_view = "pomset%d"%pm
+            if pm in self.workspace.cc2["mapping"]:
+                str_view += " -> %d" % self.workspace.cc2["mapping"][pm]
+            self.store.append(closure_list, [store_name, str_view])
+            self.tree_cc2_closure_mapping[store_name] = pm
+            if not pm in self.workspace.cc2["mapping"]:
+                store_name = "cc2-counterexample-%d"%pm
+                self.store.append(counterexamples_list, [store_name, str_view])
+                self.tree_cc2_counterexamples_mapping[store_name] = pm
+
+    def change_main_view(self, widget):
+        old_views = self.scrolled_window.get_children()
+        for old in old_views:
+            self.scrolled_window.remove(old)
+        self.scrolled_window.add(widget)
+        self.scrolled_window.show_all()
+        
     def show_choreography_source(self):
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_border_width(5)
-        # we scroll only if needed
-        scrolled_window.set_policy(
-            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        label = Gtk.Label(open(self.choography_file_path).read())
-        scrolled_window.add(label)
-        self.vp.remove(self.vp.get_child2());
-        self.vp.add2(scrolled_window)
-        scrolled_window.show_all()
+        self.change_main_view(
+            Gtk.Label(open(self.workspace.sgg_absolute_path).read())
+        )
         
     def show_choreography_graph(self):
-        img = Gtk.Image.new_from_file(
-            os.path.dirname(self.choography_file_path) + "/choreography.png")
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_border_width(5)
-        # we scroll only if needed
-        scrolled_window.set_policy(
-            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled_window.add(img)
-        self.vp.remove(self.vp.get_child2());
-        self.vp.add2(scrolled_window)
-        scrolled_window.show_all()
+        self.change_main_view(
+            Gtk.Image.new_from_file(
+                self.workspace.get_choreography_png_path()
+            ))
+
 
     def show_pomset_graph(self, f):
-        img = Gtk.Image.new_from_file(
-            self.get_semantics_folder() + "/%s.png" % f)
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_border_width(5)
-        # we scroll only if needed
-        scrolled_window.set_policy(
-            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled_window.add(img)
-        self.vp.remove(self.vp.get_child2());
-        self.vp.add2(scrolled_window)
-        scrolled_window.show_all()
+        self.change_main_view(
+            Gtk.Image.new_from_file(
+                self.workspace.get_semantics_png_path(f)
+            ))
 
     def show_cc2_closure(self, i):
-        img = Gtk.Image.new_from_file(
-            join(os.path.dirname(self.choography_file_path) + "/cc2/closure/", "%d.png"%i))
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_border_width(5)
-        # we scroll only if needed
-        scrolled_window.set_policy(
-            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled_window.add(img)
-        self.vp.remove(self.vp.get_child2());
-        self.vp.add2(scrolled_window)
-        scrolled_window.show_all()
+        self.change_main_view(
+            Gtk.Image.new_from_file(
+                self.workspace.get_cc2_closure_png_path(i)
+            ))
 
     def add_filters(self, dialog):
         filter_sgg = Gtk.FileFilter()
