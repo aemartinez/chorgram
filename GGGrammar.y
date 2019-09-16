@@ -63,7 +63,7 @@
 -- after '..', so is the rest of a line.
 --
 -- The parser generator is Haskell's 'Happy' and the parser
--- (GGparser.hs) is obtained by typing 'make parser'.
+-- (GGParser.hs) is obtained by typing 'make parser'.
 --
 -- Basic syntactic checks are made during the parsing (e.g, (i) that
 -- sender and receiver of interactions have to be different and (2)
@@ -75,7 +75,7 @@
 -- TODO: add line numbers
 --
 {
-module GGparser where
+module GGParser where
 import SyntacticGlobalGraphs
 import ErlanGG
 import Data.Set as S (empty, singleton, intersection, union, unions, difference, fromList, difference, toList, member, foldr, Set)

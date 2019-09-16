@@ -10,7 +10,7 @@
 --
 -- the binary operators | and ; are given in ascending order of
 -- precedence.  The parser generator is Haskell's 'Happy' and the
--- parser (RGGparser.hs) is obtained by typing'make parser'.
+-- parser (RGGParser.hs) is obtained by typing'make parser'.
 --
 -- The only syntactic check made (right now) during the parsing are
 -- (i) that sender and receiver of interactions have to be different,
@@ -29,7 +29,7 @@
 -- TODO: add line numbers
 --
 {
-module RGGparser where
+module RGGParser where
 import SyntacticGlobalGraphs
 import ErlanGG
 import Data.List as L
