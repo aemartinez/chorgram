@@ -94,10 +94,10 @@ def gen_all_choices(src):
             continue
         paths = gen_top_choices(graph)
         to_process = to_process + [(dict(list(path.items()) + list(p.items())), g) for (p, g) in paths]
-    i = 0
-    for (p, g) in res:
-        nx.readwrite.graphml.write_graphml(g, "graphs/aaa%d.graphml" % i)
-        i += 1
+    # i = 0
+    # for (p, g) in res:
+    #     nx.readwrite.graphml.write_graphml(g, "graphs/aaa%d.graphml" % i)
+    #     i += 1
     return res
 
 def from_diff_to_graph(g1, g2, g3, diffs, brs):
@@ -244,32 +244,15 @@ def clone_graph(g):
     return g1
 
 
-g1 = nx.readwrite.graphml.read_graphml("graphs/global.graphml")
-g2 = nx.readwrite.graphml.read_graphml("graphs/0/0.graphml")
-paths = gen_all_choices(g1)
+def run_diff(g1, g2, folder):
+    res = {}
+    paths = gen_all_choices(g1)
 
-for i in range(len(paths)):
-    print("******************************")
-    print(i)
-    (path, new_graph) = paths[i]
-    diffs, cost = nx.algorithms.similarity.optimal_edit_paths(new_graph, g2, node_ins_cost=nic, node_del_cost=ndc, node_subst_cost=nsc, edge_del_cost=edc, edge_ins_cost=eic)
-    print((i, cost))
-    g = from_diff_to_graph(g1, g2, new_graph, diffs, path)
-    g = clone_graph(g)
-    nx.readwrite.graphml.write_graphml(g, "graphs/res_%d.graphml" % i)
-
-    
-exit(0)
-
-
-
-defaults = ["" for k in keys]
-
-nm = iso.categorical_node_match(keys, defaults)
-# paths, cost = nx.algorithms.similarity.optimal_edit_paths(g1, g2, nm)
-g1 = nx.subgraph(g1, list(g1.nodes()))
-g2 = nx.subgraph(g2, list(g2.nodes()))
-
-
-
-
+    for i in range(len(paths)):
+        (path, new_graph) = paths[i]
+        diffs, cost = nx.algorithms.similarity.optimal_edit_paths(new_graph, g2, node_ins_cost=nic, node_del_cost=ndc, node_subst_cost=nsc, edge_del_cost=edc, edge_ins_cost=eic)
+        g = from_diff_to_graph(g1, g2, new_graph, diffs, path)
+        g = clone_graph(g)
+        nx.readwrite.graphml.write_graphml(g, folder+"/diff_%d.graphml" % i)
+        res[i] = cost
+    return res
