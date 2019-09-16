@@ -6,7 +6,7 @@
 --
 
 import Misc
-import GGparser
+import GGParser
 import CFSM (cfsm2String)
 import FSA (minimise)
 import Data.Set (toList)
@@ -28,7 +28,7 @@ main = do progargs <- getArgs
                     setFileNames sourcefile flags
               createDirectoryIfMissing True dir
               let ( gg, names ) =
-                    (gggrammar . GGparser.lexer) ggtxt
+                    (gggrammar . GGParser.lexer) ggtxt
               let ptps =
                     Data.Set.toList names
               -- TODO: fix this String -> [CFSM] -> [[String]] -> System inefficiency 

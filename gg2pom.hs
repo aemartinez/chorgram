@@ -4,7 +4,7 @@
 
 
 import Misc
-import GGparser
+import GGParser
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict
@@ -24,7 +24,7 @@ main = do progargs <- getArgs
                     setFileNames sourcefile flags
               createDirectoryIfMissing True dir
               let ( gg, _ ) =
-                    (gggrammar . GGparser.lexer) ggtxt
+                    (gggrammar . GGParser.lexer) ggtxt
               let iter = (read (flags!"-l"))::Int
               let ( pomsets, _ ) =
                     pomsetsOf gg iter 0
