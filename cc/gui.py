@@ -107,6 +107,14 @@ class Workspace():
         return join(self.get_cc2_folder(),  "synthesis", "%d"%pm_idx)
     def get_cc2_counter_choreography_png(self, pm_idx):
         return join(self.get_cc2_counter_choreography_folder(pm_idx), "%d.png"%pm_idx)
+
+    def get_cc3_closure_png_path(self, i):
+        return join(self.get_cc3_folder(),  "closure", "%d.png"%i)
+    def get_cc3_counter_choreography_folder(self, pm_idx):
+        return join(self.get_cc3_folder(),  "synthesis", "%d"%pm_idx)
+    def get_cc3_counter_choreography_png(self, pm_idx):
+        return join(self.get_cc3_counter_choreography_folder(pm_idx), "%d.png"%pm_idx)
+
     
     def gen_cc2_choreography(self, pm_idx):
         if self.cc2 is None:
@@ -122,6 +130,10 @@ class Workspace():
             join(self.get_cc2_counter_choreography_folder(pm_idx), "%d"%pm_idx),
             self.get_cc2_counter_choreography_png(pm_idx))
         )
+
+    def get_cc2_diff_path(self, counter_idx, branch_idx):
+        return "%s/diff_%d.png" % (self.get_cc2_counter_choreography_folder(counter_idx), branch_idx)
+
     def gen_cc2_diff(self, pm_idx):
         if self.cc2 is None:
             return
@@ -129,22 +141,89 @@ class Workspace():
             return
         pm = self.cc2["closure"][pm_idx]
         g1 = nx.readwrite.graphml.read_graphml(self.get_root_folder() + "/choreography.graphml")
-        g2 = nx.readwrite.graphml.read_graphml(join(self.get_cc2_folder(),  "closure", "%d.graphml"%pm_idx))
+        g2 = nx.readwrite.graphml.read_graphml(join(self.get_cc2_folder(),  "synthesis", "%d"%pm_idx, "%d.graphml"%pm_idx))
         res = run_diff(g1, g2, self.get_cc2_counter_choreography_folder(pm_idx))
         for i in res:
-            os.system("../chor2dot -d %s/ -fmt sloppygml %s/diff_%d.graphml" % (
+            os.system("../chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml" % (
                 self.get_cc2_counter_choreography_folder(pm_idx), 
                 self.get_cc2_counter_choreography_folder(pm_idx),
                 i
             ))
-            os.system('dot -Tpng %s/diff_%d.dot -o %s/diff_%d.png' % (
+            os.system('dot -Tpng %s/diff_%d.dot -o %s' % (
                 self.get_cc2_counter_choreography_folder(pm_idx),
                 i,
-                self.get_cc2_counter_choreography_folder(pm_idx),
-                i
+                self.get_cc2_diff_path(pm_idx, i)
             ))
-            
+        return res
+
+    def get_cc3_folder(self):
+        return self.get_root_folder() + "/cc3"
+
+    # remove closure elements that are prefix of other elements
+    def filter_cc3_closure(self, cc3c):
+        filtered_closure = []
+        nm = iso.categorical_node_match(["subject", "partner", "in", "out"], ["", "", "", ""])
+        for pomset in cc3c:
+            found = False
+            for pomset1 in cc3c:
+                if pomset1 == pomset:
+                    continue
+                prefixes = get_all_prefix_graphs(pomset1, False)
+                for pomset2 in prefixes:
+                    if (nx.is_isomorphic(pomset, pomset2, node_match=nm)):
+                        found = True
+                        break
+                if found:
+                    break
+            if not found:
+                filtered_closure.append(pomset)
+        return filtered_closure
+
+    def fix_cc3_counter_example(self, pom):
+        last_int = max([int(x) for x in pom.nodes()])
+        for node in list(pom.nodes()):
+            if not "out" in pom.node[node]:
+                continue
+            outs = [b for (a, b) in pom.out_edges(node)]
+            found = False
+            for node1 in outs:
+                if not "in" in pom.node[node1]:
+                    continue
+                if pom.node[node1]["subject"] == pom.node[node]["partner"] and \
+                   pom.node[node]["subject"] == pom.node[node1]["partner"] and \
+                   pom.node[node1]["in"] == pom.node[node]["out"]:
+                    found = True
+                    break
+            if not found:
+                last_int += 1
+                pom.add_node(last_int, **(dict(pomset.get_matching_label(pom.node[node]))))
+                pom.add_edge(node, last_int)
+        return pom
+
+    def gen_cc3(self):
+        if self.semantics is None:
+            return
+        self.delete_folder(self.get_cc3_folder())
+        os.makedirs(join(self.get_cc3_folder(),  "closure"))
+        os.makedirs(join(self.get_cc3_folder(),  "synthesis"))
         
+        pomsets = [self.semantics[f] for f in self.semantics]
+        self.cc3 = {"closure": {}, "mapping": {}}
+
+        (cc3c, prefixes) = cc3closure(pomsets)
+        cc3c = self.filter_cc3_closure(cc3c)
+        cc3res = cc3pom(cc3c, prefixes)
+        i = 0
+        for pm in cc3c:
+            # TODO: we should use the transitive reduction, but it does not work
+            fix_pom_out = self.fix_cc3_counter_example(pm)
+            nx.readwrite.graphml.write_graphml(fix_pom_out, join(self.get_cc3_folder(),  "closure", "%d.graphml"%i))
+            utils.debug_pomset(fix_pom_out, join(self.get_cc3_folder(),  "closure", "%d"%i))
+            self.cc3["closure"][i] = fix_pom_out
+            if not cc3res[i] is None:
+                self.cc3["mapping"][i] = cc3res[i]
+            i+=1
+
 
 UI_INFO = """
 <ui>
@@ -160,6 +239,7 @@ UI_INFO = """
       <menuitem action='FileGenSemantics' />
       <separator />
       <menuitem action='CC2' />
+      <menuitem action='CC3' />
       <menuitem action='pom2sgg' />
       <menuitem action='sgg2diff' />
       <separator />
@@ -183,9 +263,7 @@ class MainWindow(Gtk.Window):
 
         self.workspace = None
         # reverse mapping for tree-vew
-        self.tree_semantics_mapping = {}
-        self.tree_cc2_closure_mapping = {}
-        self.tree_cc2_counterexamples_mapping = {}
+        self.tree_mapping = {}
         
         self.set_default_size(600, 400)
 
@@ -210,7 +288,7 @@ class MainWindow(Gtk.Window):
 
         # the data are stored in the model
         # create a treestore with two columns
-        self.store = Gtk.TreeStore(str, str)
+        self.store = Gtk.TreeStore(str, str, str)
         
         # the treeview shows the model
         # create a treeview on the model self.store
@@ -220,16 +298,19 @@ class MainWindow(Gtk.Window):
         # the cellrenderer for the first column - text
         renderer_books = Gtk.CellRendererText()
         # the first column is created
-        main_column = Gtk.TreeViewColumn(None, renderer_books, text=1)
+        main_column = Gtk.TreeViewColumn(None, renderer_books, text=2)
         # and it is appended to the treeview
         view.append_column(main_column)
 
         self.selection = view.get_selection()
         self.selection.connect("changed", self.on_tree_selection_changed)
 
-        
-        # add the treeview to the window
-        self.vp.add1(view)
+        scrolled_window_left = Gtk.ScrolledWindow()
+        scrolled_window_left.set_border_width(5)
+        scrolled_window_left.set_policy(
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled_window_left.add(view)
+        self.vp.add1(scrolled_window_left)
 
         self.scrolled_window = Gtk.ScrolledWindow()
         self.scrolled_window.set_border_width(5)
@@ -243,17 +324,34 @@ class MainWindow(Gtk.Window):
     def on_tree_selection_changed(self, selection):
         model, treeiter = self.selection.get_selected()
         if treeiter is None:
-            pass
+            return
         elif model[treeiter][0] == "root":
-            self.show_choreography_source()
+            return self.show_choreography_source()
         elif model[treeiter][0] == "choreography-graph":
-            self.show_choreography_graph()
-        elif model[treeiter][0] in self.tree_semantics_mapping:
-            self.show_pomset_graph(self.tree_semantics_mapping[model[treeiter][0]])
-        elif model[treeiter][0] in self.tree_cc2_closure_mapping:
-            self.show_cc2_closure(self.tree_cc2_closure_mapping[model[treeiter][0]])
-        elif model[treeiter][0] in self.tree_cc2_counterexamples_mapping:
-            self.show_cc2_closure(self.tree_cc2_counterexamples_mapping[model[treeiter][0]])
+            return self.show_choreography_graph()
+
+        key = (model[treeiter][0], model[treeiter][1])
+        if not key in self.tree_mapping:
+            return
+        val = self.tree_mapping[key]
+        if key[0] == "semantics-pom":
+            self.show_pomset_graph(val)
+        elif key[0] == "cc2-closure-pom":
+            self.show_cc2_closure(val)
+        elif key[0] == "cc2-counterexamples-pom":
+            self.show_cc2_closure(val)
+        elif key[0] == "cc2-counterexamples-sgg":
+            self.show_cc2_sgg(val)
+        elif key[0] == "cc2-counterexamples-diff":
+            self.show_cc2_diff(val)
+        elif key[0] == "cc3-closure-pom":
+            self.show_cc3_closure(val)
+        elif key[0] == "cc3-counterexamples-pom":
+            self.show_cc3_closure(val)
+        elif key[0] == "cc3-counterexamples-sgg":
+            self.show_cc3_sgg(val)
+        elif key[0] == "cc3-counterexamples-diff":
+            self.show_cc3_diff(val)
 
     def add_file_menu_actions(self, action_group):
         action_filemenu = Gtk.Action("FileMenu", "File", None, None)
@@ -290,6 +388,10 @@ class MainWindow(Gtk.Window):
         action_cc2.connect("activate", self.on_menu_cc2)
         action_group.add_action_with_accel(action_cc2, "<Control>2")
 
+        action_cc3 = Gtk.Action("CC3", "CC_3", "Closure Condition 3", None)
+        action_cc3.connect("activate", self.on_menu_cc3)
+        action_group.add_action_with_accel(action_cc3, "<Control>3")
+        
         action_pom2sgg = Gtk.Action("pom2sgg", "Generate Choreography", "Generate Choreography", None)
         action_pom2sgg.connect("activate", self.on_menu_pom2sgg)
         action_group.add_action_with_accel(action_pom2sgg, "<Control>p")
@@ -332,10 +434,11 @@ class MainWindow(Gtk.Window):
         
         choreography = self.store.append(
             None,
-            ["root", self.workspace.get_root_folder()])
+            ["root", None, self.workspace.get_root_folder()])
         choreography_png = self.store.append(
             choreography,
-            ["choreography-graph", "graph"])
+            ["choreography-graph", None, "graph"])
+        self.tree_mapping = {}
 
         self.show_choreography_source()
 
@@ -351,67 +454,89 @@ class MainWindow(Gtk.Window):
     def on_menu_gen_semantics(self, widget):
         self.workspace.gen_semantics()
         self.remove_tree_root_section("semantics")
-        semantics = self.store.append(None, ["semantics", "semantics"])
-        self.tree_semantics_mapping = {}
+        semantics = self.store.append(None, ["semantics", None, "semantics"])
         i = 0
         for f in self.workspace.semantics:
-            store_name = "semantics-%d"%i
-            self.store.append(semantics, [store_name, f])
-            self.tree_semantics_mapping[store_name] = f
+            self.store.append(semantics, ["semantics-pom", str(i), "pomset %d"%i])
+            self.tree_mapping[("semantics-pom", str(i))] = f
             i+=1
+
+    def closure_res_to_tree(self, closure, res):
+        self.remove_tree_root_section("cc%d"%closure)
+        cc_list = self.store.append(None, ["cc%d"%closure, None, "CC %d"%closure])
+        closure_list = self.store.append(cc_list, ["cc%d-closure"%closure, None, "closure"])
+        counterexamples_list = self.store.append(cc_list, ["cc%d-counterexamples"%closure, None, "counterexamples"])
+
+        for pm in res["closure"]:
+            str_view = "pomset %d"%pm
+            if pm in res["mapping"]:
+                str_view += " -> %d" % res["mapping"][pm]
+            self.store.append(closure_list, ["cc%d-closure-pom"%closure, str(pm), str_view])
+            self.tree_mapping[("cc%d-closure-pom"%closure, str(pm))] = pm
+            if not pm in res["mapping"]:
+                self.store.append(counterexamples_list, ["cc%d-counterexamples-pom"%closure, str(pm), str_view])
+                self.tree_mapping[("cc%d-counterexamples-pom"%closure, str(pm))] = pm
         
     def on_menu_cc2(self, widget):
         self.workspace.gen_cc2()
-        self.remove_tree_root_section("cc2")
-        cc2_list = self.store.append(None, ["cc2", "CC 2"])
-        closure_list = self.store.append(cc2_list, ["cc2-closure", "closure"])
-        counterexamples_list = self.store.append(cc2_list, ["cc2-counterexamples", "counterexamples"])
+        self.closure_res_to_tree(2, self.workspace.cc2)
 
-        self.tree_cc2_closure_mapping = {}
-        self.tree_cc2_counterexamples_mapping = {}
+    def get_selected_cc_pom_idx(self, closure):
+        model, treeiter = self.selection.get_selected()
+        if treeiter is None:
+            return None
+        key = (model[treeiter][0], model[treeiter][1])
+        if key[0] == ("cc%d-counterexamples-pom"%closure):
+            return
+        if not key in self.tree_mapping:
+            return
         
-        for pm in self.workspace.cc2["closure"]:
-            store_name = "cc2-closure-%d"%pm
-            str_view = "pomset%d"%pm
-            if pm in self.workspace.cc2["mapping"]:
-                str_view += " -> %d" % self.workspace.cc2["mapping"][pm]
-            self.store.append(closure_list, [store_name, str_view])
-            self.tree_cc2_closure_mapping[store_name] = pm
-            if not pm in self.workspace.cc2["mapping"]:
-                store_name = "cc2-counterexample-%d"%pm
-                self.store.append(counterexamples_list, [store_name, str_view])
-                self.tree_cc2_counterexamples_mapping[store_name] = pm
-
     def on_menu_pom2sgg(self, widget):
         model, treeiter = self.selection.get_selected()
         if treeiter is None:
             return
-        if not model[treeiter][0] in self.tree_cc2_counterexamples_mapping:
+        key = (model[treeiter][0], model[treeiter][1])
+        if key[0] != "cc2-counterexamples-pom":
+            return
+        if not key in self.tree_mapping:
             return
 
-        pom = self.tree_cc2_counterexamples_mapping[model[treeiter][0]]
+        pom = self.tree_mapping[key]
         self.workspace.gen_cc2_choreography(
             pom
         )
 
-        self.store.append(treeiter, ["cc2-counterexample-graph-%d"%pom, "graph"])
-        self.change_main_view(
-            Gtk.Image.new_from_file(
-                self.workspace.get_cc2_counter_choreography_png(pom)
-            ))
-        return
+        self.store.append(treeiter, ["cc2-counterexamples-sgg", str(pom), "graph"])
+        self.tree_mapping[("cc2-counterexamples-sgg", str(pom))] = pom
                 
     def on_menu_sgg2diff(self, widget):
         model, treeiter = self.selection.get_selected()
         if treeiter is None:
             return
-        if not model[treeiter][0] in self.tree_cc2_counterexamples_mapping:
+        key = (model[treeiter][0], model[treeiter][1])
+        if key[0] != "cc2-counterexamples-sgg":
             return
+        if not key in self.tree_mapping:
+            return
+        pom = self.tree_mapping[key]
 
-        pom = self.tree_cc2_counterexamples_mapping[model[treeiter][0]]
-        self.workspace.gen_cc2_diff(
+        diffs = self.workspace.gen_cc2_diff(
             pom
         )
+
+        diff_iter = self.store.append(treeiter, ["cc2-counterexamples-diff-list", None, "diffs"])
+        for i in diffs:
+            new_iter = self.store.append(diff_iter, ["cc2-counterexamples-diff", "%d-%d"%(pom, i), "%d: %f"%(i, diffs[i])])
+            self.tree_mapping[("cc2-counterexamples-diff", "%d-%d"%(pom, i))] = (pom, i)
+            
+    def on_menu_cc3(self, widget):
+        self.workspace.gen_cc3()
+        self.closure_res_to_tree(3, self.workspace.cc3)
+
+    def on_menu_pom3sgg(self, widget):
+        return
+    def on_menu_sgg3diff(self, widget):
+        return
 
     def change_main_view(self, widget):
         old_views = self.scrolled_window.get_children()
@@ -442,6 +567,38 @@ class MainWindow(Gtk.Window):
         self.change_main_view(
             Gtk.Image.new_from_file(
                 self.workspace.get_cc2_closure_png_path(i)
+            ))
+
+    def show_cc2_sgg(self, i):
+        self.change_main_view(
+            Gtk.Image.new_from_file(
+                self.workspace.get_cc2_counter_choreography_png(i)
+            ))
+
+    def show_cc2_diff(self, val):
+        (pom_id, i) = val
+        self.change_main_view(
+            Gtk.Image.new_from_file(
+                self.workspace.get_cc2_diff_path(pom_id, i)
+            ))
+
+    def show_cc3_closure(self, i):
+        self.change_main_view(
+            Gtk.Image.new_from_file(
+                self.workspace.get_cc3_closure_png_path(i)
+            ))
+
+    def show_cc3_sgg(self, i):
+        self.change_main_view(
+            Gtk.Image.new_from_file(
+                self.workspace.get_cc3_counter_choreography_png(i)
+            ))
+
+    def show_cc3_diff(self, val):
+        (pom_id, i) = val
+        self.change_main_view(
+            Gtk.Image.new_from_file(
+                self.workspace.get_cc3_diff_path(pom_id, i)
             ))
 
     def add_filters(self, dialog):

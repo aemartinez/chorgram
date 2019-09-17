@@ -256,3 +256,8 @@ def run_diff(g1, g2, folder):
         nx.readwrite.graphml.write_graphml(g, folder+"/diff_%d.graphml" % i)
         res[i] = cost
     return res
+
+if __name__ == "__main__":
+    g1 = nx.readwrite.graphml.read_graphml("choreography.graphml")
+    g2 = nx.readwrite.graphml.read_graphml("cc2/synthesis/1/1.graphml")
+    run_diff(g1, g2, "graphs")
