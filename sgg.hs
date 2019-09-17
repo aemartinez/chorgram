@@ -9,8 +9,8 @@
 
 import Misc
 import DotStuff
-import GGparser
-import RGGparser
+import GGParser
+import RGGParser
 import CFSM
 import Data.Set as S
 import Data.List as L
@@ -38,7 +38,7 @@ main = do progargs <- getArgs
                 then do
                 myPrint flags SGG "start"
                 let ( gg, names ) =
-                      (gggrammar . GGparser.lexer) ggtxt
+                      (gggrammar . GGParser.lexer) ggtxt
                 let ptps =
                       list2map $ S.toList names
                 writeToFile (dir ++ "in_sgg_parsed.txt") ("Input @ " ++ sourcefile ++ "\n\n" ++ show gg)
@@ -81,7 +81,7 @@ main = do progargs <- getArgs
                 else do
                 -- TODO: the compilation to erlang should be better integrated with the rest
                 let (rgg, _) =
-                      (rgggrammar . RGGparser.lexer) ggtxt
+                      (rgggrammar . RGGParser.lexer) ggtxt
                 writeToFile (dir ++ "in_rgg_parsed.txt") (show rgg)
                   >>=
                   (\_ -> writeToFile (dir ++ "reg.txt") (if (head $ fst (rgg2erl 1 rgg)) == '[' then fst (rgg2erl 1 rgg) else erlList $ fst (rgg2erl 1 rgg)))

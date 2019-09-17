@@ -6,7 +6,7 @@
 
 import Misc
 import DotStuff
-import GGparser
+import GGParser
 import Data.List as L
 import Data.Map.Strict as M
 import SyntacticGlobalGraphs
@@ -30,7 +30,7 @@ main = do progargs <- getArgs
               case flags!"-fmt" of
                 "sgg" -> do
                   let ( gg, _ ) =
-                        (gggrammar . GGparser.lexer) ggtxt
+                        (gggrammar . GGParser.lexer) ggtxt
                   writeToFile (dir ++ baseName ++ ".dot") ("# Input @ " ++ sourcefile ++ "\n\n" ++ show gg)
                   writeToFile (dir ++ baseName ++ ".dot") (gg2dot gg baseName (flines!ggsizenode))
                 "gml" -> do

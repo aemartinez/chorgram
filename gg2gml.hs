@@ -5,7 +5,7 @@
 --
 
 import Misc
-import GGparser
+import GGParser
 import Data.Set (toList)
 import Data.List as L
 import Data.Map.Strict as M
@@ -25,7 +25,7 @@ main = do progargs <- getArgs
                     setFileNames sourcefile flags
               createDirectoryIfMissing True dir
               let ( gg, names ) =
-                    (gggrammar . GGparser.lexer) ggtxt
+                    (gggrammar . GGParser.lexer) ggtxt
               let ptps =
                     Data.Set.toList names
               let gml = gg2graphml gg

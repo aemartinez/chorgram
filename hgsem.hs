@@ -4,7 +4,7 @@
 
 import Misc
 import DotStuff
-import GGparser
+import GGParser
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
@@ -26,7 +26,7 @@ main = do progargs <- getArgs
               createDirectoryIfMissing True dir
               myPrint flags HGSEM "start"
               let ( gg, names ) =
-                    (gggrammar . GGparser.lexer) ggtxt
+                    (gggrammar . GGParser.lexer) ggtxt
               let ptps =
                     list2map $ S.toList names
               let ( _, hg ) =
