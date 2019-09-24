@@ -26,7 +26,7 @@ main = do progargs <- getArgs
               let ( _, _, baseName, _ ) =
                     setFileNames sourcefile flags
               let dir = flags!"-d"
-              createDirectoryIfMissing True dir              
+              createDirectoryIfMissing True dir
               case flags!"-fmt" of
                 "sgg" -> do
                   let ( gg, _ ) =
