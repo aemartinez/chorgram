@@ -1,0 +1,10 @@
+sel {
+    {C -> L: reqLog | C -> S: date};
+       L -> S: noLog;
+       S -> C: string
+    + 
+    {C -> L: reqLog | C -> S: string};
+       S -> L: resLog;
+       S -> C: date
+}
+    
