@@ -1,6 +1,6 @@
 sel {
     {C -> L: reqLog | C -> S: date};
-       S -> L: resLog;
+       L -> S: resLog;
        S -> C: string
     + 
     {C -> L: reqLog | C -> S: string};
