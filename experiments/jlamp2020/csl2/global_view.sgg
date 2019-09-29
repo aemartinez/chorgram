@@ -1,14 +1,14 @@
 sel {
-  {C -> L: reqLog | C -> S: dateFmt};
+  {C -> L: logReq | C -> S: dateFmt};
      sel {
-       S -> L: resLog
+       S -> L: logRes
        +              .. S may send a less informative logs
        S -> L: basicLog
      };
      S -> C: string
   + 
-  {C -> L: reqLog | C -> S: string};
-     S -> L: resLog;
+  {C -> L: logReq | C -> S: string};
+     S -> L: logRes;
      S -> C: dateFmt
 }
     

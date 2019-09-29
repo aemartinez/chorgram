@@ -1,9 +1,9 @@
 sel {
-  {C -> L: reqLog | C -> S: dateFmt};
+  {C -> L: logReq | C -> S: dateFmt};
      S -> C: string
   + 
-  {C -> L: reqLog | C -> S: string};
-     S -> L: resLog;
+  {C -> L: logReq | C -> S: string};
+     S -> L: logRes;
      S -> C: dateFmt
 }
     
