@@ -96,6 +96,9 @@ def termination_condition(global_view):
                                min2_sub       
                 ))
                 print([pom2_sub.nodes[n] for n in min2_sub])
+                if debug:
+                    export_termination_counterexample("/tmp",*res[p][-1])
+
     return res
 
 def get_event_label(event):
@@ -139,12 +142,15 @@ strict digraph "" {
 
     for n in pom2.nodes():
         label = get_event_label(pom2.nodes[n])
-        f.write('subgraph cluster_%d {B_%s\t[label="%s"];}\n'%(2, n, label))
+        f.write('subgraph cluster_%d {B_%s\t[label="%s"'%(2, n, label))
+        if n in mins:
+            f.write('color=darkolivegreen3')
+        f.write('];}\n')
     for (e1, e2) in pom2.edges():
         f.write('B_%s -> B_%s;\n'%(e1, e2))
 
     for m in mapping:
-        f.write('A_%s -> B_%s;\n'%(m, mapping[m]))
+        f.write('A_%s -> B_%s [style=dashed];\n'%(m, mapping[m]))
     f.write('}\n')
     f.close()
     os.system('dot -Tpng %s.dot -o %s.png' % (name, name))
