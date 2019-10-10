@@ -36,6 +36,11 @@ def debug_graph(gr, name="G"):
     return ("%s.png" % name)
 
 def debug_pomset(pomset, name):
+    nids = {}
+    nid = 0
+    for n in pomset.nodes():
+        nids[n] = nid
+        nid+=1
     f = open("%s.dot"%name, "w")
     f.write("""
 strict digraph "" {
@@ -58,9 +63,9 @@ strict digraph "" {
                 pomset.nodes[n]["partner"],
                 pomset.nodes[n]["out"]
             )
-        f.write('subgraph cluster_%s {%s\t[label="%s"];}\n'%(pomset.nodes[n]["subject"], n, label))
+        f.write('subgraph cluster_%s {%s\t[label="%s"];}\n'%(pomset.nodes[n]["subject"], nids[n], label))
     for (e1, e2) in pomset.edges():
-        f.write('%s -> %s;\n'%(e1, e2))
+        f.write('%s -> %s;\n'%(nids[e1], nids[e2]))
     f.write('}\n')
     f.close()
     os.system('dot -Tpng %s.dot -o %s.png' % (name, name))

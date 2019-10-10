@@ -38,9 +38,9 @@ def nic(n):
     return 0.45
 
 def edc(n):
-    return 0
+    return 0.1
 def eic(n):
-    return 0
+    return 0.1
 
 
 def is_source_node(attr):
@@ -251,6 +251,7 @@ def run_diff(g1, g2, folder):
     for i in range(len(paths)):
         (path, new_graph) = paths[i]
         diffs, cost = nx.algorithms.similarity.optimal_edit_paths(new_graph, g2, node_ins_cost=nic, node_del_cost=ndc, node_subst_cost=nsc, edge_del_cost=edc, edge_ins_cost=eic)
+        print(diffs, cost)
         g = from_diff_to_graph(g1, g2, new_graph, diffs, path)
         g = clone_graph(g)
         nx.readwrite.graphml.write_graphml(g, folder+"/diff_%d.graphml" % i)
