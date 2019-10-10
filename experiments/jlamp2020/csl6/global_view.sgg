@@ -1,13 +1,13 @@
 sel {
   {C -> L: logReq | C -> S: dateFmt};
      S -> L: basicLog;
-     L -> S: ack;
+     L -> S: ack;                        .. L acknoledges S
      S -> L: logReqExt;
      S -> C: string
   + 
   {C -> L: logReq | C -> S: string};
      S -> L: logReqExt;
-     L -> S: ack;
+     L -> S: ack;                        .. L acknoledges S
      S -> L: basicLog;
      S -> C: dateFmt
 }
