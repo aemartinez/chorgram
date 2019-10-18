@@ -338,7 +338,7 @@ UI_INFO = """
 class MainWindow(Gtk.Window):
 
     def __init__(self):
-        Gtk.Window.__init__(self, title="PomChor 0.99 Beta 2")
+        Gtk.Window.__init__(self, title="PomCho 0.99 Beta 2")
 
         self.workspace = None
         # reverse mapping for tree-vew
