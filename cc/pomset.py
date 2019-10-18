@@ -18,7 +18,6 @@ def transitive_reduction(gr):
     gr = nx.subgraph(gr, gr.nodes())
     gr = nx.DiGraph(gr)
     for (n1, n2) in list(gr.edges()):
-        print(n1, n2, gr.nodes[n1], gr.nodes[n2])
         common = set([n for n in nx.descendants(gr, n1) if not n in [n1,n2]]).\
             intersection(
                 set([n for n in nx.ancestors(gr, n2) if not n in [n1,n2]]))

@@ -4,6 +4,8 @@ from pomset import get_all_receive_lbls, get_all_send_lbls, get_matching_label
 from pomset import proj_lbl
 from pomset import transitive_closure
 from pomset import linearizations
+import utils
+import pomset
 
 import networkx.algorithms.isomorphism as iso
 
@@ -22,6 +24,7 @@ def make_tuples(local_threads):
         tuples.append(tpl)
     return tuples
 
+j = 0
 # several operaions can be optimized. Bu we do not care.
 def join_graph(gr, label):
     gps = []
@@ -49,7 +52,8 @@ def join_graph(gr, label):
             ev2 = lin2[i]
             new_gr.add_edge(ev2, ev1)
         new_gr = transitive_closure(new_gr)
-        gps.append(new_gr)
+        if len(list(nx.simple_cycles(new_gr))) == 0:
+            gps.append(new_gr)
     return gps
 
 
@@ -64,6 +68,7 @@ def join_graphs(gps, label):
 
 
 def inter_process_closure(tuples, complete):
+    j = 0
     ipc = []
     for tpl in tuples:
         principals = list(tpl.keys())
@@ -87,12 +92,24 @@ def inter_process_closure(tuples, complete):
             #else:
             #    print "Not complete", not_matched_out
 
+        step = 0
         for l in inputs:
             grs = join_graphs(grs, l)
+            i = 0
+            for gr1 in grs:
+                # utils.debug_pomset(gr1, "/tmp/ipc-tmp-%d-%d-%d"%(j, step, i))
+                i+=1
             if grs is None:
                 break
+            step += 1
+        i = 0
         if grs is not None:
             ipc = ipc + grs
+            for new_gr in grs:
+                # utils.debug_pomset(pomset.transitive_reduction(new_gr), "/tmp/ipc%d-%d"%(j,i))
+                i+=1
+        j+=1
+
 
     res = []
     for g in ipc:

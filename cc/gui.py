@@ -77,7 +77,7 @@ class Workspace():
         for f in self.list_files_in_folder(self.get_semantics_folder()):
             graph = nx.readwrite.graphml.read_graphml(join(self.get_semantics_folder(), f))
             self.semantics[f] = graph
-            utils.debug_pomset(graph, join(self.get_semantics_folder(), f))
+            utils.debug_pomset(pomset.transitive_reduction(graph), join(self.get_semantics_folder(), f))
 
     def get_cc2_folder(self):
         return self.get_root_folder() + "/cc2"
@@ -96,9 +96,9 @@ class Workspace():
         i = 0
         for pm in cc2c:
             # TODO: we should use the transitive reduction, but it does not work
-            pm = pomset.transitive_reduction(pm)
+            
             nx.readwrite.graphml.write_graphml(pm, join(self.get_cc2_folder(),  "closure", "%d.graphml"%i))
-            utils.debug_pomset(pm, join(self.get_cc2_folder(),  "closure", "%d"%i))
+            utils.debug_pomset(pomset.transitive_reduction(pm), join(self.get_cc2_folder(),  "closure", "%d"%i))
             self.cc2["closure"][i] = pm
             if not cc2res[i] is None:
                 self.cc2["mapping"][i] = cc2res[i]
