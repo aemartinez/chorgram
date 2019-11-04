@@ -133,6 +133,7 @@ class Workspace():
             join(self.get_cc2_counter_choreography_folder(pm_idx), "%d"%pm_idx),
             self.get_cc2_counter_choreography_png(pm_idx))
         )
+        return os.path.isfile(self.get_cc2_counter_choreography_png(pm_idx)) 
 
     def get_cc2_diff_path(self, counter_idx, branch_idx):
         return "%s/diff_%d.png" % (self.get_cc2_counter_choreography_folder(counter_idx), branch_idx)
@@ -243,6 +244,7 @@ class Workspace():
             join(self.get_cc3_counter_choreography_folder(pm_idx), "%d"%pm_idx),
             self.get_cc3_counter_choreography_png(pm_idx))
         )
+        return os.path.isfile(self.get_cc3_counter_choreography_png(pm_idx)) 
 
     def gen_cc3_diff(self, pm_idx):
         if self.cc3 is None:
@@ -307,27 +309,25 @@ UI_INFO = """
   <menubar name='MenuBar'>
     <menu action='FileMenu'>
       <menuitem action='FileOpenChoreography' />
-      <menu action='FileNew'>
-        <menuitem action='FileNewStandard' />
-        <menuitem action='FileNewFoo' />
-        <menuitem action='FileNewGoo' />
-      </menu>
-      <separator />
+      <menuitem action='FileQuit' />
+    </menu>
+    <menu action='GenerateMenu'>
       <menuitem action='FileGenSemantics' />
-      <separator />
+      <menuitem action='Projection' />
+    </menu>
+    <menu action='AnalysesMenu'>
       <menuitem action='CC2' />
       <menuitem action='CC3' />
-      <menuitem action='pom2sgg' />
-      <menuitem action='sgg2diff' />
-      <menuitem action='Termination' />
-      <menuitem action='Projection' />
+      <menu action='CounterexampleMenu'>
+        <menuitem action='pom2sgg' />
+        <menuitem action='sgg2diff' />
+      </menu>
       <separator />
-      <menuitem action='FileQuit' />
+      <menuitem action='Termination' />
     </menu>
   </menubar>
   <toolbar name='ToolBar'>
     <toolitem action='FileOpenChoreography' />
-    <toolitem action='FileQuit' />
   </toolbar>
 </ui>
 """
@@ -444,32 +444,43 @@ class MainWindow(Gtk.Window):
         action_filemenu = Gtk.Action("FileMenu", "File", None, None)
         action_group.add_action(action_filemenu)
 
-        action_filenewmenu = Gtk.Action("FileNew", None, None, Gtk.STOCK_NEW)
-        action_group.add_action(action_filenewmenu)
+        # action_filenewmenu = Gtk.Action("FileNew", None, None, Gtk.STOCK_NEW)
+        # action_group.add_action(action_filenewmenu)
 
-        action_new = Gtk.Action("FileNewStandard", "_New",
-            "Create a new file", Gtk.STOCK_NEW)
-        action_new.connect("activate", self.on_menu_file_new_generic)
-        action_group.add_action_with_accel(action_new, None)
+        # action_new = Gtk.Action("FileNewStandard", "_New",
+        #     "Create a new file", Gtk.STOCK_NEW)
+        # action_new.connect("activate", self.on_menu_file_new_generic)
+        # action_group.add_action_with_accel(action_new, None)
 
-        action_group.add_actions([
-            ("FileNewFoo", None, "New Foo", None, "Create new foo",
-             self.on_menu_file_new_generic),
-            ("FileNewGoo", None, "_New Goo", None, "Create new goo",
-             self.on_menu_file_new_generic),
-        ])
+        # action_group.add_actions([
+        #     ("FileNewFoo", None, "New Foo", None, "Create new foo",
+        #      self.on_menu_file_new_generic),
+        #     ("FileNewGoo", None, "_New Goo", None, "Create new goo",
+        #      self.on_menu_file_new_generic),
+        # ])
 
         action_filequit = Gtk.Action("FileQuit", None, None, Gtk.STOCK_QUIT)
         action_filequit.connect("activate", self.on_menu_file_quit)
-        action_group.add_action(action_filequit)
+        action_group.add_action_with_accel(action_filequit, "<Control>q")
 
         action_fileopen = Gtk.Action("FileOpenChoreography", "_Open", "Open .sgg", Gtk.STOCK_OPEN)
         action_fileopen.connect("activate", self.on_menu_file_open)
         action_group.add_action_with_accel(action_fileopen)
 
-        action_semantics = Gtk.Action("FileGenSemantics", "Generate _Semantics", "Generate Pomset Semantics", None)
+        action_generatemenu = Gtk.Action("GenerateMenu", "Generate", None, None)
+        action_group.add_action(action_generatemenu)
+
+        action_semantics = Gtk.Action("FileGenSemantics", "_Semantics", "Generate Pomset Semantics", None)
         action_semantics.connect("activate", self.on_menu_gen_semantics)
         action_group.add_action_with_accel(action_semantics, "<Control>s")
+
+        action_project = Gtk.Action("Projection", "Projection", "Generate Projections", None)
+        action_project.connect("activate", self.on_menu_project)
+        action_group.add_action_with_accel(action_project, "<Control>p")
+
+
+        action_analysesmenu = Gtk.Action("AnalysesMenu", "Analyses", None, None)
+        action_group.add_action(action_analysesmenu)
 
         action_cc2 = Gtk.Action("CC2", "CC_2", "Closure Condition 2", None)
         action_cc2.connect("activate", self.on_menu_cc2)
@@ -479,9 +490,12 @@ class MainWindow(Gtk.Window):
         action_cc3.connect("activate", self.on_menu_cc3)
         action_group.add_action_with_accel(action_cc3, "<Control>3")
         
-        action_pom2sgg = Gtk.Action("pom2sgg", "Generate Choreography", "Generate Choreography", None)
+        action_counterexamplemenu = Gtk.Action("CounterexampleMenu", "Counterexample", None, None)
+        action_group.add_action(action_counterexamplemenu)
+
+        action_pom2sgg = Gtk.Action("pom2sgg", "Generate Graph", "Generate Graph", None)
         action_pom2sgg.connect("activate", self.on_menu_pom2sgg)
-        action_group.add_action_with_accel(action_pom2sgg, "<Control>c")
+        action_group.add_action_with_accel(action_pom2sgg, "<Control>g")
 
         action_sgg2diff = Gtk.Action("sgg2diff", "Compare", "Compare Choreography", None)
         action_sgg2diff.connect("activate", self.on_menu_sgg2diff)
@@ -491,9 +505,6 @@ class MainWindow(Gtk.Window):
         action_termination.connect("activate", self.on_menu_termination)
         action_group.add_action_with_accel(action_termination, "<Control>t")
 
-        action_project = Gtk.Action("Projection", "Project", "Project", None)
-        action_project.connect("activate", self.on_menu_project)
-        action_group.add_action_with_accel(action_project, "<Control>p")
 
     def create_ui_manager(self):
         uimanager = Gtk.UIManager()
@@ -601,11 +612,14 @@ class MainWindow(Gtk.Window):
          
         pom = self.tree_mapping[key]
         if ccprefix == "cc2":
-            self.workspace.gen_cc2_choreography(pom)
+            res = self.workspace.gen_cc2_choreography(pom)
         else:
-            self.workspace.gen_cc3_choreography(pom)
-        self.store.append(treeiter, ["%s-counterexamples-sgg" % ccprefix, str(pom), "graph"])
-        self.tree_mapping[("%s-counterexamples-sgg" % ccprefix, str(pom))] = pom
+            res = self.workspace.gen_cc3_choreography(pom)
+        if res:
+            self.store.append(treeiter, ["%s-counterexamples-sgg" % ccprefix, str(pom), "graph"])
+            self.tree_mapping[("%s-counterexamples-sgg" % ccprefix, str(pom))] = pom
+            return
+        self.store.append(treeiter, ["", "", "pomset cannot be represented as global graph"])
         
                 
     def on_menu_sgg2diff(self, widget):

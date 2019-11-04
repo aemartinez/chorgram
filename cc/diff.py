@@ -27,9 +27,11 @@ def nsc(n1, n2):
                 else:
                     return 0.1
             else:
-                return 0.2
+                # return 0.2
+                return 0.1
         else:
-            return 0.3
+            # return 0.3
+            return 0.1
     return 1
 
 def ndc(n):
@@ -38,9 +40,11 @@ def nic(n):
     return 0.45
 
 def edc(n):
-    return 0.1
+    #return 0.1
+    return 0.2
 def eic(n):
-    return 0.1
+    #return 0.1
+    return 0.2
 
 
 def is_source_node(attr):

@@ -95,12 +95,12 @@ def inter_process_closure(tuples, complete):
         step = 0
         for l in inputs:
             grs = join_graphs(grs, l)
+            if grs is None:
+                break
             i = 0
             for gr1 in grs:
                 # utils.debug_pomset(gr1, "/tmp/ipc-tmp-%d-%d-%d"%(j, step, i))
                 i+=1
-            if grs is None:
-                break
             step += 1
         i = 0
         if grs is not None:
