@@ -1,7 +1,8 @@
 import networkx as nx
 import networkx.algorithms.isomorphism as iso
 
-nm = iso.categorical_node_match(["subject", "partner", "in", "out"], ["", "", "", ""])
+labels = ["subject", "partner", "in", "out"]
+nm = iso.categorical_node_match(labels, ["" for l in labels])
 
 def clone_node_attr(n1, n2):
     for attr in ["subject", "partner", "in", "out"]:
@@ -155,3 +156,33 @@ def get_all_prefixes(gr, small):
 def get_all_prefix_graphs(gr, small):
     prefixes = get_all_prefixes(gr, small)
     return [nx.subgraph(gr, pr) for pr in prefixes]
+
+
+def get_line_graph(pom):
+    p = nx.generators.line.line_graph(pom)
+    for (n1, n2) in p.nodes():
+        for l in labels:
+            if l in pom.node[n1]:
+                p.node[(n1, n2)]["s-%s"%l] = pom.node[n1][l]
+            if l in pom.node[n2]:
+                p.node[(n1, n2)]["t-%s"%l] = pom.node[n2][l]
+    return p
+
+def is_more_permissive(pom1, pom2):
+    p1 = get_line_graph(pom1)
+    p2 = get_line_graph(pom2)
+    labels1 = ["s-%s"%l for l in ["subject", "partner", "in", "out"]] + \
+        ["t-%s"%l for l in ["subject", "partner", "in", "out"]]
+    nm1 = iso.categorical_node_match(labels1, ["" for l in labels1])
+    m1 = iso.DiGraphMatcher(p2, p1, nm1)
+    if not m1.subgraph_is_isomorphic():
+        return False
+    #pom1 edges a subset of pom2 edges
+    pom1_labels = [frozenset(pom1.nodes[n].items()) for n in pom1.nodes()]
+    pom2_labels = [frozenset(pom2.nodes[n].items()) for n in pom2.nodes()]
+    if set(pom1_labels) != set(pom2_labels):
+        return False
+    for lbl in set(pom1_labels):
+        if pom2_labels.count(lbl) != pom1_labels.count(lbl):
+            return False
+    return True

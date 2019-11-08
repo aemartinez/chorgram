@@ -72,21 +72,15 @@ def termination_condition(global_view):
                     utils.debug_pomset(ext_pom, join(test_path,  "pomext"))
                 # this condition is too restrictive, since we only need to check that the
                 # edge intersection is a partial order
-                m = iso.GraphMatcher(pom2, ext_pom, nm)
-                # m = iso.GraphMatcher(ext_pom, pom2, nm)
+                # m = iso.GraphMatcher(pom2, ext_pom, nm)
+                m = iso.GraphMatcher(pom2, pom1, nm)
                 print("Sub isomorphism %s"% m.subgraph_is_isomorphic())
                 if not m.subgraph_is_isomorphic():
                     continue
+                print(m.mapping)
                 # this condition is broken
-                # min1 = [(a,b) for (a,b) in ext_pom.nodes() if a == 1 and len(ext_pom.in_edges((a,b))) == 0]
-                # min2 = [n for n in pom2.nodes() if len(pom2.in_edges(n)) == 0]
-                # first_condition = True
-                # for n1 in min2:
-                #     if not m.mapping[n1] in min1:
-                #         first_condition = False
-                # if not first_condition:
-                #     continue
-                nodes = [n for n in pom2.nodes() if m.mapping[n][0] == 2]
+                #nodes = [n for n in pom2.nodes() if m.mapping[n][0] == 2]
+                nodes = [n for n in pom2.nodes() if n not in m.mapping]
                 pom2_sub = nx.subgraph(pom2, nodes)
                 min2_sub = [n for n in pom2_sub.nodes() if len(pom2_sub.in_edges(n)) == 0]
                 res[p].append((id_pom1, id_pom2,
@@ -126,6 +120,8 @@ def export_termination_counterexample(path, id_pom1, id_pom2,
     except:
         pass
 
+    pom1 = pomset.transitive_reduction(pom1)
+    pom2 = pomset.transitive_reduction(pom2)
     f = open("%s.dot"%name, "w")
     f.write("""
 strict digraph "" {

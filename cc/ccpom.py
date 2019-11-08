@@ -37,12 +37,14 @@ def cc2pom(ipc, graphs):
     for i in range(len(ipc)):
         matches[i] = None
         g1 = ipc[i]
+        g1 = transitive_closure(g1)
         for j in range(len(graphs)):
             g2 = graphs[j]
             g3 = transitive_closure(g2)
-            m = iso.GraphMatcher(g1, g3, nm)
-            # actually should not be a subgraph
-            if m.subgraph_is_isomorphic():
+            # m = iso.GraphMatcher(g1, g3, nm)
+            # # actually should not be a subgraph
+            # if m.subgraph_is_isomorphic():
+            if pomset.is_more_permissive(g3, g1):
                 matches[i] = j
     return matches
 
@@ -79,15 +81,17 @@ def cc3pom(ipc, graphs):
     for i in range(len(ipc)):
         matches[i] = None
         g1 = ipc[i]
+        g1 = transitive_closure(g1)
         for j in range(len(graphs)):
             if len(graphs[j].nodes()) != len(ipc[i].nodes()):
                 continue
             g2 = graphs[j]
             g4 = transitive_closure(g2)
             #g4 = g2
-            m = iso.GraphMatcher(g1, g4, nm)
+            #m = iso.GraphMatcher(g1, g4, nm)
             # actually should not be a subgraph
-            if m.subgraph_is_isomorphic():
+            #if m.subgraph_is_isomorphic():
+            if pomset.is_more_permissive(g4, g1):
                 matches[i] = j
                 break
     return matches

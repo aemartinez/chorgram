@@ -220,8 +220,9 @@ class Workspace():
         cc3c = self.filter_cc3_closure(cc3c)
         cc3res = cc3pom(cc3c, prefixes)
         i = 0
+
+        #TODO: remove duplicates after 
         for pm in cc3c:
-            # TODO: we should use the transitive reduction, but it does not work
             pm = pomset.transitive_reduction(pm)
             fix_pom_out = self.fix_cc3_counter_example(pm)
             nx.readwrite.graphml.write_graphml(fix_pom_out, join(self.get_cc3_folder(),  "closure", "%d.graphml"%i))
