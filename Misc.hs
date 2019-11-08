@@ -57,14 +57,14 @@ isAlpha :: Char -> Bool
 -- For parsing: strings are made of the following characters
 --
 --   0123456789
---   ()\\^_`\167$#&~.
+--   \_$#&~
 --   ABCDEFGHIJKLMNOPQRSTUVWXYZ
 --   abcdefghijklmnopqrstuvwxyz
 --
 -- and must start with a letter when specifying the identity of a
 -- machine (non-terminal Ptp) or of system.
-isAlpha c = c € ([x | x <- ['0'.. 'z'] ++ ['$', '#', '&', '~', '\"'],
-                  not (x € ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '-', '*', '/', '!', '?', '%', '§'])
+isAlpha c = c € ([x | x <- ['0'.. 'z'] ++ ['$', '#', '&', '~', '\"', '_'],
+                  not (x € ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '-', '*', '/', '^', '!', '?', '%', '§'])
                  ])
 
 isPtp :: String -> Bool
