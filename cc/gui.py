@@ -138,7 +138,7 @@ class Workspace():
     def get_cc2_diff_path(self, counter_idx, branch_idx):
         return "%s/diff_%d.png" % (self.get_cc2_counter_choreography_folder(counter_idx), branch_idx)
 
-    def gen_cc2_diff(self, pm_idx):
+    def gen_cc2_diff(self, pm_idx, costs):
         if self.cc2 is None:
             return
         if not pm_idx in self.cc2["closure"]:
@@ -146,7 +146,7 @@ class Workspace():
         pm = self.cc2["closure"][pm_idx]
         g1 = nx.readwrite.graphml.read_graphml(self.get_root_folder() + "/choreography.graphml")
         g2 = nx.readwrite.graphml.read_graphml(join(self.get_cc2_folder(),  "synthesis", "%d"%pm_idx, "%d.graphml"%pm_idx))
-        res = run_diff(g1, g2, self.get_cc2_counter_choreography_folder(pm_idx))
+        res = run_diff(g1, g2, self.get_cc2_counter_choreography_folder(pm_idx), costs)
         for i in res:
             os.system("../chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml" % (
                 self.get_cc2_counter_choreography_folder(pm_idx), 
@@ -247,7 +247,7 @@ class Workspace():
         )
         return os.path.isfile(self.get_cc3_counter_choreography_png(pm_idx)) 
 
-    def gen_cc3_diff(self, pm_idx):
+    def gen_cc3_diff(self, pm_idx, costs):
         if self.cc3 is None:
             return
         if not pm_idx in self.cc3["closure"]:
@@ -255,7 +255,7 @@ class Workspace():
         pm = self.cc3["closure"][pm_idx]
         g1 = nx.readwrite.graphml.read_graphml(self.get_root_folder() + "/choreography.graphml")
         g3 = nx.readwrite.graphml.read_graphml(join(self.get_cc3_folder(),  "synthesis", "%d"%pm_idx, "%d.graphml"%pm_idx))
-        res = run_diff(g1, g3, self.get_cc3_counter_choreography_folder(pm_idx))
+        res = run_diff(g1, g3, self.get_cc3_counter_choreography_folder(pm_idx), costs)
         for i in res:
             os.system("../chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml" % (
                 self.get_cc3_counter_choreography_folder(pm_idx), 
@@ -311,6 +311,7 @@ UI_INFO = """
     <menu action='FileMenu'>
       <menuitem action='FileOpenChoreography' />
       <menuitem action='FileQuit' />
+      <menuitem action='FileCosts' />
     </menu>
     <menu action='GenerateMenu'>
       <menuitem action='FileGenSemantics' />
@@ -463,6 +464,10 @@ class MainWindow(Gtk.Window):
         action_filequit = Gtk.Action("FileQuit", None, None, Gtk.STOCK_QUIT)
         action_filequit.connect("activate", self.on_menu_file_quit)
         action_group.add_action_with_accel(action_filequit, "<Control>q")
+
+        action_filecosts = Gtk.Action("FileCosts", None, None, Gtk.STOCK_QUIT)
+        action_filecosts.connect("activate", self.on_menu_file_costs)
+        action_group.add_action_with_accel(action_filecosts, "<Control>a")
 
         action_fileopen = Gtk.Action("FileOpenChoreography", "_Open", "Open .sgg", Gtk.STOCK_OPEN)
         action_fileopen.connect("activate", self.on_menu_file_open)
@@ -622,7 +627,11 @@ class MainWindow(Gtk.Window):
             return
         self.store.append(treeiter, ["", "", "pomset cannot be represented as global graph"])
         
-                
+
+    def on_menu_file_costs(self, widget):
+        win = CostWindow(self)
+        win.show()
+        
     def on_menu_sgg2diff(self, widget):
         model, treeiter = self.selection.get_selected()
         if treeiter is None:
@@ -639,12 +648,33 @@ class MainWindow(Gtk.Window):
 
         if not key in self.tree_mapping:
             return
+
+        win = CostWindow(self)
+        win.show()
+
+    def diff_exec(self, costs):
+        model, treeiter = self.selection.get_selected()
+        if treeiter is None:
+            return
+        key = (model[treeiter][0], model[treeiter][1])
+
+        ccprefix = None
+        if key[0] == "cc2-counterexamples-sgg":
+            ccprefix = "cc2"
+        elif key[0] == "cc3-counterexamples-sgg":
+            ccprefix = "cc3"
+        if ccprefix is None:
+            return
+
+        if not key in self.tree_mapping:
+            return
+
         pom = self.tree_mapping[key]
 
         if ccprefix == "cc2":
-            diffs = self.workspace.gen_cc2_diff(pom)
+            diffs = self.workspace.gen_cc2_diff(pom, costs)
         else:
-            diffs = self.workspace.gen_cc3_diff(pom)
+            diffs = self.workspace.gen_cc3_diff(pom, costs)
 
         diff_iter = self.store.append(treeiter, ["%s-counterexamples-diff-list"%ccprefix, None, "diffs"])
         for i in diffs:
@@ -775,7 +805,85 @@ class MainWindow(Gtk.Window):
         Gtk.main_quit()
 
 
+class CostWindow(Gtk.Window):
 
+    def __init__(self, main_window):
+        Gtk.Window.__init__(self, title="Edit Distance costs")
+        self.main_window = main_window
+        self.set_default_size(200, 200)
+        table = Gtk.Table(8, 3, True)
+
+        self.mapval = {
+            "change_open_gate": {
+                "value": 0.1,
+                "txt":"Change open gate",
+                "pos": (0,0)},
+            "change_close_gate": {
+                "value": 0.1,
+                "txt":"Change close gate",
+                "pos": (1,0)},
+            "delete_node": {
+                "value": 0.45,
+                "txt":"Delete node",
+                "pos": (2,0)},
+            "insert_node": {
+                "value": 0.45,
+                "txt":"Insert node",
+                "pos": (3,0)},
+            "change_sender": {
+                "value": 0.2,
+                "txt":"Change sender",
+                "pos": (0,1)},
+            "change_receiver": {
+                "value": 0.2,
+                "txt":"Change receiver",
+                "pos": (1,1)},
+            "change_payload": {
+                "value": 0.1,
+                "txt":"Change payload",
+                "pos": (2,1)},
+            "delete_edge": {
+                "value": 0.2,
+                "txt":"Delete edge",
+                "pos": (0,2)},
+            "insert_edge": {
+                "value": 0.2,
+                "txt":"Insert edge",
+                "pos": (1,2)},
+        }
+        for k in self.mapval:
+            self.mapval[k]["label"] = Gtk.Label(self.mapval[k]["txt"])
+            self.mapval[k]["entry"] = Gtk.Entry()
+            self.mapval[k]["entry"].set_text("%.2f" % self.mapval[k]["value"])
+
+        def attach_elem(name, x, y):
+            table.attach(self.mapval[name]["label"], 2*x, 2*x+1, y, y+1)
+            table.attach(self.mapval[name]["entry"], 2*x+1, 2*x+2, y, y+1)
+
+        for k in self.mapval:
+            attach_elem(k, self.mapval[k]["pos"][0], self.mapval[k]["pos"][1])
+
+        button = Gtk.Button.new_with_mnemonic("_Close")
+        button.connect("clicked", self.on_close_clicked)
+        table.attach(button, 0, 1, 3, 4)
+
+        button = Gtk.Button.new_with_mnemonic("_Execute")
+        button.connect("clicked", self.on_execute_clicked)
+        table.attach(button, 1, 2, 3, 4)
+
+        self.add(table)
+        self.show_all()
+
+    def on_close_clicked(self, widget) :
+        self.close()
+    def on_execute_clicked(self, widget) :
+        res = {}
+        for k in self.mapval:
+            res[k] = float(self.mapval[k]["entry"].get_text())
+        self.main_window.diff_exec(res)
+        self.close()
+
+        
 win = MainWindow()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()

@@ -5,47 +5,47 @@ import pomset
 
 keys = ["open", "close", "sender", "receiver", "payload"]
 
-def nsc(n1, n2):
-    if n1 == n2:
-        return 0
-    if "open" in n1 and "open" in n2:
-        if n1["open"] == n2["open"]:
-            return 0
-        else:
-            return 0.1
-    if "close" in n1 and "close" in n2:
-        if n1["close"] == n2["close"]:
-            return 0
-        else:
-            return 0.1
-    if "sender" in n1 and "receiver" in n1 and "payload" in n1 and \
-       "sender" in n2 and "receiver" in n2 and "payload" in n2:
-        if n1["sender"] == n2["sender"]:
-            if n1["receiver"] == n2["receiver"]:
-                if n1["payload"] == n2["payload"]:
-                    return 0
-                else:
-                    return 0.1
-            else:
-                # return 0.2
-                return 0.1
-        else:
-            # return 0.3
-            return 0.1
-    return 1
+def cost_functions(costs):
+   def nsc(n1, n2):
+       if n1 == n2:
+           return 0
+       if "open" in n1 and "open" in n2:
+           if n1["open"] == n2["open"]:
+               return 0
+           else:
+               return costs["change_open_gate"]
+       if "close" in n1 and "close" in n2:
+           if n1["close"] == n2["close"]:
+               return 0
+           else:
+               return costs["change_close_gate"]
+       if "sender" in n1 and "receiver" in n1 and "payload" in n1 and \
+          "sender" in n2 and "receiver" in n2 and "payload" in n2:
+           if n1["sender"] == n2["sender"]:
+               if n1["receiver"] == n2["receiver"]:
+                   if n1["payload"] == n2["payload"]:
+                       return 0
+                   else:
+                       return costs["change_payload"]
+               else:
+                   # return 0.2
+                   return costs["change_receiver"]
+           else:
+               # return 0.3
+               return costs["change_sender"]
+       return 1
 
-def ndc(n):
-    return 0.45
-def nic(n):
-    return 0.45
+   def ndc(n):
+       return costs["delete_node"]
+   def nic(n):
+       return costs["insert_node"]
+    
+   def edc(n):
+       return costs["delete_edge"]
+   def eic(n):
+       return costs["insert_edge"]
 
-def edc(n):
-    #return 0.1
-    return 0.2
-def eic(n):
-    #return 0.1
-    return 0.2
-
+   return (nsc, ndc, nic, edc, eic)
 
 def is_source_node(attr):
     return "open" in attr and attr["open"] == "Source"
@@ -248,10 +248,11 @@ def clone_graph(g):
     return g1
 
 
-def run_diff(g1, g2, folder):
+def run_diff(g1, g2, folder, costs):
     res = {}
     paths = gen_all_choices(g1)
 
+    (nsc, ndc, nic, edc, eic) = cost_functions(costs)
     for i in range(len(paths)):
         (path, new_graph) = paths[i]
         diffs, cost = nx.algorithms.similarity.optimal_edit_paths(new_graph, g2, node_ins_cost=nic, node_del_cost=ndc, node_subst_cost=nsc, edge_del_cost=edc, edge_ins_cost=eic)
