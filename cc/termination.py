@@ -81,8 +81,12 @@ def termination_condition(global_view):
                 # this condition is broken
                 #nodes = [n for n in pom2.nodes() if m.mapping[n][0] == 2]
                 nodes = [n for n in pom2.nodes() if n not in m.mapping]
+                print(nodes)
                 pom2_sub = nx.subgraph(pom2, nodes)
                 min2_sub = [n for n in pom2_sub.nodes() if len(pom2_sub.in_edges(n)) == 0]
+                min2_sub = [n for n in min2_sub if "in" in pom2_sub.node[n]]
+                if len(min2_sub) == 0:
+                    continue
                 res[p].append((id_pom1, id_pom2,
                                pom1,
                                pom2,

@@ -811,45 +811,45 @@ class CostWindow(Gtk.Window):
         Gtk.Window.__init__(self, title="Edit Distance costs")
         self.main_window = main_window
         self.set_default_size(200, 200)
-        table = Gtk.Table(8, 3, True)
+        table = Gtk.Table(4, 6, True)
 
         self.mapval = {
-            "change_open_gate": {
-                "value": 0.1,
-                "txt":"Change open gate",
-                "pos": (0,0)},
-            "change_close_gate": {
-                "value": 0.1,
-                "txt":"Change close gate",
-                "pos": (1,0)},
             "delete_node": {
                 "value": 0.45,
                 "txt":"Delete node",
-                "pos": (2,0)},
+                "pos": (0,0)},
             "insert_node": {
                 "value": 0.45,
                 "txt":"Insert node",
-                "pos": (3,0)},
+                "pos": (1,0)},
+            "change_open_gate": {
+                "value": 0.1,
+                "txt":"Change open gate",
+                "pos": (0,1)},
+            "change_close_gate": {
+                "value": 0.1,
+                "txt":"Change close gate",
+                "pos": (1,1)},
             "change_sender": {
                 "value": 0.2,
                 "txt":"Change sender",
-                "pos": (0,1)},
+                "pos": (0,2)},
             "change_receiver": {
                 "value": 0.2,
                 "txt":"Change receiver",
-                "pos": (1,1)},
+                "pos": (1,2)},
             "change_payload": {
                 "value": 0.1,
                 "txt":"Change payload",
-                "pos": (2,1)},
+                "pos": (0,3)},
             "delete_edge": {
                 "value": 0.2,
                 "txt":"Delete edge",
-                "pos": (0,2)},
+                "pos": (0,4)},
             "insert_edge": {
                 "value": 0.2,
                 "txt":"Insert edge",
-                "pos": (1,2)},
+                "pos": (1,4)},
         }
         for k in self.mapval:
             self.mapval[k]["label"] = Gtk.Label(self.mapval[k]["txt"])
@@ -865,11 +865,12 @@ class CostWindow(Gtk.Window):
 
         button = Gtk.Button.new_with_mnemonic("_Close")
         button.connect("clicked", self.on_close_clicked)
-        table.attach(button, 0, 1, 3, 4)
+        table.attach(button, 0, 1, 5, 6)
+
 
         button = Gtk.Button.new_with_mnemonic("_Execute")
         button.connect("clicked", self.on_execute_clicked)
-        table.attach(button, 1, 2, 3, 4)
+        table.attach(button, 1, 2, 5, 6)
 
         self.add(table)
         self.show_all()
