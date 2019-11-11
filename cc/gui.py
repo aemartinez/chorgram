@@ -461,13 +461,13 @@ class MainWindow(Gtk.Window):
         #      self.on_menu_file_new_generic),
         # ])
 
-        action_filequit = Gtk.Action("FileQuit", None, None, Gtk.STOCK_QUIT)
-        action_filequit.connect("activate", self.on_menu_file_quit)
-        action_group.add_action_with_accel(action_filequit, "<Control>q")
-
-        action_filecosts = Gtk.Action("FileCosts", None, None, Gtk.STOCK_QUIT)
+        action_filecosts = Gtk.Action("FileCosts", "Configure _ediff", None, Gtk.STOCK_QUIT)
         action_filecosts.connect("activate", self.on_menu_file_costs)
         action_group.add_action_with_accel(action_filecosts, "<Control>a")
+
+        action_filequit = Gtk.Action("FileQuit", "Quit", None, Gtk.STOCK_QUIT)
+        action_filequit.connect("activate", self.on_menu_file_quit)
+        action_group.add_action_with_accel(action_filequit, "<Control>q")
 
         action_fileopen = Gtk.Action("FileOpenChoreography", "_Open", "Open .sgg", Gtk.STOCK_OPEN)
         action_fileopen.connect("activate", self.on_menu_file_open)
