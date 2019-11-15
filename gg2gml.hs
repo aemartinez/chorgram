@@ -19,7 +19,7 @@ main = do progargs <- getArgs
             then error $ usage(GG2GML)
             else do
               let ( sourcefile, flags ) =
-                    (last progargs, getFlags GMC (take ((length progargs) - 1) progargs))
+                    (last progargs, getFlags GG2GML (take ((length progargs) - 1) progargs))
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
