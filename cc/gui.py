@@ -302,6 +302,7 @@ class Workspace():
         for pr in principals:
             self.projections[pr] = proj_to_cfsm(poms, pr)
             utils.debug_graph(self.projections[pr], join(self.get_projection_folder(), pr))
+            nx.readwrite.graphml.write_graphml(self.projections[pr], join(self.get_projection_folder(), "%s.graphml"%pr))
 
         
 

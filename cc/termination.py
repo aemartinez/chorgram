@@ -90,7 +90,7 @@ def termination_condition(global_view):
                 res[p].append((id_pom1, id_pom2,
                                pom1,
                                pom2,
-                               dict([(m.mapping[k][1], k) for k in m.mapping if m.mapping[k][0] == 1]),
+                               dict([(m.mapping[k], k) for k in m.mapping]),
                                min2_sub       
                 ))
                 print([pom2_sub.nodes[n] for n in min2_sub])
