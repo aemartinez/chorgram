@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 #!/usr/bin/python3
 import networkx as nx
 import networkx.algorithms.isomorphism as iso
@@ -168,4 +166,3 @@ if __name__ == "__main__":
         for c in res[p]:
             export_termination_counterexample(join("/tmp", p), *c)
     exit(0)
->>>>>>> b8b930538a35ea70f1dd9c5e01f0e1bcfa4f738e
