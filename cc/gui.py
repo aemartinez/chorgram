@@ -14,7 +14,7 @@ import pomset
 import termination
 from ccpom import *
 from diff import run_diff
-from projection import proj_to_cfsm
+from projection import proj_to_cfsm, export_projection
 
 class Workspace():
     def __init__(self, sgg_path):
@@ -301,7 +301,7 @@ class Workspace():
         self.projections = {}
         for pr in principals:
             self.projections[pr] = proj_to_cfsm(poms, pr)
-            utils.debug_graph(self.projections[pr], join(self.get_projection_folder(), pr))
+            export_projection(self.get_projection_folder(), pr, self.projections[pr])
             nx.readwrite.graphml.write_graphml(self.projections[pr], join(self.get_projection_folder(), "%s.graphml"%pr))
 
         
