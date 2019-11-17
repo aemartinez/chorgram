@@ -1,8 +1,8 @@
-A -> B: a ;
-A -> C: b ;
+A -> B: int ;
+A -> C: string ;
 sel {
-    (A -> B: 1 ; A -> B: 2)
+    (A -> B: date ; A -> B: quit)
     + 
-    (A -> C: 1 ; A -> C: 2)
+    (A -> C: invoice ; A -> C: quit)
 }
     
