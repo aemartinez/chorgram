@@ -382,7 +382,7 @@ xgmldiff2dot name xml flines =
             "edge" -> addEdge xtree xtree' (aux rest m) m
             _ -> error (msgFormat POM2GG "Bad Tag " ++ (localPart tag))
         _:rest -> aux rest m
-    diffkeys = ["deleted", "changed", "kept", "added", "subject-change-to", "partner-change-to", "payload-change-to"]
+    diffkeys = ["deleted", "changed", "kept", "added", "sender-change-to", "receiver-change-to", "payload-change-to"]
     diffRender m o l =
       let line = 
             case o of
@@ -397,10 +397,11 @@ xgmldiff2dot name xml flines =
           | L.elem "deleted" ls = mkdot "filled" "gmldiffdel"
           | L.elem "changed" ls = mkdot "filled" "gmldiffcng"
               ++ n ++ " [label=\""
-              ++ m!"sender" ++ flines!ggarr
-              ++ mark "subject-change-to" ls
+              ++ m!"sender"
+              ++ mark "sender-change-to" ls
+              ++ flines!ggarr
               ++ m!"receiver"
-              ++ mark "partner-change-to" ls
+              ++ mark "receiver-change-to" ls
               ++ ":"
               ++ m!"payload"
               ++ mark "payload-change-to" ls
