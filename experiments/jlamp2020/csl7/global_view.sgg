@@ -1,0 +1,11 @@
+sel {
+  {C -> L: logReq | C -> S: dateFmt};
+     L -> S: basicFormat;
+     S -> L: basicLog;
+     S -> C: string
+  + 
+  {C -> L: logReq | C -> S: string};
+     L -> S: logFormat;
+     S -> L: logRes;
+     S -> C: dateFmt
+}
