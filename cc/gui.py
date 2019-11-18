@@ -312,11 +312,11 @@ UI_INFO = """
     <menu action='FileMenu'>
       <menuitem action='FileOpenChoreography' />
       <menuitem action='FileQuit' />
-      <menuitem action='FileCosts' />
     </menu>
     <menu action='GenerateMenu'>
       <menuitem action='FileGenSemantics' />
       <menuitem action='Projection' />
+      <menuitem action='FileCosts' />
     </menu>
     <menu action='AnalysesMenu'>
       <menuitem action='CC2' />
@@ -466,9 +466,9 @@ class MainWindow(Gtk.Window):
         action_filequit.connect("activate", self.on_menu_file_quit)
         action_group.add_action_with_accel(action_filequit, "<Control>q")
 
-        action_filecosts = Gtk.Action("FileCosts", None, None, Gtk.STOCK_QUIT)
+        action_filecosts = Gtk.Action("FileCosts", "Set Costs", None, None)
         action_filecosts.connect("activate", self.on_menu_file_costs)
-        action_group.add_action_with_accel(action_filecosts, "<Control>a")
+        action_group.add_action_with_accel(action_filecosts, "<Control>c")
 
         action_fileopen = Gtk.Action("FileOpenChoreography", "_Open", "Open .sgg", Gtk.STOCK_OPEN)
         action_fileopen.connect("activate", self.on_menu_file_open)
