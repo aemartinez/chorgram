@@ -1,0 +1,10 @@
+delete_node : .45
+insert_node : .45
+change_open_gate : .1
+change_close_gate : .1
+change_sender : .2
+change_receiver : .2
+change_payload : .1
+delete_edge : .2
+insert_edge : .2
+
