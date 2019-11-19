@@ -49,17 +49,20 @@ sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
 
 pomsetsOf :: GG -> Int -> Event -> (Set Pomset, Event)
 pomsetsOf gg iter e =
-  -- PRE: gg is well-formed
+  -- PRE: gg is well-formed; e is the 'counter' of the events
   -- POST: returns the set of pomsets [[gg]] with n-unfolds of each loop for n = |iter|
   --       (eventually) well-formedness is checked iff iter >= 0
-  -- e is the 'counter' of the events
   let unfold g n = if n==0 then Emp else Seq (L.replicate (abs n) g)
-      -- TODO: uniform unfoldind for the moment. Eventually to generate random numbers between 0 and iter.
+      -- TODO: uniform unfoldind for the moment.
+      --       Eventually to generate random numbers between 0 and iter.
   in
     case gg of
       Emp -> emptySem e
-      Act c m -> (S.fromList [ (S.fromList [e, e+1], (S.singleton (e,e+1)), lab )], e+2)
-        where lab = M.fromList [(e, (c, Send, m)), (e+1, (c, Receive, m) )]
+      Act c m ->
+        let
+           lab = M.fromList [(e, (c, Send, m)), (e+1, (c, Receive, m) )]
+           interactionPom = (S.fromList [e, e+1], (S.singleton (e, e+1)), lab)
+        in (S.singleton interactionPom, e+2)
       LAct c m -> pomsetsOf (Act c m) iter e
       Par ggs -> (combine (tail pomsets) (head pomsets), e'')
         where (pomsets, e'') = L.foldl aux ([], e) ggs
@@ -97,8 +100,8 @@ pomsetsOf gg iter e =
 getClosure :: Set Event -> Pomset -> Set Event
 getClosure evs p@(events, rel, _)=
   let p' = subpom evs p
-      right = S.difference events evs
-      p'' = subpom right p
+      cont = S.difference events evs
+      p'' = subpom cont p
       rel' = [(x,y) | (x,y) <- reflexoTransitiveClosure (S.toList events) (S.toList rel), x /= y]
       new = S.filter (\e -> not (S.null $ getNonPred e p' rel')) (minOfPomset p'')
   in if S.null new then
@@ -119,8 +122,8 @@ mkInteractions :: Pomset -> Pomset
 mkInteractions p@(_, rel, lab) =
   let dualpairs = S.filter getDuals rel
   in L.foldr aux p (S.toList dualpairs)
-     where getDuals = \(i,j) -> (isSend (lab!i)) && (dualAction (lab!i) == (lab!j))
-           aux (i,j) (events', rel', lab') = (S.delete j events', replace i j rel', M.delete j lab')
+     where getDuals (e,e') = (isSend (lab!e)) && (dualAction (lab!e) == (lab!e'))
+           aux (e,e') (events', rel', lab') = (S.delete e' events', replace e e' rel', M.delete e' lab')
            replace e e' r = (S.foldr (\x r' -> S.insert (change x e e') r') S.empty r)
            change (h,k) e e' = let f = \x -> if x == e' then e else x in (f h, f k)
 
@@ -169,39 +172,45 @@ components (events, rel, _) = S.foldr aux S.empty events
 
 pomset2gg :: Pomset -> Maybe GG
 pomset2gg p@(_, _, lab) =
-  let comps = components $ mkInteractions p
-  in if S.null comps then
-        Just Emp
-     else let tmp = S.foldr aux (Just []) comps
-          in case tmp of
-               Nothing -> Nothing
-               Just [gg] -> Just gg
-               Just ggs -> Just (Par ggs)
-  where aux evs l =
-          case l of
-            Nothing -> Nothing
-            Just l' ->
-              let
-                subp = subpom evs (mkInteractions p)
-                closure = getClosure (S.filter (\e -> S.member e (minOfPomset subp)) evs) subp
+  let
+    interactionsPomset = mkInteractions p
+    comps = components interactionsPomset
+    aux evs l =
+      case l of
+        Nothing -> Nothing
+        Just l' ->
+          let
+            subp = subpom evs (mkInteractions p)
+            closure = getClosure (S.filter (\e -> S.member e (minOfPomset subp)) evs) subp
+          in
+            if closure == evs then
+              if S.size evs > 1 then                -- A closure with more than one event
+                Nothing                             -- cannot be represented with parallel or sequential
+              else                                  -- we just return the interatction
+                let act = lab!(head $ S.toList evs) -- recall that those must be output actions
+                    s = subjectOf act
+                    r = objectOf act
+                    m = msgOf act
+                in Just ((Act (s,r) m) : l')
+            else                                       -- a split is possible and we recur
+              let p' = subpom closure subp
+                  p'' = subpom (S.difference (eventsOf subp) closure) subp
               in
-                if closure == evs then
-                  if S.size evs > 1 then                -- A closure with more than one event
-                    Nothing                             -- cannot be represented with parallel or sequential
-                  else                                  -- we just return the interatction
-                    let act = lab!(head $ S.toList evs) -- recall that those must be output actions
-                        s = subjectOf act
-                        r = objectOf act
-                        m = msgOf act
-                    in Just ((Act (s,r) m) : l')
-                else                                       -- a split is possible and we recur
-                  let p' = subpom closure subp
-                      p'' = subpom (S.difference (eventsOf subp) closure) subp
-                  in
-                    case (pomset2gg p', pomset2gg p'') of
-                      (Nothing, _) -> Nothing
-                      (_, Nothing) -> Nothing
-                      (Just g1, Just g2) -> Just ((Seq [g1,g2]):l')
+                case (pomset2gg p', pomset2gg p'') of
+                  (Nothing, _) -> Nothing
+                  (_, Nothing) -> Nothing
+                  (Just g1, Just g2) -> Just ((Seq [g1,g2]):l')
+  in if S.null comps then
+       Just Emp
+     else
+       if L.foldr (\(e,e') b -> b || (not (S.member (e',e) (orderOf interactionsPomset)))) False (orderOf interactionsPomset) then
+         Nothing
+       else
+         let tmp = S.foldr aux (Just []) comps
+         in case tmp of
+              Nothing -> Nothing
+              Just [gg] -> Just gg
+              Just ggs -> Just (Par ggs)
 
 
 -- GML stuff
@@ -222,7 +231,7 @@ pomset2gml (events, rel, lab) =
                   Just ((s,r), Receive, m) -> (datatag subjkey r) ++ (datatag othkey s) ++ (datatag inkey m)
                   Just ((s,r), Send,    m) -> (datatag subjkey s) ++ (datatag othkey r) ++ (datatag outkey m)
                   Just ((s,_), Tau, _)     -> (datatag subjkey s)
-                  _                        -> myError GG2POM ("Unknown action: " ++ (show (M.lookup e lab)))
+                  _                        -> myError POM2GG ("Unknown action: " ++ (show (M.lookup e lab)))
   in mlpref ++ (L.foldr (++) "" (S.map nodeGL events)) ++ (L.foldr (++) "" (S.map edgeGL rel)) ++ mlsuff
 
 -- gml2pomset :: String -> Pomset

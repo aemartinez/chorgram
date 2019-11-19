@@ -4,6 +4,6 @@ sel {
      S -> C: string
   + 
   {C -> L: logReq | C -> S: string};
-     L -> S: logRes;
+     S -> L: logRes;
      S -> C: dateFmt
 }

@@ -111,7 +111,6 @@ minR as = [ (n,m) | (n,m) <- as, L.all (\(_,t) -> n/=t) as ]
 maxR :: (Eq a) => [(a,a)] -> [(a,a)]
 maxR as = [ (n,m) | (n,m) <- as, L.all (\(t,_) -> m/=t) as ]
 
-
 equivalenceRelation :: (Eq a) => [(a,a)] -> [(a,a)]
 -- Assume that (x,x) in ys for all x
 equivalenceRelation ys = transitiveClosure (L.nub $ addPairs ys)
