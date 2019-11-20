@@ -182,30 +182,34 @@ pomset2gg p@(_, _, lab) =
           let
             subp = subpom evs (mkInteractions p)
             closure = getClosure (S.filter (\e -> S.member e (minOfPomset subp)) evs) subp
-          in
-            if closure == evs then
-              if S.size evs > 1 then                -- A closure with more than one event
-                Nothing                             -- cannot be represented with parallel or sequential
-              else                                  -- we just return the interatction
-                let act = lab!(head $ S.toList evs) -- recall that those must be output actions
-                    s = subjectOf act
-                    r = objectOf act
-                    m = msgOf act
-                in Just ((Act (s,r) m) : l')
-            else                                       -- a split is possible and we recur
-              let p' = subpom closure subp
-                  p'' = subpom (S.difference (eventsOf subp) closure) subp
-              in
-                case (pomset2gg p', pomset2gg p'') of
-                  (Nothing, _) -> Nothing
-                  (_, Nothing) -> Nothing
-                  (Just g1, Just g2) -> Just ((Seq [g1,g2]):l')
+            loop = L.foldr (\(e,e') b -> b || ((e/=e') &&  (S.member (e',e) (orderOf subp)))) False (orderOf subp)
+          in -- error $ ((show subp) ++ "\n" ++ (show evs) ++ "\n" ++ (show closure) ++ "\n" ++ (show loop))
+            if loop then
+              Nothing
+            else
+              if closure == evs then
+                if S.size evs > 1 then                -- A closure with more than one event
+                  Nothing                             -- cannot be represented with parallel or sequential
+                else                                  -- we just return the interatction
+                  let act = lab!(head $ S.toList evs) -- recall that those must be output actions
+                      s = subjectOf act
+                      r = objectOf act
+                      m = msgOf act
+                  in Just ((Act (s,r) m) : l')
+              else                                       -- a split is possible and we recur
+                let p' = subpom closure subp
+                    p'' = subpom (S.difference (eventsOf subp) closure) subp
+                in
+                  case (pomset2gg p', pomset2gg p'') of
+                    (Nothing, _) -> Nothing
+                    (_, Nothing) -> Nothing
+                    (Just g1, Just g2) -> Just ((Seq [g1,g2]):l')
   in if S.null comps then
        Just Emp
      else
-       if L.foldr (\(e,e') b -> b || (not (S.member (e',e) (orderOf interactionsPomset)))) False (orderOf interactionsPomset) then
-         Nothing
-       else
+       -- if L.foldr (\(e,e') b -> b || (not (S.member (e',e) (orderOf interactionsPomset)))) False (orderOf interactionsPomset) then
+       --   Nothing
+       -- else
          let tmp = S.foldr aux (Just []) comps
          in case tmp of
               Nothing -> Nothing
