@@ -5,8 +5,6 @@ ccdebug = $(ccmd) -Wall -threaded --make $(debug)
 profiling = -prof -auto-all -caf-all
 cfgdir = ~/
 cfgfile = .chorgram.config
-hkcpath := $(shell find . -type d -name 'hknt*')
-petripath := $(shell find . -type d -name petrify)/bin
 experimentsdir = ./Dropbox/chorgram_experiments/
 logdir = ./experiments/experiments.csv
 os := $(shell uname -s)
@@ -22,34 +20,23 @@ gitmsg = "checkpoint"
 # compile: gmc.hs BuildGlobal.hs GGParser.hs SystemParser.hs sgg.hs sysparser.hs
 #	$(ccmd)
 
-compile: gmc.hs BuildGlobal.hs GGParser.hs SystemParser.hs PomsetSemantics.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs gg2pom.hs pom2gg.hs minimise.hs gg2gml.hs #K KGparser.hs hgsem.hs
+compile: GGParser.hs PomsetSemantics.hs gg2fsa.hs gg2pom.hs pom2gg.hs gg2gml.hs #K KGparser.hs hgsem.hs
 	$(MAKE) all
 
 all:
-	$(ccmd) gmc.hs &&\
-	$(ccmd) BuildGlobal.hs &&\
 	$(ccmd) GGParser.hs &&\
-#K	$(ccmd) KGparser.hs &&\
-	$(ccmd) SystemParser.hs &&\
 	$(ccmd) PomsetSemantics.hs &&\
-	$(ccmd) sgg.hs &&\
-	$(ccmd) sysparser.hs &&\
-	$(ccmd) minimise.hs &&\
-#	$(ccmd) hgsem.hs &&\
 	$(ccmd) gg2pom.hs &&\
 	$(ccmd) pom2gg.hs &&\
-	$(ccmd) gg2fsa.hs
-	$(ccmd) chor2dot.hs &&\
+	$(ccmd) gg2fsa.hs &&\
+#	$(ccmd) chor2dot.hs &&\
 	$(ccmd) gg2gml.hs
 
 debug:
-	$(ccdebug) gmc.hs &&\
 	$(ccdebug) BuildGlobal.hs &&\
 	$(ccdebug) GGParser.hs &&\
 #K	$(ccdebug) KGparser.hs &&\
-	$(ccdebug) SystemParser.hs &&\
 	$(ccdebug) PomsetSemantics.hs &&\
-	$(ccdebug) sgg.hs &&\
 	$(ccdebug) minimise.hs &&\
 #	$(ccdebug) hgsem.hs &&\
 	$(ccdebug) sysparser.hs\
@@ -64,23 +51,21 @@ prof:
 	$(ccmd) $(profiling) gmc.hs && ghc --make  $(profiling) BuildGlobal.hs
 
 clean:
-	@rm -f *~ *.o *.hi SystemParser.* GGParser.* KGparser.* gmc sgg BuildGlobal sysparser $(cfgfile) *.info *.log
+	@rm -f *~ *.o *.hi SystemParser.* GGParser.* RGGParser.* KGparser.* HGSemantics.hs BCGBridge.hs gmc sgg BuildGlobal sysparser $(cfgfile) *.info *.log
 	$(info >>> cleaning done.)
 
 parser:
 	happy -a -i  GGGrammar.y -o GGParser.hs && $(ccmd) GGParser.hs
-	happy -a -i  RGGGrammar.y -o RGGParser.hs && $(ccmd) RGGParser.hs
-	happy -a -i  SystemGrammar.y -o SystemParser.hs && $(ccmd) SystemParser.hs
+#	happy -a -i  RGGGrammar.y -o RGGParser.hs && $(ccmd) RGGParser.hs
+#	happy -a -i  SystemGrammar.y -o SystemParser.hs && $(ccmd) SystemParser.hs
 #K	happy -a -i  KGGrammar.y -o KGparser.hs && $(ccmd) KGparser.hs
 
 config:
 	@echo "experiments\t"$(experimentsdir) > /tmp/$(cfgfile)
 	@echo "logfilename\t"$(logdir) >> /tmp/$(cfgfile)
-	@echo "hkc\t"$(hkcpath) >> /tmp/$(cfgfile)
-	@echo "petrify\t"$(petripath) >> /tmp/$(cfgfile)
 	@echo "gmc\t./gmc" >> /tmp/$(cfgfile)
 	@echo "bg\t./BuildGlobal" >> /tmp/$(cfgfile)
-	@echo "base\t./choreography/chorgram/" >> /tmp/$(cfgfile)
+	@echo "base\t./chorgram/" >> /tmp/$(cfgfile)
 	@echo "dot\taux/dot.cfg" >> /tmp/$(cfgfile)
 	@mv /tmp/$(cfgfile) $(cfgdir)$(cfgfile)
 	$(info >>> config file created $(cfgdir)$(cfgfile))
@@ -92,7 +77,6 @@ hp:
 
 setup:
 	make config
-	make hp
 	make parser
 	make all
 
