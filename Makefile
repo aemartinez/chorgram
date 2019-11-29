@@ -7,7 +7,7 @@ cfgdir = $(shell find . -type d -name 'aux')
 cfgfile = chorgram.config
 hkcpath := $(shell find . -type d -name 'hknt*')
 petripath := $(shell find . -type d -name petrify)/bin
-experimentsdir = $(shell find . -type d -name chorgram_experiments)
+experimentsdir = $(shell find $(cfgdir) -name experiments)
 logfile = $(shell find . -name experiments.csv)
 os := $(shell uname -s)
 gitmsg = "checkpoint"
@@ -86,7 +86,7 @@ debug:
 	$(ccdebug) gmc.hs &&\
 	$(ccdebug) BuildGlobal.hs &&\
 	$(ccdebug) GGParser.hs &&\
-#K	$(ccdebug) KGparser.hs &&\
+#	$(ccdebug) KGparser.hs &&\
 	$(ccdebug) SystemParser.hs &&\
 	$(ccdebug) PomsetSemantics.hs &&\
 	$(ccdebug) sgg.hs &&\
