@@ -49,10 +49,16 @@ gmc.hs: SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuf
 PomsetSemantics.hs: CFSM.hs SyntacticGlobalGraphs.hs Misc.hs DotStuff.hs 
 	$(ccmd) $@
 
-BuildGlobal.hs: PetriNet Misc GlobalGraph
+BuildGlobal.hs: PetriNet.hs Misc.hs GlobalGraph.hs
+	$(ccmd) $@
+
+PetriNet.hs: Misc.hs
 	$(ccmd) $@
 
 sgg.hs: Misc.hs DotStuff.hs GGParser.hs RGGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
+	$(ccmd) $@
+
+RGGParser.hs: Misc.hs DotStuff.hs GGParser.hs RGGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
 	$(ccmd) $@
 
 sysparser.hs: SystemParser.hs
@@ -104,8 +110,8 @@ clean:
 parser:
 	happy -a -i  GGGrammar.y -o GGParser.hs && $(ccmd) GGParser.hs
 	happy -a -i  SystemGrammar.y -o SystemParser.hs && $(ccmd) SystemParser.hs
+	happy -a -i  RGGGrammar.y -o RGGParser.hs && $(ccmd) RGGParser.hs
 #	happy -a -i  KGGrammar.y -o KGparser.hs && $(ccmd) KGparser.hs
-#	happy -a -i  RGGGrammar.y -o RGGParser.hs && $(ccmd) RGGParser.hs
 
 config:
 	@echo "experiments\t"$(experimentsdir) > $(cfgdir)/$(cfgfile)
