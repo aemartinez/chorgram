@@ -24,7 +24,9 @@ import System.Directory(createDirectoryIfMissing)
 
 main :: IO ()
 main = do progargs <- getArgs
+          putStrLn "----"
           flines   <- getDotConf
+          putStrLn "----"
           if L.null progargs
             then error $ usage(SGG)
             else do
