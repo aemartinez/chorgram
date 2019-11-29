@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml>
+  ...
+  <graph edgedefault="directed">
+    <node id="0"><data key="subject">C1</data>
+      <data key="partner">UR</data><data key="out">inc</data>
+    </node>
+    <node id="1"><data key="subject">UR</data>
+      <data key="partner">C1</data><data key="in">inc</data>
+    </node>
+    <node id="2"><data key="subject">C2</data>
+      <data key="partner">UR</data><data key="out">dbl</data>
+    </node>
+    <node id="3"><data key="subject">UR</data>
+      <data key="partner">C2</data><data key="in">dbl</data>
+    </node>
+    <node id="4"><data key="subject">C1</data>
+      <data key="partner">NA</data><data key="out">inc</data>
+    </node>
+    <node id="5"><data key="subject">NA</data>
+      <data key="partner">C1</data><data key="in">inc</data>
+    </node>
+    <node id="6"><data key="subject">C2</data>
+      <data key="partner">NA</data><data key="out">dbl</data>
+    </node>
+    <node id="7"><data key="subject">NA</data>
+      <data key="partner">C2</data><data key="in">dbl</data>
+    </node>
+    <edge source="0" target="1" />
+    <edge source="1" target="3" />
+    <edge source="2" target="3" />
+    <edge source="4" target="5" />
+    <edge source="5" target="7" />
+    <edge source="6" target="7" />
+  </graph>
+</graphml>

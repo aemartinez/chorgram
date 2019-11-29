@@ -1,0 +1,10 @@
+sel {
+  {C -> L: logReq | C -> S: dateFmt}; .. date2string and logging
+     S -> L: logRes;
+     S -> C: string
+  + 
+  {C -> L: logReq | C -> S: string};  .. string2date and logging
+     S -> L: logRes;
+     S -> C: dateFmt
+}
+    

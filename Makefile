@@ -16,7 +16,15 @@ gitmsg = "checkpoint"
 # Examples of usage of scripts:
 # python cfsm2gg.py -l -df png -dir <path-to-results-directory> <path-to-file>
 # sgg.py --dot "Tpng" --dot "Gsplines=ortho" --sloppy -dir <path-to-results-directory> <path-to-file>
-#
+# cfsm2gg.py -sn -D det -dir /tmp ~/Dropbox/chorgram_experiments/gmc/bank > /tmp/b.txt
+# minimise -v -D det -d experiments/open_chor/ experiments/open_chor/ex4_1.fsa
+# gg2fsa ~/Dropbox/chorgram_experiments/examples_sgg/two_buyers_protocol.sgg > experiments/results/two_buyers_protocol/sys.fsa
+# gg2pom -l 2 --gml -d /tmp/ experiments/test/atm.sgg
+# gg2gml -o t.x experiments/test/atm.sgg 
+# pom2gg -d /tmp experiments/jlamp2020/csl7/cc3/closure/0.graphml 
+# chor2dot -d /tmp ~/Dropbox/chorgram_experiments/examples_sgg/two_buyers_protocol.sgg 
+# chor2dot -d /tmp/ -fmt gmldiff /tmp/t.graphml
+
 
 # gmc dependencies
 # compile: gmc.hs BuildGlobal.hs GGParser.hs SystemParser.hs PomsetSemantics.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs gg2pom.hs pom2gg.hs minimise.hs gg2gml.hs

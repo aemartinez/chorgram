@@ -1,0 +1,11 @@
+sel {
+ (A -> B : x |
+ (sel {
+    C -> B : x
+    +
+    C -> B : z
+ })
+ ) ; A -> B : l
+ +
+ (A -> B : y | C -> B : y) ; A -> B : r
+}
