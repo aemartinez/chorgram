@@ -8,16 +8,17 @@ module DotStuff where
 
 import Data.Map.Strict as M
 import Misc
-import System.Directory
+import System.Environment (getExecutablePath)
 import System.FilePath.Posix
 
 type DotNode = Int
 
 getDotConf :: IO(Map String DotString)
 getDotConf = do
-  cwd <- getCurrentDirectory
-  cfg  <- getConf (cwd </> "aux/chorgram.config")
-  getConf (cfg!"dot")
+  exe <- getExecutablePath
+  let cwd = takeDirectory exe
+  cfg <- getConf (cwd </> "aux/chorgram.config")
+  getConf (cwd </> cfg!"dot")
 
 cpV :: DotString
 cpV = " [label=\"\", shape=point, width=0.15, height=0.15, color=darkorange, fillcolor=darkorange, style=filled]\n"
