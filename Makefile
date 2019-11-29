@@ -130,8 +130,8 @@ hp:
 
 setup:
 	@if test -e aux/experiments; then echo ">>> The directory experiments is already there. Nothing to be done."; else make -C aux/experiments; echo ">>> directory experiments created"; fi
-	make config
 	make hp
+	make config
 	make parser
 	make all
 
