@@ -208,7 +208,7 @@ usage :: Command -> String
 -- Message on how to use a command
 usage cmd = "Usage: " ++ msg
   where msg = case cmd of
-               GMC      -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ~/.chorgram.config \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
+               GMC      -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ./aux \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
                GG       -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                SGG      -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                CHOR2DOT -> "chor2dot [-d dirpath] [-fmt gml | -fmt sgg | -fmt sloppygml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t-fmt = sgg\n\t"
@@ -249,7 +249,7 @@ defaultFlags :: Command -> Map String String
 defaultFlags cmd = M.insert "-o" ""
                    (case cmd of
                       GMC      -> M.fromList [("-d",dirpath),
-                                              ("-c", "~/.chorgram.config"),
+                                              ("-c", "./aux/chorgram.config"),
                                               ("-v",""),
                                               ("-m","0"),   -- multiplicity **deprecated**
                                               ("-ts",""),

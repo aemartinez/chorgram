@@ -1,5 +1,0 @@
-sel {
- (A -> B : x | C -> B : x) ; A -> B : z
- +
- (A -> B : y | C -> B : y) ; A -> B : z
-}
