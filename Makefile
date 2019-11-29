@@ -7,7 +7,7 @@ cfgdir = $(shell find . -type d -name 'aux')
 cfgfile = chorgram.config
 hkcpath := $(shell find . -type d -name 'hknt*')
 petripath := $(shell find . -type d -name petrify)/bin
-experimentsdir = $(shell find $(HOME) -type d -name chorgram_experiments)
+experimentsdir = $(shell find . -type d -name chorgram_experiments)
 logfile = $(shell find . -name experiments.csv)
 os := $(shell uname -s)
 gitmsg = "checkpoint"
@@ -109,11 +109,17 @@ parser:
 
 config:
 	@echo "experiments\t"$(experimentsdir) > $(cfgdir)/$(cfgfile)
+	$(info .)
 	@echo "logfile\t"$(logfile) >> $(cfgdir)/$(cfgfile)
+	$(info ..)
 	@echo "hkc\t"$(hkcpath) >> $(cfgdir)/$(cfgfile)
+	$(info ...)
 	@echo "petrify\t"$(petripath) >> $(cfgdir)/$(cfgfile)
+	$(info ....)
 	@echo "gmc\t./gmc" >> $(cfgdir)/$(cfgfile)
+	$(info .....)
 	@echo "bg\t./BuildGlobal" >> $(cfgdir)/$(cfgfile)
+	$(info ......)
 	@echo "dot\taux/dot.cfg" >> $(cfgdir)/$(cfgfile)
 	$(info >>> config file created $(cfgdir)/$(cfgfile))
 
@@ -131,8 +137,9 @@ hp:
 	@if test -e $(petripath)/petrify$(os); then echo ">>> The link to petrify is already there. Nothing to be done."; else (cd $(petripath); ln -s petrify petrify$(os)); fi
 
 setup:
-	make config
+	@if test -e aux/experiments; then echo ">>> The directory experiments is already there. Nothing to be done."; else make -C aux/experiments; echo ">>> directory experiments created"; fi
 	make hp
+	make config
 	make parser
 	make all
 
