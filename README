@@ -1,70 +1,23 @@
-CHORGRAM
+PomCho: a tool chain for choreographic design
 
-A tool chain for
+PomCho is a tool chain for model-driven development of message-passage applications.
+The key features of the tool chain allow designers to identify misbehaviour leading to unsound communications,
+to provide counterexamples, and to suggest possible corrections as well as to project global specifications
+to local models in order to generate executable implementations.
 
-- converting communicating finite state machines (CFSMs) to global graphs (GGs)
-- projecting GGs on CFSMs
-- check multiparty compatibility
+To install the dependencies required by PomCho on Ubuntu 18.04 execute
+```
+#!bash
+./setup.sh
+```
 
-Chorgram is written in haskell and uses hkc and petrify as auxiliary
-tools. The integration between chorgram and hkc and petrify is is
-attained with some python scripts. Chorgram uses dot to display CFSMs,
-transition systems, global graphs, and semantics
+To start PomCho execute
+```
+#!bash
+cd cc
+./gui.py
+```
 
+The examples are in aux/experiments/jlamp2020
 
-
-CONTENT 
-
-aux: a directory with configuration files; it is advisable to put in
-     aux the directories of hkc and petrify
-
-BCGBridge.hs: from our notation to BCG. This is very much work in progress to
-              rely on BCG in order to minimise CFSMs
-
-BranchingProperty.hs: checks the branching property
-
-BuildGlobal.hs: from petri nets in GGs
-
-CFSM.hs: data and functions on CFSMs
-
-cfsm2gg.py: checks gmc of system of CFSMs and builds its GG
-
-Dependency.hs
-
-DotStuff.hs: configuration for dot
-
-gg2fsa.hs: projects a global graph on its CFSMs in .fsa format
-
-GGGrammar.y: lex/yacc parser generator for the syntax of GGs
-
-GlobalGraph.hs: data and functions on GGs
-
-gmc.hs: generalised multiparty compatibility checker
-
-HKCBridge.hs: transforms CFSMs in the hkc format
-
-Makefile: a makefile
-
-Misc.hs: should I say more?
-
-PartialOrderReduction.hs: compacts p.o.
-
-PetrifyBridge.hs: transforms files to the format of petrify
-
-PetriNet.hs: utils on Petri nets
-
-Representability.hs: representability checker
-
-SemanticGlobalGraphs.hs: computes the semantics of GGs...well, not really yet! The 'sloopy' option is the default, due to my 'lazy' option
-
-sgg.hs: extracts the semantics of a GGs and its (non minimised) projections
-
-sgg.py: python script for post-processing of the output of sgg.hs
-
-SyntacticGlobalGraphs.hs: an editor for GGs
-
-sysparser.hs: parses the process algebraic presentation of systems CFSMs (.sys format)
-
-SystemGrammar.y: lex/yacc parser generator for the process algebraic presentation of systems CFSMs
-
-TS.hs: data structures and functions for manipulating transition systems of CFSMs
+A virtual machine for VirtualBox is available at http://www.google.com. User: demo, Password: demopassword
