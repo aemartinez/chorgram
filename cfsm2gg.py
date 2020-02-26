@@ -22,11 +22,14 @@ cfgfile = os.getenv("HOME") + os.sep + ".chorgram.config"
 with open(cfgfile) as f:
     lns = f.readlines()
     cfg = dict(map(lambda x: x.split("\t"), lns))
-    HKC = cfg["hkc"][:-1] + os.sep + "hkc" + os.uname()[0]
-    PETRY = cfg["petrify"][:-1] + os.sep + "petrify" + os.uname()[0]
+    # HKC = cfg["hkc"][:-1] + os.sep + "hkc" + os.uname()[0]
+    HKC = cfg["hkc"][:-1] + os.sep + "hkc"
+    # PETRY = cfg["petrify"][:-1] + os.sep + "petrify" + os.uname()[0]
+    PETRY = cfg["petrify"][:-1] + os.sep + "petrify"
     GMC = cfg["gmc"][:-1]
     BG = cfg["bg"][:-1]
-    logfilename = os.getenv("HOME") + os.sep + cfg["base"][:-1] + os.sep + cfg["logfilename"][:-1]
+#    logfilename = os.getenv("HOME") + os.sep + cfg["base"][:-1] + os.sep + cfg["logfilename"][:-1]
+    logfilename = cfg["logfilename"][:-1]
 
 # Setting flags
 parser = argparse.ArgumentParser(description="chorgram: From communicating machines to graphical choreographies")
@@ -261,6 +264,7 @@ except:
     loginfo = loginfo + ["petrify err"]
     logexperiment(loginfo)
     sys.exit("petrify err")
+
 stop = time.time()
 petritime = stop - start
 st_arrow, st_comma, st_colon,st_del = "AAA", "CCC", "COCO", "delPTP"

@@ -44,11 +44,11 @@ repLanguageConcurrent file (sys,ptps) ts =
             )
           -- file with the mCRL2 format
           _ <- forkIO $
-            writeToFile (file ++ "_projection_" ++ (show i) ++ ".fsm") (
+            writeToFile (file ++ "_projection_" ++ (show i) ++ ".fsa") (
               fst (cfsm2fsm flines projected)
             )
           _ <- forkIO $
-            writeToFile (file ++ "_machine_" ++ (show i) ++ ".fsm") (
+            writeToFile (file ++ "_machine_" ++ (show i) ++ ".fsa") (
               fst (cfsm2fsm flines x)
             )
           _ <- forkIO $

@@ -13,14 +13,17 @@ gitmsg = "checkpoint"
 
 all:
 	$(MAKE) GGParser.hs &&\
+	$(MAKE) sgg.hs &&\
 	$(MAKE) PomsetSemantics.hs &&\
 	$(MAKE) gg2pom.hs &&\
+	$(MAKE) BuildGlobal.hs &&\
 	$(MAKE) pom2gg.hs &&\
 	$(MAKE) gg2fsa.hs &&\
 	$(MAKE) chor2dot.hs &&\
+	$(MAKE) gmc.hs &&\
 	$(MAKE) gg2gml.hs
 
-GGParser.hs: SyntacticGlobalGraphs.hs ErlanGG.hs Misc.hs CFSM.hs
+GGParser.hs: SyntacticGlobalGraphs.hs ErlanGG.hs Misc.hs CFSM.hs sgg.hs
 	$(ccmd) $@
 
 PomsetSemantics.hs: CFSM.hs SyntacticGlobalGraphs.hs Misc.hs DotStuff.hs 
@@ -47,6 +50,8 @@ clean:
 
 parser:
 	happy -a -i  GGGrammar.y -o GGParser.hs && $(ccmd) GGParser.hs
+	happy -a -i RGGGrammar.y -o RGGParser.hs 
+	happy -a -i  SystemGrammar.y -o SystemParser.hs
 
 config:
 	@echo "experiments\t"$(experimentsdir) > $(cfgdir)/$(cfgfile)

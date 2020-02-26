@@ -385,8 +385,8 @@ printMessage msg = msg
 printAction :: Action -> Map String String -> String
 printAction ( (s,r), dir, msg ) flines =
   case dir of
-   LoopSnd -> show s ++ show msg
-   LoopRcv -> show r ++ show msg
+   LoopSnd -> rmChar '\"' $ show s ++ show msg
+   LoopRcv -> rmChar '\"' $ show r ++ show msg
    _       -> rmChar '\"' $ s ++ (flines!ptpsep) ++ r ++ (showDir dir flines) ++ (printMessage msg)
 
 printCfsm :: CFSM -> Ptp -> Map String String -> String
