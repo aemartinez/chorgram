@@ -11,16 +11,16 @@
 --       |  P -> P : M
 --       |  P => P, ..., P : M
 --	 |  G | G
---       |  sel { Brc }
---       |  sel P { Brc }
---       |  branch { Brc }
---       |  branch P { Brc }
+--       |  chop { Brc }
+--       |  chop P { Brc }
 --       |  G ; G
 --       |  * G @ P
 --       |  repeat { G unless guard }
 --       |  repeat P { G unless guard }
 --       |  { G }
 --       |  ( G )
+--
+--    chop ::= sel | branch | choice
 --
 --    Brc   ::= G | G unless guard | B + B
 --
@@ -108,47 +108,24 @@ import CFSM
   '}'	        { TokenCurlyc   }
   'sel'         { TokenSel      }
   'branch'      { TokenSel      }
+  'choice'      { TokenSel      }
   'repeat'      { TokenRep      }
   'unless'      { TokenUnl      }
 
 %right '|'
+%right ';'
 %right '+'
 %right '%'
-%right ';'
 %right ','
 
 %%
 
 G :: { (GG, Set Ptp) }
-G : B                                   { $1 }
-  | B '|' G  	     	        	{ (Par ((checkToken TokenPar $1)
+G : Blk                                 { $1 }
+  | Blk '|' G  	     	        	{ (Par ((checkToken TokenPar $1)
                                                 ++ (checkToken TokenPar $3)),
                                             S.union (snd $1) (snd $3))
                                         }
-
-
-B :: { (GG, Set Ptp) }
-B : S                                   { $1 }
-  | choiceop '{' Br '+' Bs '}'        	{ (Bra (S.fromList $
-                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
-                                                   []
-                                                   (L.map fst ([$3] ++ $5))
-                                                 )
-                                               ),
-                                            ptpsBranches ([$3] ++ $5))
-                                        }
-  | choiceop str '{' Br '+' Bs '}'	{ (Bra (S.fromList $
-                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
-                                                   []
-                                                   (L.map fst ([$4] ++ $6))
-                                                 )
-                                               ),
-                                            ptpsBranches ([$4] ++ $6))
-                                        }
-
-
-choiceop : 'sel'        {}
-         | 'branch'     {}
 
 
 Bs :: { [((GG, Set Ptp), M.Map String String)] }
@@ -157,22 +134,22 @@ Bs : Br                                 { [ $1 ] }
 
 
 Br :: { ((GG, Set Ptp), M.Map String String) }
-Br : S                                  { ($1, M.empty) }
-   | S 'unless' guard                   { checkGuard $1 $3 }
+Br : Blk                                  { ($1, M.empty) }
+   | Blk 'unless' guard                   { checkGuard $1 $3 }
 
 
-S :: { (GG, Set Ptp) }
-S : '(o)'                               { (Emp, S.empty) }
-  | Blk                                 { $1 }
-  | B ';' B                           { (Seq ((checkToken TokenSeq $1)
-                                                 ++ (checkToken TokenSeq $3)),
-                                            S.union (snd $1) (snd $3))
-                                        }
-
+choiceop : 'sel'        {}
+         | 'branch'     {}
+         | 'choice'     {}
 
 
 Blk :: { (GG, Set Ptp) }
-Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
+Blk : '(o)'                            { (Emp, S.empty) }
+   | Blk ';' Blk                       { (Seq ((checkToken TokenSeq $1)
+                                            ++ (checkToken TokenSeq $3)),
+                                          S.union (snd $1) (snd $3))
+                                       }
+   | str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
         				    (True, True, True)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])
 	        			    (True, False, True)  -> myErr ("Bad name " ++ $3)
 		        		    (True, True, False)  -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
@@ -188,6 +165,22 @@ Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 =
                                                                 _    -> (Par (L.map (\s -> (Act ($1 , s) $5)) $3),S.fromList($1:$3))
                                             (True,  False) -> myErr ($1 ++ " must be in " ++ (show $3))
                                             (False, _)     -> myErr ("Bad name " ++ $1)
+                                        }
+  | choiceop '{' Br '+' Bs '}'        	{ (Bra (S.fromList $
+                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
+                                                   []
+                                                   (L.map fst ([$3] ++ $5))
+                                                 )
+                                               ),
+                                            ptpsBranches ([$3] ++ $5))
+                                        }
+  | choiceop str '{' Br '+' Bs '}'	{ (Bra (S.fromList $
+                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
+                                                   []
+                                                   (L.map fst ([$4] ++ $6))
+                                                 )
+                                               ),
+                                            ptpsBranches ([$4] ++ $6))
                                         }
   | '*' G '@' str                       {
       			        	  case ((isPtp $4), (S.member $4 (snd $2))) of

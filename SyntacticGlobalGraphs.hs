@@ -159,7 +159,7 @@ factorise gg = case gg of
 wb :: Set GG -> Bool
 --
 -- PRE : the input ggs are factorised
--- POST: returns True iff th list is well-branched
+-- POST: returns True iff the set is well-branched
 --        
 wb ggs =
   let ps             = S.toList $ ggptp S.empty (Bra ggs)
@@ -227,7 +227,7 @@ ggptp ptps g = case g of
 proj :: Bool -> GG -> P -> Ptp -> State -> State -> Int -> (CFSM, State)
 proj loopFlag gg pmap p q0 qe n =
 --
--- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
+-- PRE : actions are well-formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
 -- POST: the non-minimised projection of GG wrt p and a unique exiting state (it must always exist!)
 --       n is a counter for fresh state generation
 --       q0 and qe correspond to the entry and exit state, respectively
@@ -304,7 +304,7 @@ proj loopFlag gg pmap p q0 qe n =
               helper msg  = Par (L.map (\p'' -> LAct (p',p'') msg) (S.toList $ S.delete p' bodyptps))
 
 --
--- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ ps are all the participants of gg
+-- PRE : actions are well-formed (wffActions) ^ q0 /= qe ^ ps are all the participants of gg
 -- POST: the system corresponding to GG wrt ps
 -- n is a counter for fresh state generation
 -- q0 and qe are used to generate  (entry and exit) nodes of each participant

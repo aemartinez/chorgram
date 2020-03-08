@@ -1,8 +1,9 @@
 --
 -- Author: Emilio Tuosto <emilio@le.ac.uk>
 --
--- This module implements the pomset semantics of JLAMP 17 (but for
--- the well-formedness checking)
+-- This module implements the pomset semantics of JLAMP 18 (but for
+-- the well-formedness checking).
+-- It also extracts a gg from a single pomesets.
 --
 
 module PomsetSemantics where
@@ -49,11 +50,11 @@ sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
 
 pomsetsOf :: GG -> Int -> Event -> (Set Pomset, Event)
 pomsetsOf gg iter e =
-  -- PRE: gg is well-formed; e is the 'counter' of the events
+  -- PRE: gg is a global graph; e is the 'counter' of the events
   -- POST: returns the set of pomsets [[gg]] with n-unfolds of each loop for n = |iter|
   --       (eventually) well-formedness is checked iff iter >= 0
   let unfold g n = if n==0 then Emp else Seq (L.replicate (abs n) g)
-      -- TODO: uniform unfoldind for the moment.
+      -- TODO: uniform unfolding for the moment.
       --       Eventually to generate random numbers between 0 and iter.
   in
     case gg of
