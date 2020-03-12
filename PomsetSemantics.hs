@@ -22,9 +22,17 @@ import DotStuff
 type Event = Int
 type Lab = Map Event Action
 type Pomset = (Set Event, Set (Event, Event), Lab)
+
+data WBViolation =
+  ChAwarness (GG,[Ptp]) |
+  UniqueSender (GG, [Ptp]) |
+  Active (GG, [Ptp]) |
+  Passive (GG, [Ptp])
+  
 data LabelFormat =
   Interaction |
   Communication
+
 data DiffObj =
   Edge String String |
   Node String
@@ -146,13 +154,78 @@ maxOfPomset (events, rel, _) =
 
 subpom :: Set Event -> Pomset -> Pomset
 subpom evs (_, rel, lab) = (evs, rel', lab')
--- PRE: evs included in the events of p
--- POST: returns the sub pomset made of the events in evs from p
+  -- PRE: evs included in the events of p
+  -- POST: returns the sub pomset made of the events in evs from p
   where rel' = S.foldr f S.empty rel
         f (h,k) res = if (S.member h evs) && (S.member k evs) then
                          S.insert (h,k) res
                       else res
         lab' = S.foldr (\e m -> M.insert e (lab!e) m) M.empty evs
+
+
+next :: Event -> Pomset -> Set Event
+next e (events, rel, _) =
+  -- PRE: e in events
+  -- POST: set of immediate successors of e in the relation rel
+  S.fromList ([e' | e' <- S.toList events, S.member (e,e') rel])
+
+
+minPtp :: Pomset -> Ptp -> Set Action
+minPtp pom@(_, _, lab) p = aux S.empty (minOfPomset pom)
+  -- PRE: true
+  -- POST: the set of minimal actions of a participant in a pomset
+  where aux acc todo = case S.toList todo of
+          [] -> acc
+          e:_ ->
+            if p == subjectOf (lab!e)
+            then aux (S.insert (lab!e) acc) (S.delete e todo)
+            else aux acc (S.union todo (next e pom))
+  
+
+wb :: GG -> [WBViolation]
+wb gg =
+  -- PRE: true
+  -- POST: returns the list of non-well-branched subgraphs of GG
+  case gg of
+    Emp -> []
+    Act _ _ -> []
+    LAct _ _ -> []
+    Par ggs -> L.foldr (++) [] (L.map wb ggs)
+    Bra ggs ->
+      let sems = S.map (\g -> fst $ pomsetsOf g 0 0) ggs
+          sem = S.foldr S.union S.empty sems
+          participants = S.toList $ L.foldr ggPtp S.empty ggs
+          pomPred = \pom acc predicate ->
+            S.union acc (S.fromList [q | q <- participants,
+                                         act <- S.toList (minPtp pom q), predicate act])
+          pomActive = \pom l -> pomPred pom l isSend
+          pomPassive = \pom l -> pomPred pom l isReceive
+          activePtps = S.foldr pomActive S.empty sem
+          passivePtps = S.foldr pomPassive S.empty sem
+      in
+        let noAP = S.toList $ S.intersection activePtps passivePtps
+            disj l = case l of
+                       [] -> True
+                       [_] -> True
+                       x:ls -> (disj ls) && (S.null $ S.intersection x (L.foldr S.union S.empty ls))
+            isActive = \p ->
+              let m = S.map (\poms -> S.foldr (\pom acc -> S.union acc (minPtp pom p)) S.empty poms) sems
+              in (disj (S.toList m))  -- pairwise disjoint min of branches
+              && (S.foldr (\pom acc -> acc && S.null pom) True m) -- no empty branches
+            isPassive = \p ->
+              let m = S.map (\poms -> S.foldr (\pom acc -> S.union acc (minPtp pom p)) S.empty poms) sems
+                  uniform = True
+              in (disj (S.toList m)) || uniform -- pairwise disjoint min of branches or uniform behaviour
+              && (S.foldr (\pom acc -> acc && S.null pom) True m) -- no empty branches
+        in (if noAP == [] then [] else [Active (Bra ggs, noAP), Passive (Bra ggs, noAP)])
+        ++ (case S.toList activePtps of
+              [] -> []
+              [active] -> if isActive active then [] else [Active (Bra ggs, [active])]
+              _ -> [UniqueSender (Bra ggs, noAP)]
+           )
+        ++ []
+    Seq ggs -> L.foldr (++) [] (L.map wb ggs)
+    Rep gg' _ -> wb gg'
 
 components :: Pomset -> Set (Set Event)
 -- computes the connected components in the order relation of the pomset
