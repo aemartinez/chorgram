@@ -246,31 +246,32 @@ msgFormat cmd msg =
 
 defaultFlags :: Command -> Map String String
 -- The default argument of each command
-defaultFlags cmd = M.insert "-o" ""
-                   (case cmd of
-                      GMC      -> M.fromList [("-d",dirpath),
-                                              ("-c", "./aux/chorgram.config"),
-                                              ("-v",""),
-                                              ("-m","0"),   -- multiplicity **deprecated**
-                                              ("-ts",""),
-                                              ("-b","0"),
-                                              ("-cp", ""),
-                                              ("-tp", "- - - -"),
-                                              ("-p", ""),
-                                              ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
-                                             ]
-                      GG       -> M.fromList [("-d",dirpath), ("-v","")]
-                      SGG      -> M.fromList [("-d",dirpath), ("-v","")]
-                      CHOR2DOT -> M.fromList [("-d",dirpath), ("-fmt","sgg")]
-                      GG2FSA   -> M.fromList [("-d",dirpath), ("-v","")]
-                      GG2POM   -> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no"), ("-l","1")]
-                      POM2GG   -> M.fromList [("-d",dirpath)]
-                      GG2GML   -> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
-                      SYS      -> M.fromList [("-d",dirpath), ("-v","")]
-                      MIN      -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
-                      PROD     -> M.fromList [("-d",dirpath), ("-v","")]
-                      HGSEM    -> M.fromList [("-d",dirpath), ("-v","")]
-                   )
+defaultFlags cmd =
+  let common = [("-d", dirpath), ("-o", ""), ("-v","")]
+  in M.fromList (common ++
+                 (case cmd of
+                    GMC      -> [("-c", "./aux/chorgram.config"),
+                                 ("-m","0"),   -- multiplicity **deprecated**
+                                 ("-ts",""),
+                                 ("-b","0"),
+                                 ("-cp", ""),
+                                 ("-tp", "- - - -"),
+                                 ("-p", ""),
+                                 ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
+                                ]
+                    GG       -> []
+                    SGG      -> [("-l", "yes")]
+                    CHOR2DOT -> [("-fmt","sgg")]
+                    GG2FSA   -> []
+                    GG2POM   -> [("--gml", "no"), ("-l","1")]
+                    POM2GG   -> []
+                    GG2GML   -> [("-l","1")] -- '-l' unfolding of loops
+                    SYS      -> []
+                    MIN      -> [("-D","min")]
+                    PROD     -> []
+                    HGSEM    -> []
+                 )
+                )
 
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
@@ -306,6 +307,7 @@ getFlags cmd args =
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
       "-rg":xs      -> M.insert "-rg" yes      (getFlags cmd xs)
       "-v":xs       -> M.insert "-v" yes       (getFlags cmd xs)
+      "-l":xs       -> M.insert "-l" "no"      (getFlags cmd xs)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       _             -> error $ usage(cmd)
     CHOR2DOT -> case args of

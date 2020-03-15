@@ -28,7 +28,6 @@ def proj_to_cfsm(graphs, pr):
             "terminating": is_state_terminating(id_to_pomsets[nid])}
     automaton.add_node(nid, **attr)
     
-    
     to_process = [root]
     while (len(to_process) > 0):
        state = to_process.pop()
