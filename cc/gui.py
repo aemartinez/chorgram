@@ -623,7 +623,7 @@ class MainWindow(Gtk.Window):
         if response == Gtk.ResponseType.OK:
             self.workspace = Workspace(dialog.get_filename())
             dialog.destroy()
-        elif response == Gtk.ResponseType.CANCEL:
+        else:
             dialog.destroy()
             return
 
