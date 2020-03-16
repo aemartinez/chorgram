@@ -1,0 +1,4 @@
+# vscode config files
+.vscode/
+
+**/*.pyc
