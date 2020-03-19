@@ -11,6 +11,7 @@ import Misc
 import DotStuff
 import GGParser
 import RGGParser
+import FSA(minimise,determinise)
 import CFSM
 import Data.Set as S
 import Data.List as L
@@ -79,10 +80,17 @@ main = do progargs <- getArgs
               let output l =
                     case l of
                       []   -> (myPrint flags SGG "end")
-                      i:ls -> (myPrint flags SGG ("\t" ++ (path i "") ++ " is the machine for participant " ++ (ptps!i) ++ " in both .fsa and .aut format"))
+                      i:ls -> (myPrint flags SGG ("\t" ++ (path i "") ++ " is the machine for participant " ++ (ptps!i) ++ " in both .fsa and .dot format"))
                         >>= (\_ -> writeToFile (path i ".dot") (dottifyCfsm cfsm (ptps!i) (legend cfsm i) flines) )
                         -- >>= (\_ -> writeToFile (path i ".aut") (cfsm2bcg cfsm flines) )
                         >>= (\_ -> writeToFile (path i ".fsa") (cfsm2String (ptps!i) cfsm) )
+                        >>= (\_ -> if (flags!"-D" /= "no")
+                              		then writeToFile (path i (flags!"-D" ++ ".fsa")) (cfsm2String (ptps!i) d)
+                                   	else myPrint flags SGG "no minimisation or determinisation" )
+                        >>= (\_ -> if (flags!"-D" /= "no")
+                              		then writeToFile (path i (flags!"-D" ++ ".dot")) (dottifyCfsm d (ptps!i) (legend cfsm i) flines)
+                                   	else putStrLn "")
                         >>= (\_ -> output ls)
                         where cfsm = fst $ proj False gg ptps (ptps!i) "q0" "qe" 0
+                              d = (if (flags!"-D" == "min") then minimise else determinise) cfsm
               output $ range (S.size names)

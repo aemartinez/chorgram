@@ -210,7 +210,7 @@ usage cmd = "Usage: " ++ msg
   where msg = case cmd of
                GMC      -> "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ./aux \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
                GG       -> "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-               SGG      -> "sgg [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+               SGG      -> "sgg [-d dirpath] [-v] [-D] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t -D = no"
                CHOR2DOT -> "chor2dot [-d dirpath] [-fmt gml | -fmt sgg | -fmt sloppygml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t-fmt = sgg\n\t"
                GG2FSA   -> "gg2fsa [-v] [-d dirpath | -o output-file] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                GG2POM   -> "gg2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
@@ -260,7 +260,7 @@ defaultFlags cmd =
                                  ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
                                 ]
                     GG       -> []
-                    SGG      -> [("-l", "yes")]
+                    SGG      -> [("-l", "yes"), ("-D", "no")]
                     CHOR2DOT -> [("-fmt","sgg")]
                     GG2FSA   -> []
                     GG2POM   -> [("--gml", "no"), ("-l","1")]
@@ -305,6 +305,7 @@ getFlags cmd args =
     SGG -> case args of
       []            -> defaultFlags(cmd)
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+      "-D":y:xs     -> M.insert "-D"  y        (getFlags cmd xs)
       "-rg":xs      -> M.insert "-rg" yes      (getFlags cmd xs)
       "-v":xs       -> M.insert "-v" yes       (getFlags cmd xs)
       "-l":xs       -> M.insert "-l" "no"      (getFlags cmd xs)
