@@ -17,6 +17,10 @@ from ccpom import *
 from diff import run_diff
 from projection import proj_to_cfsm, export_projection
 
+# Quick patch to disregard which folder the gui script is run from
+from pathlib import Path
+os.environ['PATH'] += os.path.pathsep + \
+   str(Path(__file__).parent.absolute().parent)
 
 class Workspace:
     def __init__(self, sgg_path):
@@ -32,7 +36,7 @@ class Workspace:
 
     def gen_choreography_graphml(self):
         os.system(
-            "../gg2gml %s > %s"
+            "gg2gml %s > %s"
             % (self.sgg_absolute_path, self.get_root_folder() + "/choreography.graphml")
         )
 
@@ -42,7 +46,7 @@ class Workspace:
     def gen_choreography_png(self):
         self.gen_choreography_graphml()
         os.system(
-            "../chor2dot -d %s/ -fmt sloppygml %s/choreography.graphml"
+            "chor2dot -d %s/ -fmt sloppygml %s/choreography.graphml"
             % (self.get_root_folder(), self.get_root_folder())
         )
         os.system(
@@ -69,7 +73,7 @@ class Workspace:
     def gen_semantics(self):
         # I should ensure this goes in the third position and remove all the past semantics from the tree
         self.delete_folder(self.get_semantics_folder())
-        cmd = "../gg2pom -d %s/ --gml %s" % (
+        cmd = "gg2pom -d %s/ --gml %s" % (
             self.get_root_folder(),
             self.sgg_absolute_path,
         )
@@ -139,7 +143,7 @@ class Workspace:
             return
         pm = self.cc2["closure"][pm_idx]
         os.system(
-            "../pom2gg -d %s %s"
+            "pom2gg -d %s %s"
             % (
                 join(self.get_cc2_folder(), "synthesis"),
                 join(self.get_cc2_folder(), "closure", "%d.graphml" % pm_idx),
@@ -177,7 +181,7 @@ class Workspace:
         res = run_diff(g1, g2, self.get_cc2_counter_choreography_folder(pm_idx), costs)
         for i in res:
             os.system(
-                "../chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml"
+                "chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml"
                 % (
                     self.get_cc2_counter_choreography_folder(pm_idx),
                     self.get_cc2_counter_choreography_folder(pm_idx),
@@ -286,7 +290,7 @@ class Workspace:
         if not pm_idx in self.cc3["closure"]:
             return
         os.system(
-            "../pom2gg -d %s %s"
+            "pom2gg -d %s %s"
             % (
                 join(self.get_cc3_folder(), "synthesis"),
                 join(self.get_cc3_folder(), "closure", "%d.graphml" % pm_idx),
@@ -318,7 +322,7 @@ class Workspace:
         res = run_diff(g1, g3, self.get_cc3_counter_choreography_folder(pm_idx), costs)
         for i in res:
             os.system(
-                "../chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml"
+                "chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml"
                 % (
                     self.get_cc3_counter_choreography_folder(pm_idx),
                     self.get_cc3_counter_choreography_folder(pm_idx),
