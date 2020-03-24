@@ -1,3 +1,17 @@
+#########################################################################
+# Dockerfile for testing and development of ChorGram.
+# 
+# Install Docker for your platform from https://docs.docker.com/install/
+# 
+# Build the image with:
+# $ docker build -t chorgram .
+# 
+# To open a shell with the toolchain:
+# $ docker run -it chorgram bash
+# 
+# You can also use zsh if you prefer.
+#################################################################
+
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-ubuntu-18.04
 
 ENV DEBIAN_FRONTEND=noninteractive
