@@ -9,6 +9,7 @@ hkcpath := $(shell find . -type d -name 'hknt*')
 petripath := $(shell find . -type d -name petrify)/bin
 experimentsdir = $(shell find $(cfgdir) -name experiments)
 logfile = $(shell find . -name experiments.csv)
+logdir = ./experiments/experiments.csv
 os := $(shell uname -s)
 gitmsg = "checkpoint"
 
@@ -125,6 +126,8 @@ config:
 	@echo "gmc\t./gmc" >> $(cfgdir)/$(cfgfile)
 	$(info .....)
 	@echo "bg\t./BuildGlobal" >> $(cfgdir)/$(cfgfile)
+	$(info ......)
+   @echo "logfilename\t"$(logdir) >> $(cfgdir)/$(cfgfile)
 	$(info ......)
 	@echo "dot\taux/dot.cfg" >> $(cfgdir)/$(cfgfile)
 	$(info >>> config file created $(cfgdir)/$(cfgfile))
