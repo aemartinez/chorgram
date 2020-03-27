@@ -174,16 +174,23 @@ class Workspace():
             for pomset1 in cc3c:
                 if pomset1 == pomset:
                     continue
-                prefixes = get_all_prefix_graphs(pomset1, False)
-                for pomset2 in prefixes:
-                    if (nx.is_isomorphic(pomset, pomset2, node_match=nm)):
-                        found = True
-                        break
+                nodes1 = [x for x in pomset1.nodes() if frozenset(pomset1.node[x].items()) in
+                          [frozenset(pomset.node[y].items()) for y in pomset.nodes()]]
+                pomset2 = nx.subgraph(pomset1, nodes1)
+                if (nx.is_isomorphic(pomset, pomset2, node_match=nm)):
+                    found = True
+                    break
+                #prefixes = get_all_prefix_graphs(pomset1, False)
+                #for pomset2 in prefixes:
+                #    if (nx.is_isomorphic(pomset, pomset2, node_match=nm)):
+                #        found = True
+                #        break
                 if found:
                     break
             if not found:
                 filtered_closure.append(pomset)
         return filtered_closure
+
 
     def fix_cc3_counter_example(self, pom):
         last_int = max([int(x) for x in pom.nodes()])
@@ -204,6 +211,7 @@ class Workspace():
                 last_int += 1
                 pom.add_node(last_int, **(dict(pomset.get_matching_label(pom.node[node]))))
                 pom.add_edge(node, last_int)
+                # search the mins of the same subjects that are not ordered with the out
         return pom
 
     def gen_cc3(self):
