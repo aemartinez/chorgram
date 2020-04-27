@@ -156,50 +156,50 @@ factorise gg = case gg of
 --                         _         -> ngg
 --                      )
 
-wb :: Set GG -> Bool
---
--- PRE : the input ggs are factorised
--- POST: returns True iff th list is well-branched
---        
-wb ggs =
-  let ps             = S.toList $ ggptp S.empty (Bra ggs)
-      disjoint (x, y)= S.null $ S.intersection x y
---      same (x, y)    = x == y
-      firstActs p gg = case sevAt p gg of
-                        Emp               -> (S.empty, S.empty)
-                        act@(Act (s,_) _) -> if s == p
-                                             then (S.singleton act, S.empty)
-                                             else (S.empty, S.singleton act)
-                        act@(LAct (s,_) _)-> if s == p
-                                             then (S.singleton act, S.empty)
-                                             else (S.empty, S.singleton act)
-                        Par ggs''         -> L.foldr aux (S.empty, S.empty) ggs''
-                            where aux gg_ (fA,fP) = let (fA',fP') = firstActs p gg_ in
-                                                    (S.union fA fA', S.union fP fP')
-                        Bra ggs''         -> S.foldr aux (S.empty, S.empty) ggs''
-                            where aux = \gg_ (fA,fP) -> let (fA',fP') = firstActs p gg_ in
-                                                        ((S.union fA fA'), (S.union fP fP'))
-                        Seq ggs''         -> case ggs'' of
-                                              []    -> (S.empty, S.empty)
-                                              gg':_ -> if res == (S.empty, S.empty)
-                                                       then firstActs p (Seq (tail ggs''))
-                                                       else res
-                                                           where res = firstActs p gg'
-                        Rep gg' _        -> firstActs p gg'
-      matrix         = M.fromList [(p, L.map (firstActs p) (S.toList ggs)) | p <- ps ]
-      check prop f p = L.all (\pairs -> prop (f pairs)) (matrix!p)
-      active         = S.fromList ([ p | p <- ps, check (\x -> not (S.null x)) fst p ])
-      passive        = S.fromList ([ p | p <- ps, check (\x -> not (S.null x)) snd p ])
-      getpairs l res = case l of
-                        []   -> res
-                        e:l' -> getpairs l' (res ++ [(e,e') | e' <- l'])
-  in S.null ggs || (
-                    L.all (\p -> check (\x -> S.null x) fst p || check (\x -> not (S.null x)) fst p) ps &&
-                    L.all (\p -> check (\x -> S.null x) snd p || check (\x -> not (S.null x)) snd p) ps &&
-                    (S.size active == 1) && (disjoint (active, passive)) &&
-                    L.all disjoint (getpairs (L.map fst (matrix!(S.elemAt 0 active))) []) &&
-                    L.all (\p -> L.all disjoint (getpairs (L.map snd (matrix!p)) [])) (S.toList passive)
-                   )
+-- wb :: Set GG -> Bool
+-- --
+-- -- PRE : the input ggs are factorised
+-- -- POST: returns True iff the set is well-branched
+-- --        
+-- wb ggs =
+--   let ps             = S.toList $ ggptp S.empty (Bra ggs)
+--       disjoint (x, y)= S.null $ S.intersection x y
+-- --      same (x, y)    = x == y
+--       firstActs p gg = case sevAt p gg of
+--                         Emp               -> (S.empty, S.empty)
+--                         act@(Act (s,_) _) -> if s == p
+--                                              then (S.singleton act, S.empty)
+--                                              else (S.empty, S.singleton act)
+--                         act@(LAct (s,_) _)-> if s == p
+--                                              then (S.singleton act, S.empty)
+--                                              else (S.empty, S.singleton act)
+--                         Par ggs''         -> L.foldr aux (S.empty, S.empty) ggs''
+--                             where aux gg_ (fA,fP) = let (fA',fP') = firstActs p gg_ in
+--                                                     (S.union fA fA', S.union fP fP')
+--                         Bra ggs''         -> S.foldr aux (S.empty, S.empty) ggs''
+--                             where aux = \gg_ (fA,fP) -> let (fA',fP') = firstActs p gg_ in
+--                                                         ((S.union fA fA'), (S.union fP fP'))
+--                         Seq ggs''         -> case ggs'' of
+--                                               []    -> (S.empty, S.empty)
+--                                               gg':_ -> if res == (S.empty, S.empty)
+--                                                        then firstActs p (Seq (tail ggs''))
+--                                                        else res
+--                                                            where res = firstActs p gg'
+--                         Rep gg' _        -> firstActs p gg'
+--       matrix         = M.fromList [(p, L.map (firstActs p) (S.toList ggs)) | p <- ps ]
+--       check prop f p = L.all (\pairs -> prop (f pairs)) (matrix!p)
+--       active         = S.fromList ([ p | p <- ps, check (\x -> not (S.null x)) fst p ])
+--       passive        = S.fromList ([ p | p <- ps, check (\x -> not (S.null x)) snd p ])
+--       getpairs l res = case l of
+--                         []   -> res
+--                         e:l' -> getpairs l' (res ++ [(e,e') | e' <- l'])
+--   in S.null ggs || (
+--                     L.all (\p -> check (\x -> S.null x) fst p || check (\x -> not (S.null x)) fst p) ps &&
+--                     L.all (\p -> check (\x -> S.null x) snd p || check (\x -> not (S.null x)) snd p) ps &&
+--                     (S.size active == 1) && (disjoint (active, passive)) &&
+--                     L.all disjoint (getpairs (L.map fst (matrix!(S.elemAt 0 active))) []) &&
+--                     L.all (\p -> L.all disjoint (getpairs (L.map snd (matrix!p)) [])) (S.toList passive)
+--                    )
 
 sevAt :: Ptp -> GG -> GG
 sevAt p gg = case gg of
@@ -211,23 +211,23 @@ sevAt p gg = case gg of
                Seq ggs            -> Seq (L.map (sevAt p) ggs)
                Rep gg' p'         -> Rep (sevAt p gg') p'
                       
-ggptp :: Set Ptp -> GG -> Set Ptp
+ggPtp :: GG -> Set Ptp -> Set Ptp
 --
--- ggptp computes the set of participants of a global graph
+-- computes the set of participants of a global graph
 --
-ggptp ptps g = case g of
+ggPtp g ptps = case g of
                 Emp          -> ptps
                 Act (s,r) _  -> S.union ptps (S.fromList [s,r])
                 LAct (s,r) _ -> S.union ptps (S.fromList [s,r])
-                Par gs       -> S.union ptps (S.unions $ L.map (ggptp S.empty) gs)
-                Bra gs       -> S.union ptps (S.unions $ S.toList (S.map (ggptp S.empty) gs))
-                Seq gs       -> S.union ptps (S.unions (L.map (ggptp S.empty) gs))
-                Rep g' p     -> S.union ptps (ggptp (S.singleton p) g')
+                Par gs       -> S.union ptps (S.unions $ L.map (\x -> ggPtp x S.empty) gs)
+                Bra gs       -> S.union ptps (S.unions $ S.toList (S.map (\x -> ggPtp x S.empty) gs))
+                Seq gs       -> S.union ptps (S.unions (L.map (\x -> ggPtp x S.empty) gs))
+                Rep g' p     -> S.union ptps (ggPtp g' (S.singleton p))
 
 proj :: Bool -> GG -> P -> Ptp -> State -> State -> Int -> (CFSM, State)
 proj loopFlag gg pmap p q0 qe n =
 --
--- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
+-- PRE : actions are well-formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
 -- POST: the non-minimised projection of GG wrt p and a unique exiting state (it must always exist!)
 --       n is a counter for fresh state generation
 --       q0 and qe correspond to the entry and exit state, respectively
@@ -288,7 +288,7 @@ proj loopFlag gg pmap p q0 qe n =
                   (0, q0, S.empty, S.empty, S.empty)
                   ggs
       Rep g p'    -> if (S.member p bodyptps) then (ggrep, qe') else (dm qe' Tau)
-        where bodyptps    = ggptp S.empty g
+        where bodyptps    = ggPtp g S.empty
               ggrep       = (S.unions [statesOf body, statesOf loop, statesOf exit],
                              initialOf body,
                              S.unions [actionsOf body, actionsOf loop, actionsOf exit],
@@ -304,7 +304,7 @@ proj loopFlag gg pmap p q0 qe n =
               helper msg  = Par (L.map (\p'' -> LAct (p',p'') msg) (S.toList $ S.delete p' bodyptps))
 
 --
--- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ ps are all the participants of gg
+-- PRE : actions are well-formed (wffActions) ^ q0 /= qe ^ ps are all the participants of gg
 -- POST: the system corresponding to GG wrt ps
 -- n is a counter for fresh state generation
 -- q0 and qe are used to generate  (entry and exit) nodes of each participant

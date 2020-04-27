@@ -6,20 +6,19 @@
 
 module DotStuff where
 
-import Data.List as L
 import Data.Map.Strict as M
 import Misc
-import System.Directory
+import System.Environment (getExecutablePath)
 import System.FilePath.Posix
-import qualified Data.Text as T
 
 type DotNode = Int
 
 getDotConf :: IO(Map String DotString)
 getDotConf = do
-  home <- getHomeDirectory
-  cfg  <- getConf (home </> ".chorgram.config")
-  getConf (home </> cfg!"base" </> (cfg!"dot"))
+  exe <- getExecutablePath
+  let cwd = takeDirectory exe
+  cfg <- getConf (cwd </> "aux/chorgram.config")
+  getConf (cwd </> cfg!"dot")
 
 cpV :: DotString
 cpV = " [label=\"\", shape=point, width=0.15, height=0.15, color=darkorange, fillcolor=darkorange, style=filled]\n"

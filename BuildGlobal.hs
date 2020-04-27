@@ -2,8 +2,8 @@
 -- Authors: Julien Lange <j.lange@ic.ac.uk> and
 --          Emilio Tuosto <emilio@le.ac.uk>
 --
--- This module contains the main to generate the choreography
-
+-- This module contains the main to generate the global graph
+--
 
 import System.Environment
 import System.FilePath.Posix
