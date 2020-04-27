@@ -174,36 +174,56 @@ class Workspace():
             for pomset1 in cc3c:
                 if pomset1 == pomset:
                     continue
-                prefixes = get_all_prefix_graphs(pomset1, False)
-                for pomset2 in prefixes:
-                    if (nx.is_isomorphic(pomset, pomset2, node_match=nm)):
-                        found = True
-                        break
+                nodes1 = [x for x in pomset1.nodes() if frozenset(pomset1.node[x].items()) in
+                          [frozenset(pomset.node[y].items()) for y in pomset.nodes()]]
+                pomset2 = nx.subgraph(pomset1, nodes1)
+                if (nx.is_isomorphic(pomset, pomset2, node_match=nm)):
+                    found = True
+                    break
+                #prefixes = get_all_prefix_graphs(pomset1, False)
+                #for pomset2 in prefixes:
+                #    if (nx.is_isomorphic(pomset, pomset2, node_match=nm)):
+                #        found = True
+                #        break
                 if found:
                     break
             if not found:
                 filtered_closure.append(pomset)
         return filtered_closure
 
+
     def fix_cc3_counter_example(self, pom):
+        new_pomset = transitive_closure(pom)
         last_int = max([int(x) for x in pom.nodes()])
         for node in list(pom.nodes()):
             if not "out" in pom.node[node]:
                 continue
-            outs = [b for (a, b) in pom.out_edges(node)]
-            found = False
-            for node1 in outs:
-                if not "in" in pom.node[node1]:
-                    continue
-                if pom.node[node1]["subject"] == pom.node[node]["partner"] and \
-                   pom.node[node]["subject"] == pom.node[node1]["partner"] and \
-                   pom.node[node1]["in"] == pom.node[node]["out"]:
-                    found = True
-                    break
-            if not found:
+            outs = [b for (a, b) in new_pomset.out_edges(node)]
+            sim_inputs = [node1 for node1 in outs if \
+                          "in" in pom.node[node1] and \
+                          pom.node[node1]["subject"] == pom.node[node]["partner"] and \
+                          pom.node[node]["subject"] == pom.node[node1]["partner"] and \
+                          pom.node[node1]["in"] == pom.node[node]["out"]]
+            sim_outputs = [node1 for node1 in outs if \
+                          "out" in pom.node[node1] and \
+                          pom.node[node1]["subject"] == pom.node[node]["partner"] and \
+                          pom.node[node]["subject"] == pom.node[node1]["partner"] and \
+                          pom.node[node1]["out"] == pom.node[node]["out"]]
+            # found = False
+            # for node1 in outs:
+            #     if not "in" in pom.node[node1]:
+            #         continue
+            #     if pom.node[node1]["subject"] == pom.node[node]["partner"] and \
+            #        pom.node[node]["subject"] == pom.node[node1]["partner"] and \
+            #        pom.node[node1]["in"] == pom.node[node]["out"]:
+            #         found = True
+            #         break
+            # if not found:
+            if len(sim_inputs) != len(sim_outputs) + 1:
                 last_int += 1
                 pom.add_node(last_int, **(dict(pomset.get_matching_label(pom.node[node]))))
                 pom.add_edge(node, last_int)
+                # search the mins of the same subjects that are not ordered with the out
         return pom
 
     def gen_cc3(self):

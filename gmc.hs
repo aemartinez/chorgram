@@ -2,9 +2,9 @@
 -- Authors: Julien Lange <j.lange@ic.ac.uk> and
 --          Emilio Tuosto <emilio@le.ac.uk>
 --
--- This file contains the main program that extracts the machines from a
--- file and generates the dot file containing the CFSMs and their corresponging
--- transition system(s).
+-- This file contains the main program that extracts the machines from
+-- a file and generates the dot file containing the CFSMs and their
+-- corresponging transition system(s).
 --
 
 import SystemParser

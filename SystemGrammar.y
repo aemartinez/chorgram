@@ -37,8 +37,8 @@ module SystemParser where
 import CFSM
 import Misc
 import Data.List as L
-import Data.Set as S
-import Data.Map.Strict as M
+import qualified Data.Set as S
+import qualified Data.Map.Strict as M
 }
 
 %name sysgrammar
@@ -203,16 +203,16 @@ systemFrom :: [Ptp] -> [(Ptp,CFSM)] -> System
 systemFrom d l =
   let mymap        = M.fromList l
       (roles, aux) = M.partitionWithKey (\p _ -> (p € d)) mymap
-      getSys       = \(sys, ptps) -> (L.map (\i -> rmdo (ptps!i) S.empty (sys!!i)) (range $ L.length sys), ptps)
+      getSys       = \(sys, ptps) -> (L.map (\i -> rmdo (ptps M.! i) S.empty (sys!!i)) (range $ L.length sys), ptps)
       addm         = \trxs added -> case trxs of
                                      []  -> added
                                      t:r -> let q' = tail $ gtarget t in
                                             if q' € (M.keys aux) && S.notMember q' added
-                                            then addm (r++(S.toList (transitionsOf (aux!q')))) (S.insert q' added)
+                                            then addm (r++(S.toList (transitionsOf (aux M.! q')))) (S.insert q' added)
                                             else addm r added
       rmdo         = \p l m@(_, _, _,trxs) ->
                        let add = addm (S.toList trxs) S.empty -- S.filter (\p' -> p' € (M.keys aux) && S.notMember p' l) (S.map (\(_,_,q) -> (L.tail q)) trxs)
-                       in cfsmUnion (initialOf m) (m:(L.map (\p' -> renamePtp p' p (aux!p')) (S.toList add)))
+                       in cfsmUnion (initialOf m) (m:(L.map (\p' -> renamePtp p' p (aux M.! p')) (S.toList add)))
       preSys       = \pairs mysys@(sys,ptps) ->
                        case pairs of
                         []       -> mysys
@@ -247,7 +247,7 @@ simpleStates offset p (states, q0, acts, trxs) =
   where pos = M.fromList ([(S.elemAt i states , i + offset) | i <- range $ S.size states])
         aux = \q -> if (q!!0 /= stateChar)
                     then (if q!!0 /= statePref then statePref:q else q)
-                    else (mkstate (pos!q)++p)
+                    else (mkstate (pos M.! q)++p)
 
 branch :: Int -> [CFSM] -> [CFSM]
 branch offset l =

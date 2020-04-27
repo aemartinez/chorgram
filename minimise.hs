@@ -29,14 +29,14 @@ main = do progargs <- getArgs
               txt <- readFile sourcefile
               let (_, _, basename, ext) =
                     setFileNames filename flags
-              let _ = lexer txt
               let (sys,  ptps) = parseSystem ext txt
-              let (sys', f) = case (flags!"-D") of
-                                "min" -> (L.map FSA.minimise sys, basename ++ ".min")
-                                "det" -> (L.map FSA.determinise sys, basename ++ ".det")
-                                "no"  -> (sys, basename ++ ".hs")
-                                _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
-              writeToFile f (show sys')
+              let (sys', f) =
+                    case (flags!"-D") of
+                      "min" -> (L.map FSA.minimise sys, basename ++ ".min")
+                      "det" -> (L.map FSA.determinise sys, basename ++ ".det")
+                      "no"  -> (sys, basename ++ ".hs")
+                      _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
+              myPrint flags MIN (show flags)
               writeToFile (basename ++ flags!"-D" ++ ".fsa") (system2String (sys', ptps))
               writeToFile (basename ++ ".dot") (dottifySystem flines (sys', ptps))
               myPrint flags MIN ("\tresult in " ++ f ++ ", " ++ basename ++ ".dot, and in " ++ basename ++ flags!"-D" ++ ".fsa")

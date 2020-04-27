@@ -16,7 +16,7 @@ import System.Directory(createDirectoryIfMissing)
 
 main :: IO ()
 main = do progargs <- getArgs
-          flines   <- getDotConf
+          flines <- getDotConf
           if L.null progargs
             then error $ usage(CHOR2DOT)
             else do
