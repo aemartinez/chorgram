@@ -36,7 +36,7 @@ def proj_to_cfsm(graphs, pr):
        for gr in id_to_pomsets[state]:
            nodes = mins(gr)
            for n in nodes:
-               lbl = frozenset(gr.node[n].items())
+               lbl = frozenset(gr.nodes[n].items())
                if not lbl in l_to_nodes:
                    l_to_nodes[lbl] = []
                l_to_nodes[lbl].append((gr, n))

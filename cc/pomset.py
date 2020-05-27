@@ -12,7 +12,7 @@ def clone_node_attr(n1, n2):
 def transitive_closure(gr):
     gr1 = nx.transitive_closure(gr)
     for n in gr1.nodes():
-        clone_node_attr(gr.node[n], gr1.node[n])
+        clone_node_attr(gr.nodes[n], gr1.nodes[n])
     return gr1
 
 def transitive_reduction(gr):
@@ -27,11 +27,11 @@ def transitive_reduction(gr):
     return gr
 
 def proj(gr, pr):
-    nodes = [x for x in gr.nodes() if gr.node[x]["subject"] == pr]
+    nodes = [x for x in gr.nodes() if gr.nodes[x]["subject"] == pr]
     return nx.subgraph(gr, nodes)
 
 def proj_lbl(gr, label):
-    nodes = [x for x in gr.nodes() if frozenset(gr.node[x].items()) == label]
+    nodes = [x for x in gr.nodes() if frozenset(gr.nodes[x].items()) == label]
     return nx.subgraph(gr, nodes)
 
 
@@ -39,7 +39,7 @@ def map_lbls(gr):
     """ Returns a map label->nodes """
     lbls = {}
     for n in gr.nodes():
-        lbl = gr.node[n]["label"]
+        lbl = gr.nodes[n]["label"]
         if lbl in lbls:
             lbls[lbl].append(n)
         else:
@@ -74,33 +74,33 @@ def get_matching_label(lbl):
 def get_all_send_lbls(gr):
     lbls = set()
     for n in gr.nodes():
-        if not "out" in gr.node[n]:
+        if not "out" in gr.nodes[n]:
             continue
-        lbls.add(frozenset(gr.node[n].items()))
+        lbls.add(frozenset(gr.nodes[n].items()))
     return lbls
 def get_all_receive_lbls(gr):
     lbls = set()
     for n in gr.nodes():
-        if not "in" in gr.node[n]:
+        if not "in" in gr.nodes[n]:
             continue
-        lbls.add(frozenset(gr.node[n].items()))
+        lbls.add(frozenset(gr.nodes[n].items()))
     return lbls
 def get_all_send_nodes(gr):
     nodes = set()
     for n in gr.nodes():
-        lbl = gr.node[n]["label"]
+        lbl = gr.nodes[n]["label"]
         if lbl[2] == "!":
             nodes.add(n)
     return nodes
 def get_all_receive_nodes(gr):
     nodes = set()
     for n in gr.nodes():
-        lbl = gr.node[n]["label"]
+        lbl = gr.nodes[n]["label"]
         if lbl[2] == "?":
             nodes.add(lbl)
     return nodes
 def get_all_principals(gr):
-    l =  list(set([gr.node[n]["subject"] for n in gr.nodes()]))
+    l =  list(set([gr.nodes[n]["subject"] for n in gr.nodes()]))
     l.sort()
     return l
 
@@ -162,10 +162,10 @@ def get_line_graph(pom):
     p = nx.generators.line.line_graph(pom)
     for (n1, n2) in p.nodes():
         for l in labels:
-            if l in pom.node[n1]:
-                p.node[(n1, n2)]["s-%s"%l] = pom.node[n1][l]
-            if l in pom.node[n2]:
-                p.node[(n1, n2)]["t-%s"%l] = pom.node[n2][l]
+            if l in pom.nodes[n1]:
+                p.nodes[(n1, n2)]["s-%s"%l] = pom.nodes[n1][l]
+            if l in pom.nodes[n2]:
+                p.nodes[(n1, n2)]["t-%s"%l] = pom.nodes[n2][l]
     return p
 
 def is_more_permissive(pom1, pom2):
