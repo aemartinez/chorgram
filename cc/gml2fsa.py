@@ -20,7 +20,7 @@ def get_init(gr):
     # POST: return the pair made of the initial state and the subject of the machine
     #
     for q0 in gr.nodes():
-        if 'initial' in gr.node[q0].keys():
+        if 'initial' in gr.nodes[q0].keys():
             break
     edge0 = list(gr.edges())[0]
     sbj = gr.edges[edge0]['subject']

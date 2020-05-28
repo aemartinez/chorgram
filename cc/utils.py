@@ -87,8 +87,8 @@ def add_pair(gr, snd, rcv, n, msg):
     n2 = ("%s-%d" % (rcv, n))
     gr.add_node(n1)
     gr.add_node(n2)
-    gr.node[n1]['label'] = "%s%s!%s" % (snd.upper(), rcv.upper(), msg)
-    gr.node[n2]['label'] = "%s%s?%s" % (snd.upper(), rcv.upper(), msg)
+    gr.nodes[n1]['label'] = "%s%s!%s" % (snd.upper(), rcv.upper(), msg)
+    gr.nodes[n2]['label'] = "%s%s?%s" % (snd.upper(), rcv.upper(), msg)
     gr.add_edge(n1, n2)
     return (n1, n2)
 

@@ -82,21 +82,21 @@ def analysis(inputfolder, outputfolder2, outputfolder3, outputfolder4, draw):
             for pomset in corrected_model:
                 last_int = max([int(x) for x in pomset.nodes()])
                 for node in list(pomset.nodes()):
-                    if not "out" in pomset.node[node]:
+                    if not "out" in pomset.nodes[node]:
                         continue
                     outs = [b for (a, b) in pomset.out_edges(node)]
                     found = False
                     for node1 in outs:
-                        if not "in" in pomset.node[node1]:
+                        if not "in" in pomset.nodes[node1]:
                             continue
-                        if pomset.node[node1]["subject"] == pomset.node[node]["partner"] and \
-                           pomset.node[node]["subject"] == pomset.node[node1]["partner"] and \
-                           pomset.node[node1]["in"] == pomset.node[node]["out"]:
+                        if pomset.nodes[node1]["subject"] == pomset.nodes[node]["partner"] and \
+                           pomset.nodes[node]["subject"] == pomset.nodes[node1]["partner"] and \
+                           pomset.nodes[node1]["in"] == pomset.nodes[node]["out"]:
                             found = True
                             break
                     if not found:
                         last_int += 1
-                        pomset.add_node(last_int, **(dict(get_matching_label(pomset.node[node]))))
+                        pomset.add_node(last_int, **(dict(get_matching_label(pomset.nodes[node]))))
                         pomset.add_edge(node, last_int)
 
     for i in range(len(corrected_model)):
