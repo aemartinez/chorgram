@@ -44,3 +44,5 @@ aux/**/*.dot
 # Config file
 **/chorgram.config
 
+# Mac thumbnails
+.DS_Store
