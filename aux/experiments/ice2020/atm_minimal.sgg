@@ -1,0 +1,10 @@
+C -> A : withdraw;
+A -> B : authWithdrawal;
+sel B {
+  B -> A : allow;
+  A -> C : money
++
+  B -> A : deny;
+  A -> C : bye;
+(o) 
+}
