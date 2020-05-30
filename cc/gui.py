@@ -3,6 +3,7 @@
 import os
 from os import listdir
 from os.path import isfile, join
+import glob
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -32,7 +33,10 @@ class Workspace:
         self.projections = None
 
     def get_root_folder(self):
-        return os.path.dirname(self.sgg_absolute_path)
+        return join(
+            os.path.dirname(self.sgg_absolute_path),
+            os.path.basename(self.sgg_absolute_path).split('.')[0]
+        )
 
     def gen_choreography_graphml(self):
         os.system(
@@ -44,6 +48,8 @@ class Workspace:
         return self.get_root_folder() + "/choreography.png"
 
     def gen_choreography_png(self):
+        if not os.path.exists(self.get_root_folder()):
+            os.makedirs(self.get_root_folder())
         self.gen_choreography_graphml()
         os.system(
             "chor2dot -d %s/ -fmt sloppygml %s/choreography.graphml"
@@ -55,14 +61,14 @@ class Workspace:
         )
 
     def get_semantics_folder(self):
-        return self.sgg_absolute_path.split(".")[0]
+        return self.get_root_folder()
 
     def list_files_in_folder(self, folder):
         files = [f for f in listdir(folder) if isfile(join(folder, f))]
         return files
 
     def get_semantics_png_path(self, f):
-        return self.get_semantics_folder() + "/%s.png" % f
+        return "/%s.png" % f
 
     def delete_folder(self, folder):
         try:
@@ -72,14 +78,19 @@ class Workspace:
 
     def gen_semantics(self):
         # I should ensure this goes in the third position and remove all the past semantics from the tree
-        self.delete_folder(self.get_semantics_folder())
+        for f in glob.glob(join(self.get_semantics_folder() + '*.graphml')) + \
+            glob.glob(join(self.get_semantics_folder() + '*.dot')):
+            os.remove(f) # Cleanup old semantics
+
         cmd = "gg2pom -d %s/ --gml %s" % (
-            self.get_root_folder(),
+            os.path.dirname(self.sgg_absolute_path),
             self.sgg_absolute_path,
         )
         os.system(cmd)
         self.semantics = {}
-        for f in self.list_files_in_folder(self.get_semantics_folder()):
+        for f in glob.glob(join(self.get_semantics_folder(), '*.graphml')):
+            if f.endswith('choreography.graphml'):
+                continue
             graph = nx.readwrite.graphml.read_graphml(
                 join(self.get_semantics_folder(), f)
             )
