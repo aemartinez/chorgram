@@ -1,0 +1,45 @@
+.outputs Customer
+.state graph
+q0________ Supplier ! RequestForQuote qe0________
+qe0________ Supplier ? Quote qe1________
+qe1*qe2________ Ship ! ShipmentDetails qe2________
+qe1________ Ship ! ShipmentDetails qe2*qe1________
+qe1________ Supplier ! PlaceOrder qe1*qe2________
+qe2*qe1________ Supplier ! PlaceOrder qe2________
+qe2________ Truck ! PlaceOrder qe3________
+qe31*qe41________ Truck ? Cancel qe________
+qe3________ Supplier ? Cancel qe31*qe41________
+qe3________ Supplier ? Confirm qe420__qe4210*qe420__qe4211*qe420________
+qe3________ Truck ? Cancel qe41*qe31________
+qe41*qe31________ Supplier ? Cancel qe________
+qe420*qe421__qe4210*qe421__qe4211*qe421________ Truck ? Goods qe________
+qe420__qe4210*qe420__qe4211*qe420________ Supplier ! Payment qe420*qe421__qe4210*qe421__qe4211*qe421________
+qe420__qe4210*qe420__qe4211*qe420________ Truck ? Goods qe421*qe420________
+qe421*qe420________ Supplier ! Payment qe________
+.marking q0________
+.end
+
+.outputs Ship
+.state graph
+.marking q0________
+.end
+
+.outputs Supplier
+.state graph
+q0________ Customer ? RequestForQuote qe0________
+qe0________ Customer ! Quote qe1__qe2*qe1________
+qe1*qe2__qe2__qe3__qe41*qe31________ Customer ! Cancel qe__qe31*qe41____qe__qe4210*qe421__qe4211*qe421________
+qe1*qe2__qe2__qe3__qe41*qe31________ Customer ! Confirm qe420________
+qe1__qe2*qe1________ Customer ? PlaceOrder qe1*qe2__qe2__qe3__qe41*qe31________
+qe420*qe421________ Ship ! Goods qe__qe31*qe41____qe__qe4210*qe421__qe4211*qe421________
+qe420________ Customer ? Payment qe420*qe421________
+qe420________ Ship ! Goods qe421*qe420__qe4210*qe420__qe4211*qe420________
+qe421*qe420__qe4210*qe420__qe4211*qe420________ Customer ? Payment qe__qe31*qe41____qe__qe4210*qe421__qe4211*qe421________
+.marking q0________
+.end
+
+.outputs Truck
+.state graph
+.marking q0________
+.end
+
