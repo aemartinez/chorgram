@@ -6,10 +6,16 @@
 # Build the image with:
 # $ docker build -t chorgram .
 # 
-# To open a shell with the toolchain:
-# $ docker run -it chorgram bash
+# To open a shell with the toolchain you can use:
+# $ docker run -v $(pwd):/chorgram --rm -it chorgram bash
 # 
-# You can also use zsh if you prefer.
+# To use the GTK based UI from a container, you need to set 
+# the DISPLAY environment variable correctly to point to your X Server.
+# For example, assuming your IP is 192.168.1.133, you can use 
+# the following:
+# 
+# docker run --rm -it -v $(pwd):/chorgram -e DISPLAY=192.168.1.133:0 chorgram python3 cc/gui.py
+# 
 #################################################################
 
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-ubuntu-18.04
