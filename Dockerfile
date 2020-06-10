@@ -2,19 +2,32 @@
 # Dockerfile for testing and development of ChorGram.
 # 
 # Install Docker for your platform from https://docs.docker.com/install/
-# 
+#
 # Build the image with:
-# $ docker build -t chorgram .
-# 
+#
+#   $ docker build -t chorgram .
+
+# The execution of the previous command may take a while (it is
+# downloading and installing libraries, external tools, etc.).
+#
+# If the above command returns an error, you may want to execute
+#
+#   $ sudo adduser <your_user_ID> docker
+#
+# log out and then re-login (this allows non-sudo users to run the
+  docker).
+#
 # To open a shell with the toolchain you can use:
-# $ docker run -v $(pwd):/chorgram --rm -it chorgram bash
+#
+#   $ docker run -v $PWD:/chorgram --rm -it chorgram bash
 # 
-# To use the GTK based UI from a container, you need to set 
-# the DISPLAY environment variable correctly to point to your X Server.
-# For example, assuming your IP is 192.168.1.133, you can use 
-# the following:
-# 
-# docker run --rm -it -v $(pwd):/chorgram -e DISPLAY=192.168.1.133:0 chorgram python3 cc/gui.py
+# To use the GTK based UI from a container, you need to set the
+# DISPLAY environment variable correctly to point to your X Server.
+# For example, assuming your IP is 192.168.1.133, you can use the
+# following:
+#
+#   $ docker run --rm -it -v $PWD:/chorgram -e DISPLAY=172.17.0.1:0 chorgram python3 cc/gui.py
+#   $ docker run --rm -it -v $PWD:/chorgram -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY chorgram python3 cc/gui.py
 # 
 #################################################################
 
