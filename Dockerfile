@@ -6,7 +6,7 @@
 # Build the image with:
 #
 #   $ docker build -t chorgram .
-
+# 
 # The execution of the previous command may take a while (it is
 # downloading and installing libraries, external tools, etc.).
 #
@@ -14,20 +14,37 @@
 #
 #   $ sudo adduser <your_user_ID> docker
 #
-# log out and then re-login (this allows non-sudo users to run the
-  docker).
+# log out and then re-login (this allows non-sudo users to run Docker)
 #
 # To open a shell with the toolchain you can use:
 #
 #   $ docker run -v $PWD:/chorgram --rm -it chorgram bash
 # 
-# To use the GTK based UI from a container, you need to set the
-# DISPLAY environment variable correctly to point to your X Server.
-# For example, assuming your IP is 192.168.1.133, you can use the
-# following:
-#
-#   $ docker run --rm -it -v $PWD:/chorgram -e DISPLAY=172.17.0.1:0 chorgram python3 cc/gui.py
-#   $ docker run --rm -it -v $PWD:/chorgram -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY chorgram python3 cc/gui.py
+# Using the GUI from a container is a little bit more involved, but
+# you can try with the following.
+# 
+# Linux
+# -----
+# docker run --rm -it \ 
+#     -v $PWD:/chorgram \ 
+#     -v /tmp/.X11-unix:/tmp/.X11-unix \
+#     -e DISPLAY=$DISPLAY \
+#     chorgram python3 cc/gui.py
+# 
+# MacOS
+# -----
+# Install XQuartz from https://www.xquartz.org/
+# You need to set the DISPLAY environment variable 
+# to correctly point to your X Server.
+# 
+# docker run --rm -it \ 
+#     -v $PWD:/chorgram \
+#     -e DISPLAY=$(ipconfig getifaddr en0):0 \ 
+#     chorgram python3 cc/gui.py
+# 
+# In this case, you might need to unrestrict access to the X Server
+# The simplest way (though not the most secure) might be just running
+# `xhost +`
 # 
 #################################################################
 
