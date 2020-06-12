@@ -46,3 +46,8 @@ aux/**/*.dot
 
 # Mac thumbnails
 .DS_Store
+
+# Erlang files
+*.beam
+*.dump
+
