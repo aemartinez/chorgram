@@ -8,6 +8,11 @@ cfgfile = chorgram.config
 hkcpath := $(shell find . -type d -name 'hknt*')
 petripath := $(shell find . -type d -name petrify)/bin
 experimentsdir = $(shell find $(cfgdir) -name experiments)
+<<<<<<< HEAD
+=======
+logfile = $(shell find . -name experiments.csv)
+logdir = ./experiments/experiments.csv
+>>>>>>> 426da0df43cca7c1aac50d82976368fb17a82f81
 os := $(shell uname -s)
 gitmsg = "checkpoint"
 
@@ -63,6 +68,8 @@ config:
 	@echo "gmc\t./gmc" >> $(cfgdir)/$(cfgfile)
 	$(info .....)
 	@echo "bg\t./BuildGlobal" >> $(cfgdir)/$(cfgfile)
+	$(info ......)
+   @echo "logfilename\t"$(logdir) >> $(cfgdir)/$(cfgfile)
 	$(info ......)
 	@echo "dot\taux/dot.cfg" >> $(cfgdir)/$(cfgfile)
 	$(info >>> config file created $(cfgdir)/$(cfgfile))

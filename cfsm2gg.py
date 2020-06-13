@@ -13,15 +13,17 @@ import time
 import glob
 import argparse
 
+from collections import defaultdict
 from utils import *
 
 cmdname = "chorgram"
 
 # Tools to combine
-cfgfile = os.getenv("HOME") + os.sep + ".chorgram.config"
+cfgfile = "aux" + os.sep + "chorgram.config"
 with open(cfgfile) as f:
     lns = f.readlines()
     cfg = dict(map(lambda x: x.split("\t"), lns))
+<<<<<<< HEAD
     # HKC = cfg["hkc"][:-1] + os.sep + "hkc" + os.uname()[0]
     HKC = cfg["hkc"][:-1] + os.sep + "hkc"
     # PETRY = cfg["petrify"][:-1] + os.sep + "petrify" + os.uname()[0]
@@ -30,6 +32,16 @@ with open(cfgfile) as f:
     BG = cfg["bg"][:-1]
 #    logfilename = os.getenv("HOME") + os.sep + cfg["base"][:-1] + os.sep + cfg["logfilename"][:-1]
     logfilename = cfg["logfilename"][:-1]
+=======
+    cfg = defaultdict(str, cfg)
+
+    HKC = cfg["hkc"][:-1] + os.sep + "hkc" + os.uname()[0]
+    PETRY = cfg["petrify"][:-1] + os.sep + "petrify" + os.uname()[0]
+    GMC = cfg["gmc"][:-1]
+    BG = cfg["bg"][:-1]
+
+    logfilename = (cfg["base"][:-1] or '.') + os.sep + (cfg["logfilename"][:-1] or '.log')
+>>>>>>> 426da0df43cca7c1aac50d82976368fb17a82f81
 
 # Setting flags
 parser = argparse.ArgumentParser(description="chorgram: From communicating machines to graphical choreographies")
@@ -134,6 +146,11 @@ parser.add_argument("-D",
 parser.add_argument("filename",
                     help = "Specify the path to file containing the CFSMs"
 )
+
+if len(sys.argv) == 1:
+    parser.print_help()
+    exit()
+
 args = parser.parse_args()
 if args.hkc: HKC   = args.hkc
 if args.pn:  PETRY = args.pn
