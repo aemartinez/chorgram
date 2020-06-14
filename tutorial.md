@@ -5,7 +5,8 @@ You can install Docker for your platform from [here](https://docs.docker.com/ins
 
 Clone or download the source files from [the repository](https://bitbucket.org/emlio_tuosto/chorgram/).
 
-Build the image with:
+Once you have the files, *from the source folder* of ChorGram
+build the Docker image with the following command:
 
 ```bash
 docker build -t chorgram .
