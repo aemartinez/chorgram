@@ -5,11 +5,11 @@ ccdebug = $(ccmd) -Wall -threaded --make $(debug)
 profiling = -prof -auto-all -caf-all
 cfgdir = $(shell find . -type d -name 'aux' -printf "%P\n")
 cfgfile = chorgram.config
-hkcpath := $(shell find . -type d -name 'hknt*' -printf "%P\n")
+hkcpath := hknt-1.0
 petripath := $(shell find . -type d -name petrify -printf "%P\n")/bin
 experimentsdir = $(shell find $(cfgdir) -name experiments -printf "%P\n")
-logfile = $(shell find . -name experiments.csv -printf "%P\n")
-logdir = ./experiments/experiments.csv
+logdir = ./experiments
+logfile = $(logdir)/experiments.csv
 os := $(shell uname -s)
 gitmsg = "checkpoint"
 
@@ -147,7 +147,7 @@ hp:
 
 setup:
 	@if test -e aux/experiments; then echo ">>> The directory experiments is already there. Nothing to be done."; else make -C aux/experiments; echo ">>> directory experiments created"; fi
-	make hp
+	# make hp
 	make config
 	make parser
 	make all

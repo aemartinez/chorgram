@@ -64,6 +64,11 @@ RUN dpkg --add-architecture i386 \
       python3-gi \ 
       gobject-introspection \ 
       gir1.2-gtk-3.0 \
+      # ocaml \
+      # opam \
+      # libsigsegv2 \
+      # m4 \
+      # rsync \
    # Clean up
    && apt-get autoremove -y \
    && apt-get clean -y \
@@ -90,8 +95,12 @@ RUN cabal update \
 ADD requirements.txt .
 RUN pip3 install -r requirements.txt
 
+
+# RUN opam init --comp 1.2.2
+# RUN echo "eval `opam config env`" >> ~/.bashrc
+
 ADD . /chorgram
 WORKDIR /chorgram
 
-# Compile Haskell libs
+
 RUN make setup

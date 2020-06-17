@@ -51,7 +51,7 @@ to correctly point to your X Server.
 
 ```
 docker run --rm -it \
-    -v $PWD:/chorgram \
+    -v $PWD/experiments:/chorgram/experiments \
     -e DISPLAY=$(ipconfig getifaddr en0):0 \
     chorgram python3 cc/gui.py
 ```
