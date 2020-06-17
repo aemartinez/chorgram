@@ -36,8 +36,8 @@ Linux
 -----
 
 ```
-docker run --rm -it \ 
-    -v $PWD:/chorgram \ 
+docker run --rm -it \
+    -v $PWD:/chorgram \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e DISPLAY=$DISPLAY \
     chorgram python3 cc/gui.py
@@ -50,9 +50,9 @@ You need to set the DISPLAY environment variable
 to correctly point to your X Server.
 
 ```
-docker run --rm -it \ 
+docker run --rm -it \
     -v $PWD:/chorgram \
-    -e DISPLAY=$(ipconfig getifaddr en0):0 \ 
+    -e DISPLAY=$(ipconfig getifaddr en0):0 \
     chorgram python3 cc/gui.py
 ```
 
