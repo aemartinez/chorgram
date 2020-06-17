@@ -26,7 +26,7 @@ log out and then re-login (this allows non-sudo users to run Docker).
 To open a shell with the toolchain you can use:
 
 ```
-docker run -v $PWD:/chorgram --rm -it chorgram bash
+docker run -v $PWD/experiments:/chorgram/experiments --rm -it chorgram bash
 ```
 
 Using the GUI from a container is a little bit more involved, but
@@ -37,7 +37,7 @@ Linux
 
 ```
 docker run --rm -it \
-    -v $PWD:/chorgram \
+    -v $PWD/experiments:/chorgram/experiments \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e DISPLAY=$DISPLAY \
     chorgram python3 cc/gui.py
