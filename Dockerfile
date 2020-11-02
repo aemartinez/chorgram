@@ -60,6 +60,7 @@ RUN dpkg --add-architecture i386 \
       locales \
       haskell-platform \
       graphviz \
+      libgraphviz-dev \
       python3-pip \
       python3-gi \ 
       gobject-introspection \ 
