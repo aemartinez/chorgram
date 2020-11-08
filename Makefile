@@ -127,7 +127,7 @@ config:
 	$(info .....)
 	@echo "bg\t./BuildGlobal" >> $(cfgdir)/$(cfgfile)
 	$(info ......)
-	@echo "logfilename\t"$(logdir) >> $(cfgdir)/$(cfgfile)
+	@echo "logfilename\t"$(logfile) >> $(cfgdir)/$(cfgfile)
 	$(info ......)
 	@echo "dot\taux/dot.cfg" >> $(cfgdir)/$(cfgfile)
 	$(info >>> config file created $(cfgdir)/$(cfgfile))
