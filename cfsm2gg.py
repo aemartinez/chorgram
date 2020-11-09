@@ -220,7 +220,7 @@ if machine_number < 2:
 
 if args.ts:
     logexperiment(["ts only"])
-    sys.exit("ts only")
+    sys.exit(0)
 else:
     debugMsg(args.debug, cmdname, "Checking projections...")
 
