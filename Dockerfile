@@ -63,13 +63,12 @@ RUN dpkg --add-architecture i386 \
       libgraphviz-dev \
       python3-pip \
       python3-gi \ 
+      python3-dev \
       gobject-introspection \ 
       gir1.2-gtk-3.0 \
-      # ocaml \
-      # opam \
-      # libsigsegv2 \
-      # m4 \
-      # rsync \
+      ## HKC deps
+      ocamlbuild \
+      ocaml-nox \
    # Clean up
    && apt-get autoremove -y \
    && apt-get clean -y \
@@ -102,6 +101,5 @@ RUN pip3 install -r requirements.txt
 
 ADD . /chorgram
 WORKDIR /chorgram
-
 
 RUN make setup
