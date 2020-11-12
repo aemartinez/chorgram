@@ -8,25 +8,28 @@
 
 import sys
 import subprocess
-import string
 import time
 import glob
 import argparse
+import os
 
 from collections import defaultdict
-from utils import *
+from utils import debugMsg, mkdir
 
 cmdname = "chorgram"
 
 # Tools to combine
 cfgfile = "aux" + os.sep + "chorgram.config"
+if not os.path.exists(cfgfile):
+    print(f"Cannot find config file ('{cfgfile}')")
+    os.abort()
 with open(cfgfile) as f:
     lns = f.readlines()
     cfg = dict(map(lambda x: x.split("\t"), lns))
     cfg = defaultdict(str, cfg)
 
-    HKC = cfg["hkc"][:-1] + os.sep + "hkc" + os.uname()[0]
-    PETRY = cfg["petrify"][:-1] + os.sep + "petrify" + os.uname()[0]
+    HKC = cfg["hkc"][:-1]
+    PETRY = cfg["petrify"][:-1]
     GMC = cfg["gmc"][:-1]
     BG = cfg["bg"][:-1]
 
