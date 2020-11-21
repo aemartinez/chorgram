@@ -253,7 +253,7 @@ apply fifo ptps c@(n, b) t@(_, (ch@(s,r), d, msg), q)
     | otherwise    = error ((showDir d (M.empty)) ++ " not allowed")
     where newBuffer =
             if fifo
-            then (tail $ b!ch)
+            then tail $ b!ch
             else L.delete msg (b!ch)
 
 

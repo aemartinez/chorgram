@@ -84,8 +84,7 @@ main =  do progargs <- getArgs
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (cfsmsIds system)) -- (L.map snd (M.assocs $ snd system)))
                let bufferSize =
                      read (flags ! "-b") :: Int
-               let fifo =
-                     if (M.member "-nf" flags) then False else True
+               let fifo = not (M.member "-nf" flags)
                let (ts0, tsb) =
                      (buildTSb 0 fifo system, if bufferSize > 0 then buildTSb bufferSize fifo system else ts0)
                myPrint flags GMC ("Parsing CFSMs file..." ++ sourcefile)
