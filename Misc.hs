@@ -3,6 +3,7 @@
 --          Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This module contains some utility functions
+--
 
 module Misc where
 
