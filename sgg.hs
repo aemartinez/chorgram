@@ -63,7 +63,7 @@ main = do progargs <- getArgs
                       mkFileName (ptps!i) dir "cfsm" ext
                 let legend m i =
                       if (M.notMember "-l" flags)
-                      then "subgraph legend {\n\t#rank = sink;\n\tLegend [shape=rectangle, penwidth=0, fontname=courier, fontsize=8, fillcolor=gray94, style=filled, fontcolor=coral, margin=0.1,\n\t\tlabel="
+                      then "subgraph legend {\n\t#rank = sink;\n\tLegend [shape=rectangle, penwidth=0, fontsize=8, fillcolor=gray94, style=filled, fontcolor=coral, margin=0.1,\n\t\tlabel="
                            ++    "\"Source file          : " ++ "cfsm" ++ (rmChar '\"' $ show $ ptps!i) ++ ".dot"
                            ++ "\t\\lDestination dir      : " ++ dir
                            ++ "\t\\lNumber of states     : " ++ (show $ (S.size $ statesOf m))

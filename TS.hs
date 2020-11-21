@@ -454,7 +454,7 @@ ts2file destfile sourcefile k fifo sys ts@(confs, q0, _, trans) flags repbra _ =
         where getpaths []     = M.empty
               getpaths (c:cs) = gpath' ts incoming (getpaths cs) q0 [c] []
   let legend = if (M.notMember "-l" flags)
-               then "subgraph legend {\n\t#rank = sink;\n\tLegend [shape=rectangle, penwidth=0, fontname=courier, fontsize=10, fillcolor=gray94, style=filled, fontcolor=coral, margin=0.1,\n\t\tlabel="
+               then "subgraph legend {\n\t#rank = sink;\n\tLegend [shape=rectangle, penwidth=0, fontsize=10, fillcolor=gray94, style=filled, fontcolor=coral, margin=0.1,\n\t\tlabel="
                     ++    "\"Source file             : " ++ (sourcefile)
                     ++ "\t\\lDestination file        : " ++ (destfile ++ "_ts" ++ (show k) ++ ".dot")
                     ++ "\t\\lConfiguration pattern   : " ++ (rmChar '\"' $ show cpattern)

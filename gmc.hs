@@ -85,6 +85,7 @@ main =  do progargs <- getArgs
                let bufferSize =
                      read (flags ! "-b") :: Int
                let fifo = not (M.member "-nf" flags)
+               putStrLn ("fifo="++(show fifo))
                let (ts0, tsb) =
                      (buildTSb 0 fifo system, if bufferSize > 0 then buildTSb bufferSize fifo system else ts0)
                myPrint flags GMC ("Parsing CFSMs file..." ++ sourcefile)

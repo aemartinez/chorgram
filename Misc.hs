@@ -291,7 +291,7 @@ getFlags cmd args =
       "-o":y:xs          -> M.insert "-o"  y      (getFlags cmd xs)
       "--dir":y:xs       -> M.insert "-d"  y      (getFlags cmd xs)
       "--fontsize":y:xs  -> M.insert "-fs" y      (getFlags cmd xs)
-      "-nf":xs           -> M.insert "-fifo" "no" (getFlags cmd xs) -- turns off the fifo policy
+      "-nf":xs           -> M.insert "-nf" "no"   (getFlags cmd xs) -- turns off the fifo policy
       "-cp":y:xs         -> M.insert "-cp" y      (getFlags cmd xs)
       "-tp":y:xs         -> M.insert "-tp" y      (getFlags cmd xs)
       "-p":y:xs          -> M.insert "-p"  y      (getFlags cmd xs)
