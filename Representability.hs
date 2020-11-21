@@ -1,6 +1,6 @@
 --
 -- Authors: Julien Lange <j.lange@ic.ac.uk> and
---          Emilio Tuosto <emilio@le.ac.uk>
+--          Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This module handles Representability checks for part (ii) and projects files
 -- to be checked with HKC, for part (i).

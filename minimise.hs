@@ -1,5 +1,5 @@
 --
--- Authors: Emilio Tuosto <emilio@le.ac.uk>
+-- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- Minimisation of systems of cfsms.
 --
@@ -19,7 +19,7 @@ main = do progargs <- getArgs
             then error $ usage(MIN)
             else do
               let flags =
-                    getFlags MIN (take ((length progargs) - 1) progargs)
+                    getFlags MIN (L.take ((length progargs) - 1) progargs)
               flines <- getDotConf
               myPrint flags MIN "started"
               let sourcefile =

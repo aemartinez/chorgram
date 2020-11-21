@@ -1,5 +1,5 @@
 --
--- Author: Emilio Tuosto <emilio@le.ac.uk>
+-- Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This module provides the brigde to the CADP tool used to
 -- minimise machines. Information bout CADP are available at

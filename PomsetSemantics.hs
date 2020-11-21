@@ -1,5 +1,5 @@
 --
--- Author: Emilio Tuosto <emilio@le.ac.uk>
+-- Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This module implements the pomset semantics of JLAMP 17 (but for
 -- the well-formedness checking)

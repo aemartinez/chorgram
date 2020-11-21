@@ -1,4 +1,4 @@
--- Authors: Emilio Tuosto <emilio@le.ac.uk>
+-- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- Compute the global graph representing a pomset, if it exists
 

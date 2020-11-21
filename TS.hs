@@ -1,7 +1,9 @@
 --
--- Authors: Emilio Tuosto <emilio@le.ac.uk>
+-- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
--- This module implements the k-bounded semantis
+-- This module implements the k-bounded semantics
+-- both the output order-preserving and non output
+-- order-preserving one (the latter to be implemented)
 --
 
 module TS where
@@ -90,7 +92,11 @@ succConfs :: TSb -> Configuration -> Set Configuration
 succConfs ts n = S.map (\(_, _, n') -> n') (deriv n ts)
 
 succConf :: TSb -> Configuration -> KEvent -> Configuration
-succConf ts n e = head $ S.toList $ S.map (\(_, _, n') -> n') (S.filter (\(_, e', _) -> e'==e) (deriv n ts))
+-- returns {n' | n --e--> n' in ts}
+succConf ts n e =
+  head $
+  S.toList $
+  S.map (\(_, _, n') -> n') (S.filter (\(_, e', _) -> e'==e) (deriv n ts))
 
 project :: KEvent -> Ptp -> Maybe Action
 project (_, _, s, r, _, msg) p = if s == p
@@ -202,49 +208,66 @@ projectUnSafe (_,_,s,r,_,msg) p = if s == p
 -- Building the transition system
 --
 
-enabled :: Int -> System -> Configuration -> Map (Id,LTrans) [LTrans]
--- enabled k (sys,_) (n,b)
+enabled :: Int -> Bool -> System -> Configuration -> Map (Id,LTrans) [LTrans]
+-- enabled k fifo (sys,_) (n,b)
 --   PRE:  machines m in sys epsilon-free ^ m in n ^ |n| = |dom sys|
 --   POST: returns the map l such that l!(i,t) is the list of transitions
---         of machine i enabled at n, local states of the configuration (n,b)
-enabled k (sys, _) (n, b)
+--         of machine i enabled at n, local states of the configuration (n,b);
+--         A FIFO policy is adopted if fifo==true
+enabled k fifo (sys, _) (n, b)
     | k == 0    =  M.fromList $ L.concat pairs
     | otherwise = helper 0 (L.concat $ L.map S.toList l)
-    where rng             = range $ L.length n
-          l               = L.map (\m -> (S.filter (\(_, (ch, d, msg), _) ->
-                                                     (d == Send    && (length $ b!ch) < k && bs) ||
-                                                     (d == Receive && (length $ b!ch) > 0 && (head $ b!ch) == msg) ||
-                                                     (d == LoopSnd && (length $ b!ch) < k && bs) ||
-                                                     (d == LoopRcv && (length $ b!ch) > 0 && (head $ b!ch) == msg) ||
-                                                     (d == Tau) || (d == Break)
-                                                   ) (mstep m))) rng
-          mstep m         = CFSM.step (sys!!m) (n!!m)
-          match m t       = [t' | i <- [m+1 .. (length n-1)], t' <- (S.toList $ mstep i), dual t t']
-          pairs           = L.map (\m -> L.map (\t@(q,(ch,_,msg),q') -> ((m, (q,(ch,Tau,msg),q')), (match m t))) (S.toList $ mstep m)) rng
-          bs              = True -- TODO: to be used to implement 1buffer semantics
-          helper _ []     = M.empty
+    where rng = range $ L.length n
+          l = L.map (\m -> (S.filter (\(_, (ch, d, msg), _) ->
+                                        (d == Send    && (length $ b!ch) < k && bs) ||
+                                        (d == Receive && (length $ b!ch) > 0 && policy ch msg) ||
+                                        (d == LoopSnd && (length $ b!ch) < k && bs) ||
+                                        (d == LoopRcv && (length $ b!ch) > 0 && policy ch msg) ||
+                                        (d == Tau) || (d == Break)
+                                     ) (mstep m)
+                           )
+                    ) rng
+          mstep m = CFSM.step (sys!!m) (n!!m)
+          match m t = [t' | i <- [m+1 .. (length n-1)],
+                            t' <- (S.toList $ mstep i), dual t t']
+          pairs = L.map (\m -> L.map (\t@(q,(ch,_,msg),q') -> ((m, (q,(ch,Tau,msg),q')), (match m t))) (S.toList $ mstep m)) rng
+          policy ch msg =
+            if fifo
+            then (head $ b!ch) == msg
+            else msg € (b!ch)
+          bs = True -- TODO: to be used to implement 1buffer semantics
+          helper _ [] = M.empty
           helper m (t:ts) = M.insert (m, t) [] (helper (m+1) ts)
 
--- apply conf trans = conf'
+
+apply :: Bool -> P -> Configuration -> LTrans -> (KEvent, Configuration)
+-- apply fifo conf trans = conf'
 --  PRE:  trans is enabled at conf
 --  POST: conf' is the update of conf after applying the transtion
-apply :: P -> Configuration -> LTrans -> (KEvent, Configuration)
-apply ptps c@(n, b) t@(_, (ch@(s,r), d, msg), q)
+--        according to the policy established by fifo
+apply fifo ptps c@(n, b) t@(_, (ch@(s,r), d, msg), q)
     | d == Send    = (toKEvent c ptps t, (Misc.update (findId s (M.assocs ptps)) q n, M.insert ch ((b!ch)++[msg]) b))
-    | d == Receive = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, M.insert ch (tail $ b!ch) b))
+    | d == Receive = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, M.insert ch newBuffer b))
     | d == Tau     = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, b))
     | d == Break   = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, b))
     | otherwise    = error ((showDir d (M.empty)) ++ " not allowed")
+    where newBuffer =
+            if fifo
+            then (tail $ b!ch)
+            else L.delete msg (b!ch)
 
--- step k sys conf
+
+step :: Int -> Bool -> System -> Configuration -> Set (KEvent, Configuration)
+-- step k fifo sys conf
 --  PRE:  conf is a k-bounded reachable configuration of sys
---  POST: returns the set of configurations of sys reachable in one step from
---        a configuration c
-step :: Int -> System -> Configuration -> Set (KEvent, Configuration)
-step k sys@(_, ptps) conf@(n,_)
-    | k > 0     = S.map (\(_,t) -> apply ptps conf t) (M.keysSet ets)
+--  POST: returns the set of configurations of sys reachable
+--        in one step from a configuration c; depending on
+--        the flag fifo, the access policy is FIFO or not
+step k fifo sys@(_, ptps) conf@(n,_)
+    | k > 0     = S.map (\(_,t) -> apply fifo ptps conf t) (M.keysSet ets)
     | otherwise = S.fold S.union S.empty (S.map f (M.keysSet ets))
-    where ets = enabled k sys conf
+    where ets = enabled k fifo sys conf
+    --hsl
           f   = \(m,t@(_, ((s, r), _, _), q)) -> let sidx = findId s (M.assocs ptps)
                                                      ridx = findId r (M.assocs ptps)
                                                  in if m==sidx
@@ -252,15 +275,14 @@ step k sys@(_, ptps) conf@(n,_)
                                                     else S.fromList [(toKEvent conf ptps t, (Misc.update ridx q  (Misc.update sidx q' n), emptyBuffer ptps)) | (_, _, q') <- (ets!(m,t))]
 
 
-
-generate :: Int -> System -> [Configuration] -> Set Configuration -> (Set Configuration, Set KEvent, Set KTrans) -> (Set Configuration, Set KEvent, Set KTrans)
-generate k sys c visited pre@(cset, eset, tset) =
+generate :: Int -> Bool -> System -> [Configuration] -> Set Configuration -> (Set Configuration, Set KEvent, Set KTrans) -> (Set Configuration, Set KEvent, Set KTrans)
+generate k fifo sys c visited pre@(cset, eset, tset) =
   case c of 
    []      -> pre
    conf:cs -> if S.member conf visited
-              then generate k sys cs visited pre
-              else generate k sys ((snd nc) ++ cs) (S.insert conf visited) pre'
-     where nt               = S.map (\(x,y) -> (conf, x, y)) (TS.step k sys conf)
+              then generate k fifo sys cs visited pre
+              else generate k fifo sys ((snd nc) ++ cs) (S.insert conf visited) pre'
+     where nt               = S.map (\(x,y) -> (conf, x, y)) (TS.step k fifo sys conf)
            nc               = pol $ S.toList nt
            pre'             = (S.insert conf cset, S.union (S.fromList (fst nc)) eset, S.union nt tset)
            pol []           = ([],[])
@@ -274,15 +296,15 @@ initConf :: System -> Configuration
 initConf (sys,ptps) = (L.map (\(_, s, _, _) -> s) sys, M.fromList [ ((ptps!i,ptps!j),[]) | i <-rng, j <-rng, i /= j ])
     where rng = range $ (length sys)
 
-buildTSb :: Int -> System -> TSb
-buildTSb k sys
+buildTSb :: Int -> Bool -> System -> TSb
+buildTSb k fifo sys
     | k > 0     = (cs, q0, es, ts)
     | otherwise = (cs, q0, (S.map (getRepresentative mapping) es), trans)
     where q0         = initConf sys
           bowtie     = bowtieRel (snd sys) (diamondMap sys) es
           trans      = S.map  (\(n, e, n') -> (n,  ((getRepresentative mapping) e), n')) ts
           mapping    = representativeMap bowtie es
-          (cs,es,ts) = generate k sys [q0] S.empty (S.empty, S.empty, S.empty)
+          (cs,es,ts) = generate k fifo sys [q0] S.empty (S.empty, S.empty, S.empty)
 
 --
 -- Pretty (?) Printing
@@ -358,7 +380,7 @@ colorConf _ (_,_,_,_) prop c colours f
 matchConfig :: Int -> String -> Configuration -> Bool
 matchConfig k cpattern (n,b) = (cpattern /= "") && (L.all (\(x,y) -> (y =="*" || (rmChar '\"' $ show x) == rmChar '\"' y)) (L.zip n npattern) && (k==0 || L.all (\ch -> (M.member ch b) && (b!ch /= [])) bpattern))
     where w        = words cpattern
-          npattern = take (length n) w
+          npattern = L.take (length n) w
           bpattern = pairing (w L.\\ npattern)
           pairing [] = []
           pairing ws = (ws!!0, ws!!1) : (pairing (tail $ tail ws))
@@ -376,11 +398,13 @@ colorTrans ts flags paths tr colours
           (p_col, _) = (colours Path)
           onapath tx = (L.elem tx (L.concat $ L.concat (M.elems paths)))
 
--- flagDeadlock k sys ts
+flagDeadlock :: Int -> Bool -> System -> TSb -> Configuration -> Bool
+-- flagDeadlock k fifo sys ts
 --   PRE:  ts in TS ^ n
---   POST: returns a function mapping each configuration c to true iff c has no outgoing transitions
-flagDeadlock :: Int -> System -> TSb -> Configuration -> Bool
-flagDeadlock k sys _ = \c -> ((TS.step k sys c) == S.empty && (not (L.all (\i -> S.empty == (CFSM.step (ms!!i) ((fst c)!!i))) (range $ length ms))))
+--   POST: returns a function mapping each configuration c
+--         to true iff c has no outgoing transitions according
+--         to the policy established by the flag fifo
+flagDeadlock k fifo sys _ = \c -> ((TS.step k fifo sys c) == S.empty && (not (L.all (\i -> S.empty == (CFSM.step (ms!!i) ((fst c)!!i))) (range $ length ms))))
     where ms = fst sys
 
 flagAction :: TSb -> String -> KTrans -> Bool
@@ -399,9 +423,9 @@ flagAction _ pattern =
            else (w!!0 == "*" || (show s) == w!!0) && (w!!1 == "*" || (show r) == w!!1) && (w!!2 == "*" || d' == w!!2) && (w!!3 == "*" || w!!3 == msg)
 
 
+ts2file :: FilePath -> String -> Int -> Bool -> System -> TSb -> (Map String String) -> [Cause Configuration KEvent] -> [Cause State KEvent] -> IO()
 -- PRE:  .dot.cfg must be a file of lines of at least 2 words; only the first two words are considered
-ts2file :: FilePath -> String -> Int -> System -> TSb -> (Map String String) -> [Cause Configuration KEvent] -> [Cause State KEvent] -> IO()
-ts2file destfile sourcefile k sys ts@(confs, q0, _, trans) flags repbra _ = do
+ts2file destfile sourcefile k fifo sys ts@(confs, q0, _, trans) flags repbra _ = do
 --  conf <- readFile $ getDotConf
   flines <- getDotConf
   ---setDOT conf ---M.fromList $ L.concat $ L.map (\l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l]) (T.lines $ T.pack conf)
@@ -444,7 +468,7 @@ ts2file destfile sourcefile k sys ts@(confs, q0, _, trans) flags repbra _ = do
                  (S.fold (++) "\n" (S.map (\x@(n,_) ->
                                             "\t\"" ++ (showConf x (flines!qsep) (flines!bsep) showQueue) ++ "\"\t\t\t[label=\"" ++
                                             (showConf x (flines!statesep) (flines!confsep) displayQueue) ++ "\"" ++
-                                            (colorConf k ts (\y -> ((flagDeadlock k sys ts y),"")) x colours Deadlock) ++
+                                            (colorConf k ts (\y -> ((flagDeadlock k fifo sys ts y),"")) x colours Deadlock) ++
                                             (if cpattern == "" then "" else (colorConf k ts (\y -> ((matchConfig k cpattern y),"")) x colours Config)) ++
                                             (L.concat $ L.map (\(_,c) -> colorConf k ts (\y -> (y==x,c)) x colours Prop) [(n',comment) | Rp n' _ _ comment <- repbra, n == (fst n')]) ++
                                             "];\n")

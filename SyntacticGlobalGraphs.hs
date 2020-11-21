@@ -1,5 +1,5 @@
 --
--- Author: Emilio Tuosto <emilio@le.ac.uk>
+-- Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This module contains function to project a syntactic choreography,
 -- to calculate its semantics, and to output it in dot format.

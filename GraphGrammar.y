@@ -1,6 +1,6 @@
 --
 --
--- Author: Emilio Tuosto <emilio@le.ac.uk>
+-- Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 
 -- A very basic grammar and parser for the textual editing of global graphs.
 -- The grammar is the one used in the ICE16 paper with the addition

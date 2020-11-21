@@ -1,10 +1,10 @@
 --
 -- Authors: Julien Lange <j.lange@ic.ac.uk> and
---          Emilio Tuosto <emilio@le.ac.uk>
+--          Emilio Tuosto <emilio.tuosto@gssi.it>
 --
--- This file contains the main program that extracts the machines from a
--- file and generates the dot file containing the CFSMs and their corresponging
--- transition system(s).
+-- This file contains the main program that extracts the
+-- machines from a file and generates the dot file containing
+-- the CFSMs and their corresponging transition system(s).
 --
 
 import SystemParser
@@ -64,7 +64,7 @@ main =  do progargs <- getArgs
              then error $ usage(GMC)
              else do
                let flags =
-                     getFlags GMC (take ((length progargs) - 1) progargs)
+                     getFlags GMC (L.take ((length progargs) - 1) progargs)
                let sourcefile =
                      last progargs
                cfsmFile <- readFile sourcefile
@@ -84,16 +84,18 @@ main =  do progargs <- getArgs
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (cfsmsIds system)) -- (L.map snd (M.assocs $ snd system)))
                let bufferSize =
                      read (flags ! "-b") :: Int
+               let fifo =
+                     if (M.member "-nf" flags) then False else True
                let (ts0, tsb) =
-                     (buildTSb 0 system, if bufferSize > 0 then buildTSb bufferSize system else ts0)
+                     (buildTSb 0 fifo system, if bufferSize > 0 then buildTSb bufferSize fifo system else ts0)
                myPrint flags GMC ("Parsing CFSMs file..." ++ sourcefile)
                myPrint flags GMC ("dir " ++ (show $ dir))
                myPrint flags GMC ("Synchronous TS:\t(nodes " ++ (show $ (S.size $ gnodes ts0)) ++ ", transitions " ++ (show $ (S.size $ edgesOf ts0)) ++ ")")
                when (bufferSize > 0) $ myPrint flags GMC ((flags ! "-b") ++ "-bounded TS:\t(nodes " ++ (show $ (S.size $ gnodes tsb)) ++ ", transitions " ++ (show $ (S.size $ edgesOf tsb)) ++")")
                if flags!"-ts" == "ts"
                  then do
-                    ts2file destfile sourcefile 0 system ts0 flags [] []
-                    ts2file destfile sourcefile (read (flags ! "-b") :: Int) system tsb flags [] []
+                    ts2file destfile sourcefile 0 fifo system ts0 flags [] []
+                    ts2file destfile sourcefile (read (flags ! "-b") :: Int) fifo system tsb flags [] []
                  else do
                     flines <- getDotConf
                     repbra <- newEmptyMVar
@@ -112,8 +114,8 @@ main =  do progargs <- getArgs
                     _ <- takeMVar proj
                     _ <- takeMVar prnt
                     -- TODO: colour bad states
-                    ts2file destfile sourcefile 0 system ts0 flags v2 v1
-                    ts2file destfile sourcefile (read (flags ! "-b") :: Int) system tsb flags v2 v1
+                    ts2file destfile sourcefile 0 fifo system ts0 flags v2 v1
+                    ts2file destfile sourcefile (read (flags ! "-b") :: Int) fifo system tsb flags v2 v1
                     when (isEmpty ts0) $ myPrint flags GMC "(!)  Warning: the TS appears to be empty, synthesis will fail    (!)"
                     when (not(noSelfLoop ts0)) $ myPrint flags GMC "(!)  Warning: the TS contains a self-loop, synthesis might fail  (!)"
 --

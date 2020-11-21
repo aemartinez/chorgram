@@ -1,5 +1,5 @@
 --
--- Authors: Emilio Tuosto <emilio@le.ac.uk>
+-- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This main returns a file with the .fsa format of the minimised
 -- CFSMs of a global graph.
@@ -22,7 +22,7 @@ main = do progargs <- getArgs
             then error $ usage(GG2FSA)
             else do
               let ( sourcefile, flags ) =
-                    (last progargs, getFlags GG2FSA (take ((length progargs) - 1) progargs))
+                    (last progargs, getFlags GG2FSA (L.take ((length progargs) - 1) progargs))
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags

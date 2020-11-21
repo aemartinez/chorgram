@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 
-# Author: Emilio Tuosto <emilio@le.ac.uk>
+# Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 #
 # Script for the demo at ICE2018
 

@@ -1,4 +1,4 @@
-# Author: Emilio Tuosto <emilio@le.ac.uk>
+# Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 #
 # Some utilities for python scripts
 

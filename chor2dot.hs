@@ -1,5 +1,5 @@
 --
--- Authors: Emilio Tuosto <emilio@le.ac.uk>
+-- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This file converts sgg or graphml files of choreographies in dot
 --
@@ -21,7 +21,7 @@ main = do progargs <- getArgs
             then error $ usage(CHOR2DOT)
             else do
               let ( sourcefile, flags ) =
-                    (last progargs, getFlags CHOR2DOT (take ((length progargs) - 1) progargs))
+                    (last progargs, getFlags CHOR2DOT (L.take ((length progargs) - 1) progargs))
               ggtxt <- readFile sourcefile
               let ( _, _, baseName, _ ) =
                     setFileNames sourcefile flags

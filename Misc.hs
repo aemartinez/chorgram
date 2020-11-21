@@ -1,6 +1,6 @@
 --
 -- Authors: Julien Lange <j.lange@ic.ac.uk> and
---          Emilio Tuosto <emilio@le.ac.uk>
+--          Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This module contains some utility functions
 
@@ -198,7 +198,7 @@ setFileNames f flags
               _  -> (if (d!!((length d) - 1) == pathSeparator) then d else d ++ [pathSeparator]) ++ baseFile ++ [pathSeparator]
 
 rmExtension :: String -> String -> String
-rmExtension ext s = if (drop i s == ext) then fst $ splitAt i s else s
+rmExtension ext s = if (L.drop i s == ext) then fst $ L.splitAt i s else s
   where i = L.length s - L.length ext
   
 writeToFile :: FilePath -> String -> IO()
@@ -279,7 +279,7 @@ getFlags cmd args =
     GMC -> case args of
       []                 -> defaultFlags(cmd)
       "-c":y:xs          -> M.insert "-c"  y      (getFlags cmd xs)
-      "-l":xs            -> M.insert "-l" "no"    (getFlags cmd xs)
+      "-l":xs            -> M.insert "-l" "no"    (getFlags cmd xs) -- turns off the leged of dot files
       "-rg":xs           -> M.insert "-rg" "rg"   (getFlags cmd xs) -- for reversible ggs TODO: add to manual
       "-ts":xs           -> M.insert "-ts" "ts"   (getFlags cmd xs)
       "-sn":xs           -> M.insert "-sn" yes    (getFlags cmd xs)      
@@ -291,10 +291,11 @@ getFlags cmd args =
       "-o":y:xs          -> M.insert "-o"  y      (getFlags cmd xs)
       "--dir":y:xs       -> M.insert "-d"  y      (getFlags cmd xs)
       "--fontsize":y:xs  -> M.insert "-fs" y      (getFlags cmd xs)
+      "-nf":xs           -> M.insert "-fifo" "no" (getFlags cmd xs) -- turns off the fifo policy
       "-cp":y:xs         -> M.insert "-cp" y      (getFlags cmd xs)
       "-tp":y:xs         -> M.insert "-tp" y      (getFlags cmd xs)
       "-p":y:xs          -> M.insert "-p"  y      (getFlags cmd xs)
-      "-v":xs            -> M.insert "-v"  yes    (getFlags cmd xs)
+      "-v":xs            -> M.insert "-v"  yes    (getFlags cmd xs) -- turn on verbose mode
       _                  -> error $ usage(cmd)
     GG  ->  case args of
       []        -> defaultFlags(cmd)

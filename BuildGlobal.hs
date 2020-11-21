@@ -1,6 +1,6 @@
 --
 -- Authors: Julien Lange <j.lange@ic.ac.uk> and
---          Emilio Tuosto <emilio@le.ac.uk>
+--          Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This module contains the main to generate the choreography
 
@@ -18,7 +18,7 @@ main =  do progargs <- getArgs
            if L.null progargs
              then error $ usage(GG)
              else do
-                  let flags = getFlags GG $ take ((length progargs) - 1) progargs
+                  let flags = getFlags GG $ L.take ((length progargs) - 1) progargs
                   let filename = (flags ! "-d") ++ (if (""== (flags ! "-d")) then "" else [pathSeparator]) ++ (takeFileName $ (last progargs))
                   pnfile <- readFile filename
                   let pn = parsePetriNet (Prelude.map (\x -> words x) (lines pnfile))

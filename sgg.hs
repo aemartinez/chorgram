@@ -1,5 +1,5 @@
 --
--- Authors: Emilio Tuosto <emilio@le.ac.uk>
+-- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This file contains the main program that supports the pomset
 -- and reversible semantics of global graphs.
@@ -31,7 +31,7 @@ main = do progargs <- getArgs
             then error $ usage(SGG)
             else do
               let ( sourcefile, flags ) =
-                    (last progargs, getFlags SGG (take ((length progargs) - 1) progargs))
+                    (last progargs, getFlags SGG (L.take ((length progargs) - 1) progargs))
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags

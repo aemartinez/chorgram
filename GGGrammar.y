@@ -1,5 +1,5 @@
 --
--- Author: Emilio Tuosto <emilio@le.ac.uk>
+-- Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 
 -- A very basic grammar and parser for the textual editing of global

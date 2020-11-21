@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Authors: Julien Lange <j.lange@ic.ac.uk> and
-#          Emilio Tuosto <emilio@le.ac.uk>
+#          Emilio Tuosto <emilio.tuosto@gssi.it>
 #
 # This python script combines the parts of the tool
 

@@ -1,5 +1,5 @@
 --
--- Author: Emilio Tuosto <emilio@le.ac.uk>
+-- Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This module should eventually implement the
 -- HG semantics of ICE16 + JLAMP 17 (badly drafted for the moment)

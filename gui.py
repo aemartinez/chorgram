@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 
-# Author: Emilio Tuosto <emilio@le.ac.uk>
+# Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 #
 # My first GUI :)
 # I used https://tkdocs.com/tutorial/

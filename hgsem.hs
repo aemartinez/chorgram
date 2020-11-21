@@ -1,4 +1,4 @@
--- Authors: Emilio Tuosto <emilio@le.ac.uk>
+-- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- yields the hypergraph-based semantics of global graphs.
 

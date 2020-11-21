@@ -1,4 +1,4 @@
--- Authors: Emilio Tuosto <emilio@le.ac.uk>
+-- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- Compute the pomset-based semantics of global graphs.
 
@@ -18,7 +18,7 @@ main = do progargs <- getArgs
             then error $ usage(GG2POM)
             else do
               let ( sourcefile, flags ) =
-                    (last progargs, getFlags GG2POM (take ((length progargs) - 1) progargs))
+                    (last progargs, getFlags GG2POM (L.take ((length progargs) - 1) progargs))
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags

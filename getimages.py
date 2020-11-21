@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 
-# Author: Emilio Tuosto <emilio@le.ac.uk>
+# Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 #
 # This python script generates images from the dot file of ChorGram
 
