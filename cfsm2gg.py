@@ -42,11 +42,6 @@ parser.add_argument("-v", "--verbose",
                     action = "store_true",
                     help = "Run in verbose mode"
 )
-parser.add_argument("-shh",
-                    dest = "shh",
-                    action = "store_true",
-                    help = "Switches off verbose mode"
-)
 parser.add_argument("-df",
                     dest = "df",
                     default = "svg",
@@ -77,6 +72,11 @@ parser.add_argument("-ts",
                     dest = "ts",
                     action = "store_true",
                     help = "Just computes the CFSMs and the transition system(s)"
+)
+parser.add_argument("-nf", "--bag",
+                    dest = "nf",
+                    action = "store_true",
+                    help = "Disable FIFO policy: buffers are bags"
 )
 parser.add_argument("-tp",
                     dest = "tp",
@@ -189,13 +189,14 @@ def logexperiment(loginfo, str = ""):
 
 callgmc = ([GMC,
             "-d",   args.dir,
-            "-p",   args.path,
+            "-p",   str(args.path),
             "-m",   str(args.mul),
             "-tp",  args.tp,
             "-cp",  args.cp,
+            "-nf"   if args.nf else "",
+            "-v"      if args.debug else "",
             "-b",   str(args.bound),
-            "-D",   str(args.D),
-            " "     if args.shh else "-v"] +
+            "-D",   str(args.D)] +
            (["-l"]  if args.leg else []) +
            (["-sn"] if args.sn else []) +
            (["-ts"] if args.ts else []) +
@@ -284,7 +285,7 @@ replacements = [(st_comma,', '), # NOTE: the order is important
                 [("->" + str(i), "->" + machines[i]) for i in range(machine_number)] +\
                 [(', ', ',')]
 try:
-    bgcmd = [BG, "-d" , dir, "" if args.shh else "-v", basename + PNET]
+    bgcmd = [BG, "-d" , dir, "-v" if args.debug else "", basename + PNET]
     with open(dir + TEMP, "rt") as fin:
         lines = fin.readlines()
         fin.close()

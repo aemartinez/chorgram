@@ -220,8 +220,7 @@ If you want, you can compile [HKC](http://perso.ens-lyon.fr/damien.pous/hknt/) y
 # Running
 
 ## Executing cfsm2gg.py
-The Python script 'cfsm2gg.py' offers a command-line interface to gmc. For an overview of its usage,
-get the help message on the tool via the command: 
+The Python script 'cfsm2gg.py' offers a command-line interface to gmc. For an overview of its usage, get the help message on the tool via the command: 
 
 ```
 #!python
@@ -257,6 +256,7 @@ optional arguments:
   -dw DW                Set fixedsize of dot nodes to the given value {default
                         = 0}
   -ts                   Just computes the CFSMs and the transition system(s)
+  -nf, --bag            Disable FIFO policy: buffers are bags
   -tp TP                Pattern for colouring transitions; the syntax is "s r
                         d msg" where s and r are the indexes of sender and
                         receiver, d is the action, and msg is the message
