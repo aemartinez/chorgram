@@ -16,14 +16,17 @@ import os
 from collections import defaultdict
 from utils import debugMsg, mkdir
 
+# A couple of constants
 cmdname = "chorgram"
-
-# Tools to combine
 cfgfile = "aux" + os.sep + "chorgram.config"
+
+# We assume that 'cfgfile' points to
+# an existing configuration file
 if not os.path.exists(cfgfile):
-    print(f"Cannot find config file ('{cfgfile}')")
+    print("Cannot find config file ('{cfgfile}')")
     os.abort()
 with open(cfgfile) as f:
+    # Tools to combine
     lns = f.readlines()
     cfg = dict(map(lambda x: x.split("\t"), lns))
     cfg = defaultdict(str, cfg)
@@ -76,7 +79,7 @@ parser.add_argument("-ts",
 parser.add_argument("-nf", "--bag",
                     dest = "nf",
                     action = "store_true",
-                    help = "Disable FIFO policy: buffers are bags"
+                    help = "Disable FIFO policy: buffers become bags"
 )
 parser.add_argument("-tp",
                     dest = "tp",
