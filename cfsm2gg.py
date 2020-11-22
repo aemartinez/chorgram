@@ -26,11 +26,12 @@ if not os.path.exists(cfgfile):
     print("Cannot find config file ('{cfgfile}')")
     os.abort()
 with open(cfgfile) as f:
-    # Tools to combine
+    # load the configuration
     lns = f.readlines()
     cfg = dict(map(lambda x: x.split("\t"), lns))
     cfg = defaultdict(str, cfg)
 
+    # Tools to combine
     HKC = cfg["hkc"][:-1]
     PETRY = cfg["petrify"][:-1]
     GMC = cfg["gmc"][:-1]

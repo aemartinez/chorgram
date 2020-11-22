@@ -21,8 +21,7 @@ main = do progargs <- getArgs
           if L.null progargs
             then error $ usage(GG2FSA)
             else do
-              let ( sourcefile, flags ) =
-                    (last progargs, getFlags GG2FSA (L.take ((length progargs) - 1) progargs))
+              let ( sourcefile, flags ) = getCmd GG2FSA progargs
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags

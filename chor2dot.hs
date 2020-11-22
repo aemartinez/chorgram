@@ -20,8 +20,7 @@ main = do progargs <- getArgs
           if L.null progargs
             then error $ usage(CHOR2DOT)
             else do
-              let ( sourcefile, flags ) =
-                    (last progargs, getFlags CHOR2DOT (L.take ((length progargs) - 1) progargs))
+              let ( sourcefile, flags ) = getCmd CHOR2DOT progargs
               ggtxt <- readFile sourcefile
               let ( _, _, baseName, _ ) =
                     setFileNames sourcefile flags

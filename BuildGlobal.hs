@@ -3,7 +3,7 @@
 --          Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This module contains the main to generate the choreography
-
+--
 
 import System.Environment
 import System.FilePath.Posix

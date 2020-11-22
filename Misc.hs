@@ -273,6 +273,11 @@ defaultFlags cmd = M.insert "-o" ""
                       HGSEM    -> M.fromList [("-d",dirpath), ("-v","")]
                    )
 
+getCmd :: Command -> [String] -> (String, Map String String)
+getCmd cmd args =
+  let (al, fl) = L.splitAt ((length args) - 1) args
+  in (head fl, getFlags cmd al)
+
 getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
   let yes = "yes" in

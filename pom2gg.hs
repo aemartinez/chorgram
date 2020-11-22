@@ -1,7 +1,7 @@
 -- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- Compute the global graph representing a pomset, if it exists
-
+--
 
 import Misc
 import Data.List as L
@@ -16,8 +16,7 @@ main = do progargs <- getArgs
           if L.null progargs
             then error $ usage(GG2POM)
             else do
-              let ( sourcefile, flags ) =
-                    (last progargs, getFlags GG2POM (take ((length progargs) - 1) progargs))
+              let ( sourcefile, flags ) = getCmd GG2POM progargs
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
               createDirectoryIfMissing True dir

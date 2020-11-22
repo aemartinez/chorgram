@@ -63,10 +63,8 @@ main =  do progargs <- getArgs
            if L.null progargs
              then error $ usage(GMC)
              else do
-               let flags =
-                     getFlags GMC (L.take ((length progargs) - 1) progargs)
-               let sourcefile =
-                     last progargs
+               let (sourcefile, flags) =
+                     getCmd GMC progargs
                cfsmFile <- readFile sourcefile
                let (dir, destfile, basename, ext) =
                      setFileNames sourcefile flags
@@ -77,9 +75,12 @@ main =  do progargs <- getArgs
                             "no"  -> sys
                             _     -> error ("value " ++ (flags!"-D") ++ " not appropriate for flag -D; use \"min\", \"det\", or \"no\"" )
                let sigma (states, _, _, _) =
-                     M.fromList [((S.toList states)!!i, "q" ++ show i) | i <- range (S.size states)]
+                     M.fromList [((S.toList states)!!i, "q" ++ show i)
+                                | i <- range (S.size states)]
                let system =
-                     (if (M.member "-sn" flags) then (L.map (\cfsm -> (grenameVertex (sigma cfsm) cfsm)) sys') else sys', ptps)
+                     (if (M.member "-sn" flags)
+                      then (L.map (\cfsm -> (grenameVertex (sigma cfsm) cfsm)) sys')
+                      else sys', ptps)
                createDirectoryIfMissing True dir
                writeToFile (dir ++ ".machines") (rmChar '\"' $ show $ L.foldr (\x y -> x ++ (if y=="" then "" else " ") ++ y) "" (cfsmsIds system)) -- (L.map snd (M.assocs $ snd system)))
                let bufferSize =
@@ -87,7 +88,10 @@ main =  do progargs <- getArgs
                let fifo = not (M.member "-nf" flags)
                putStrLn ("fifo="++(show fifo))
                let (ts0, tsb) =
-                     (buildTSb 0 fifo system, if bufferSize > 0 then buildTSb bufferSize fifo system else ts0)
+                     (buildTSb 0 fifo system,
+                      if bufferSize > 0
+                      then buildTSb bufferSize fifo system
+                      else ts0)
                myPrint flags GMC ("Parsing CFSMs file..." ++ sourcefile)
                myPrint flags GMC ("dir " ++ (show $ dir))
                myPrint flags GMC ("Synchronous TS:\t(nodes " ++ (show $ (S.size $ gnodes ts0)) ++ ", transitions " ++ (show $ (S.size $ edgesOf ts0)) ++ ")")

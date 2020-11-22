@@ -18,8 +18,7 @@ main = do progargs <- getArgs
           if L.null progargs
             then error $ usage(HGSEM)
             else do
-              let ( sourcefile, flags ) =
-                    (last progargs, getFlags HGSEM (take ((length progargs) - 1) progargs))
+              let ( sourcefile, flags ) = getCmd HGSEM progargs
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
