@@ -197,10 +197,10 @@ callgmc = ([GMC,
             "-m",   str(args.mul),
             "-tp",  args.tp,
             "-cp",  args.cp,
-            "-nf"   if args.nf else "",
-            "-v"      if args.debug else "",
             "-b",   str(args.bound),
             "-D",   str(args.D)] +
+           (["-nf"] if args.nf else []) +
+           (["-v"]  if args.debug else []) +
            (["-l"]  if args.leg else []) +
            (["-sn"] if args.sn else []) +
            (["-ts"] if args.ts else []) +
