@@ -51,3 +51,4 @@ aux/**/*.dot
 *.beam
 *.dump
 
+experiments/results
