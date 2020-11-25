@@ -9,7 +9,7 @@ hkcpath := hknt-1.0
 petripath := $(shell find . -type d -name petrify -printf "%P\n")/bin
 experimentsdir = $(shell find $(cfgdir) -name experiments -printf "%P\n")
 logdir = ./experiments
-logfile = $(logdir)/experiments.csv
+logfile = $(logdir)/experiments.log
 os := $(shell uname -s)
 gitmsg = "checkpoint"
 
