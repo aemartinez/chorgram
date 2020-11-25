@@ -341,7 +341,7 @@ showQueue qs = rmChar '\"' $ L.concat $ L.map tokenifymsg qs
 --   PRE:  
 --   POST: queues format for dot labels
 displayQueue :: [String] -> String
-displayQueue qs = "<" ++ displayMsgs qs ++ ">"
+displayQueue qs = "[" ++ displayMsgs qs ++ "]"
   where displayMsgs [] = ""
         displayMsgs [m] = m
         displayMsgs (m:qss) = m ++ "," ++ displayMsgs qss
@@ -352,7 +352,7 @@ displayQueue qs = "<" ++ displayMsgs qs ++ ">"
 showBuffer :: Buffer -> String -> ([String] -> String) -> String
 showBuffer b sep display = L.concat
                (L.map
-                     (\((s,r),msg) -> if L.null msg then "" else sep ++ s ++ r ++ display msg)
+                     (\((s,r),msg) -> if L.null msg then "" else sep ++ s ++ "-" ++ r ++ display msg)
                      (M.toAscList b))
 
 -- showConf sys c nsep sep
