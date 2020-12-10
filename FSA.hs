@@ -44,7 +44,7 @@ determinise :: CFSM -> CFSM
 -- POST: return the minimal machine equivalent to the input machine
 determinise m = flat (states, q0_, acts, trxs)
   where
-    m'@(_, q0, acts, _) = pRemoval m (\x -> not (isCommunication x))
+    m'@(_, q0, acts, _) = pRemoval m (not . isCommunication)
     q0_ = S.singleton q0
     (states, trxs) = aux (S.singleton q0_) S.empty (S.singleton q0_, S.empty)
     aux todo done current =

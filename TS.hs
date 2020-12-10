@@ -317,7 +317,7 @@ nodelabel :: Node -> String -> String
 nodelabel n sep = rmChar '\"' (helper n)
   where helper (x:y:xs) = (show x) ++ sep ++ (helper (y:xs))
         helper [x] = (show x)
-        helper [] = ""      
+        helper [] = ""
 
 -- eventLabel k e p flines
 --   PRE:  e is an event of some participants in p

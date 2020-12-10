@@ -59,7 +59,7 @@ PetriNet.hs: Misc.hs
 sgg.hs: Misc.hs DotStuff.hs GGParser.hs RGGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
 	$(ccmd) $@
 
-RGGParser.hs: Misc.hs DotStuff.hs GGParser.hs RGGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
+RGGParser.hs: Misc.hs DotStuff.hs GGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
 	$(ccmd) $@
 
 sysparser.hs: SystemParser.hs

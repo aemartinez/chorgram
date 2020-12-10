@@ -240,7 +240,7 @@ proj loopFlag gg pmap p q0 qe n =
       tautrx q1 q2 l = S.singleton (q1, taul l, q2)
       dm q l         = ((S.fromList [q0, q], q0, S.singleton (taul l), tautrx q0 q l), q)
   in case gg of
-      Emp         -> dm (qe ++ if loopFlag then "Break" else "") (if loopFlag then Break else Tau)
+      Emp -> dm (qe ++ if loopFlag then "Break" else "") (if loopFlag then Break else Tau)
       Act (s,r) m -> if (p/=s && p/=r)
                      then dm qe Tau
                      else (((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0, c, qe))), qe)
@@ -253,13 +253,13 @@ proj loopFlag gg pmap p q0 qe n =
         where c = if (p == s)
                   then ((show $ inverse!p, show $ inverse!r), LoopSnd, m)
                   else ((show $ inverse!s, show $ inverse!p), LoopRcv, m)
-      Par ggs     -> (replaceState (initialOf m) q0 (S.union (S.singleton qe) (statesOf m),
-                                                     initialOf m,
-                                                     S.union (actionsOf m) (S.singleton $ taul Tau),
-                                                     (transitionsOf m)
-                                                    ),
-                       qe
-                     )
+      Par ggs -> (replaceState (initialOf m) q0 (S.union (S.singleton qe) (statesOf m),
+                                                 initialOf m,
+                                                 S.union (actionsOf m) (S.singleton $ taul Tau),
+                                                 (transitionsOf m)
+                                                ),
+                   qe
+                 )
         where m   = replaceState qe' qe (cfsmProd $ L.map fst mps)
               qe' = L.foldr stateProd "" (L.map snd mps)
               mps = L.map (\g -> proj loopFlag g pmap p q0 qe n) ggs
@@ -273,7 +273,7 @@ proj loopFlag gg pmap p q0 qe n =
                 (L.map fst mps)
               ggs' = L.zip (S.toList ggs) [1 .. S.size ggs]
               mps  = L.map (\(g,i) -> proj loopFlag g pmap p (q0 ++ (show i)) (qe ++ (show i)) n) ggs'
-      Seq ggs     -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
+      Seq ggs -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
         where (_, qe', states, acts, trxs) =
                 L.foldl
                   (\(i, qi, x, y, z) g ->
@@ -287,7 +287,7 @@ proj loopFlag gg pmap p q0 qe n =
                   )
                   (0, q0, S.empty, S.empty, S.empty)
                   ggs
-      Rep g p'    -> if (S.member p bodyptps) then (ggrep, qe') else (dm qe' Tau)
+      Rep g p' -> if (S.member p bodyptps) then (ggrep, qe') else (dm qe' Tau)
         where bodyptps    = ggptp S.empty g
               ggrep       = (S.unions [statesOf body, statesOf loop, statesOf exit],
                              initialOf body,

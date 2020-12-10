@@ -313,6 +313,7 @@ getFlags cmd args =
       "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
       "-rg":xs      -> M.insert "-rg" yes      (getFlags cmd xs)
       "-v":xs       -> M.insert "-v" yes       (getFlags cmd xs)
+      "-l":xs       -> M.insert "-l" yes       (getFlags cmd xs)
       "--sloppy":xs -> M.insert "--sloppy" yes (getFlags cmd xs)
       _             -> error $ usage(cmd)
     CHOR2DOT -> case args of
@@ -375,16 +376,14 @@ pClosure :: Ord vertex => Ord label => Graph vertex label -> (label -> Bool) -> 
 --  POST: returns the closure of vertexes reachable from v with
 --        transitions that satisfy the predicate lpred on labels
 pClosure g lpred v =
-  let ptrans = S.filter (\(_, l, _) -> (lpred l)) (edgesOf g)
-      aux res wl visited =
+  let aux res wl visited =
         case wl of
           []     -> S.insert v res
           v':wl' -> if v' € visited
                     then aux res wl' visited
-                    else aux res' wl'' (v':visited)
-            where vs'  = S.foldl S.union S.empty
-                         (S.map (\(q,_,q') -> if q == v' then (S.singleton q') else S.empty) ptrans)
-                  res' = S.union res vs'
+                    else aux vs' wl'' (v':visited)
+            where vs'  = S.foldl S.union res
+                         (S.map (\(q,l,q') -> if (lpred l) && q == v' then (S.singleton q') else S.empty) (edgesOf g))
                   wl'' = wl' ++ S.toList vs'
   in aux S.empty [v] []
 
@@ -394,10 +393,15 @@ pRemoval :: Ord vertex => Ord label => Graph vertex label -> (label -> Bool) -> 
 -- predicate lpred on labels
 pRemoval g@(vs, v0, _, trxs) lpred = (vs, v0, S.map glabel trxs', trxs')
   where
-    (_, other_trxs) = S.partition (\t -> (lpred $ glabel t)) trxs
-    aux (s, l, s') = case lpred l of
-                       True  -> S.fromList $ L.map (\(l', q) -> (s, l', q)) [(glabel t, gtarget t) | t <- (S.toList other_trxs), gsource t == s']
-                       False -> S.map (\q -> (s, l, q)) (S.delete s' (pClosure g lpred s'))
+    (_, other_trxs) = S.partition (lpred . glabel) trxs
+    aux (s, l, s') =
+      case lpred l of
+        True  ->
+          S.fromList $
+          L.map (\(l', q) -> (s, l', q)) [(glabel t, gtarget t) | t <- (S.toList other_trxs), gsource t € (S.toList $ pClosure g lpred s')]
+          ++
+          L.map (\(q, l') -> (q, l', s')) [(gsource t, glabel t) | t <- (S.toList other_trxs), s € (S.toList $ pClosure g lpred (gtarget t))]
+        False -> S.map (\q -> (s, l, q)) (S.delete s' (pClosure g lpred s'))
     new_trxs = S.unions $ S.toList $ S.map aux trxs
     trxs' = S.union other_trxs new_trxs
 

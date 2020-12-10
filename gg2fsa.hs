@@ -5,6 +5,9 @@
 -- CFSMs of a global graph.
 --
 
+-- let g = Seq [ Emp, Emp, Act ("A", "B") "m" ]
+-- let (m,_) = proj False g (M.fromList [(0,"A"), (1,"B")]) "A" "q0" "qe" 1
+
 import Misc
 import GGParser
 import CFSM (cfsm2String)
@@ -32,10 +35,11 @@ main = do progargs <- getArgs
                     Data.Set.toList names
               -- TODO: fix this String -> [CFSM] -> [[String]] -> System inefficiency 
               let cfsms =
+                    -- Note loops are not projected (1st arg of proj below)
                     L.map (minimise . fst) (L.map (\p -> proj False gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
               let fsa = (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))
               if ("" == flags!"-o")
-                then putStrLn fsa
+                then putStrLn (show cfsms ++ "\n-------------------\n" ++ fsa)
                 else writeToFile (dir ++ baseName ++ ".fsa") fsa
               let hs = L.concat $ L.map (\(p, m) -> "m_" ++ p ++ " = " ++ (show m) ++ "\n\n") (L.zip ptps cfsms)
               if not(flags!"-v" == "")
