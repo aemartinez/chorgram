@@ -32,73 +32,73 @@ gitmsg = "checkpoint"
 #	$(MAKE) all
 
 all:
-	$(MAKE) gmc.hs &&\
-	$(MAKE) BuildGlobal.hs &&\
-	$(MAKE) PomsetSemantics.hs &&\
-	$(MAKE) sgg.hs &&\
-	$(MAKE) sysparser.hs &&\
-	$(MAKE) minimise.hs &&\
-	$(MAKE) gg2pom.hs &&\
-	$(MAKE) pom2gg.hs &&\
-	$(MAKE) gg2fsa.hs
-	$(MAKE) chor2dot.hs &&\
-	$(MAKE) gg2gml.hs
+	$(MAKE) gmc_hs &&\
+	$(MAKE) BuildGlobal_hs &&\
+	$(MAKE) PomsetSemantics_hs &&\
+	$(MAKE) sgg_hs &&\
+	$(MAKE) sysparser_hs &&\
+	$(MAKE) minimise_hs &&\
+	$(MAKE) gg2pom_hs &&\
+	$(MAKE) pom2gg_hs &&\
+	$(MAKE) gg2fsa_hs &&\
+	$(MAKE) chor2dot_hs &&\
+	$(MAKE) gg2gml_hs
 
-gmc.hs: SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuff.hs BranchingProperty.hs PetrifyBridge.hs FSA.hs
-	$(ccmd) $@
+gmc_hs: gmc.hs SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuff.hs BranchingProperty.hs PetrifyBridge.hs
+	$(ccmd) $<
 
-PomsetSemantics.hs: CFSM.hs SyntacticGlobalGraphs.hs Misc.hs DotStuff.hs
-	$(ccmd) $@
+PomsetSemantics_hs: PomsetSemantics.hs CFSM.hs SyntacticGlobalGraphs.hs Misc.hs DotStuff.hs
+	$(ccmd) $<
 
-BuildGlobal.hs: PetriNet.hs Misc.hs GlobalGraph.hs
-	$(ccmd) $@
+BuildGlobal_hs: BuildGlobal.hs PetriNet.hs Misc.hs GlobalGraph.hs
+	$(ccmd) $<
 
-PetriNet.hs: Misc.hs
-	$(ccmd) $@
+PetriNet_hs: PetriNet.hs Misc.hs
+	$(ccmd) $<
 
-sgg.hs: Misc.hs DotStuff.hs GGParser.hs RGGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
-	$(ccmd) $@
+sgg_hs: sgg.hs Misc.hs DotStuff.hs GGParser.hs RGGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
+	$(ccmd) $<
 
-RGGParser.hs: Misc.hs DotStuff.hs GGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
-	$(ccmd) $@
+RGGParser_hs: RGGParser.hs Misc.hs DotStuff.hs GGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
+	$(ccmd) $<
 
-sysparser.hs: SystemParser.hs
-	$(ccmd) $@
+sysparser_hs: sysparser.hs SystemParser.hs
+	$(ccmd) $<
 
-minimise.hs: Misc.hs FSA.hs CFSM.hs DotStuff.hs SystemParser.hs
-	$(ccmd) $@
+minimise_hs: minimise.hs Misc.hs FSA.hs CFSM.hs DotStuff.hs SystemParser.hs
+	$(ccmd) $<
 
-gg2pom.hs: Misc.hs GGParser.hs PomsetSemantics.hs
-	$(ccmd) $@
+gg2pom_hs: gg2pom.hs Misc.hs GGParser.hs PomsetSemantics.hs
+	$(ccmd) $<
 
-pom2gg.hs: Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs
-	$(ccmd) $@
+pom2gg_hs: pom2gg.hs Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs
+	$(ccmd) $<
 
-gg2fsa.hs: Misc.hs GGParser.hs CFSM.hs FSA.hs SyntacticGlobalGraphs.hs
-	$(ccmd) $@
+gg2fsa_hs: gg2fsa.hs Misc.hs GGParser.hs CFSM.hs FSA.hs SyntacticGlobalGraphs.hs
+	$(ccmd) $<
 
-chor2dot.hs: Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs GGParser.hs
-	$(ccmd) $@
+chor2dot_hs: chor2dot.hs Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs GGParser.hs
+	$(ccmd) $<
 
-gg2gml.hs: Misc.hs SyntacticGlobalGraphs.hs GGParser.hs
-	$(ccmd) $@
+gg2gml_hs: gg2gml.hs Misc.hs SyntacticGlobalGraphs.hs GGParser.hs
+	$(ccmd) $<
 
 debug:
-	$(ccdebug) gmc.hs &&\
-	$(ccdebug) BuildGlobal.hs &&\
-	$(ccdebug) GGParser.hs &&\
-#	$(ccdebug) KGparser.hs &&\
-	$(ccdebug) SystemParser.hs &&\
-	$(ccdebug) PomsetSemantics.hs &&\
-	$(ccdebug) sgg.hs &&\
-	$(ccdebug) minimise.hs &&\
-#	$(ccdebug) hgsem.hs &&\
-	$(ccdebug) sysparser.hs\
-	$(ccdebug) gg2pom.hs &&\
-	$(ccdebug) pom2gg.hs &&\
-	$(ccdebug) gg2fsa.hs &&\
-	$(ccmd) chor2dot.hs &&\
-	$(ccdebug) gg2gml.hs
+	$(ccdebug) gmc_hs &&\
+	$(ccdebug) BuildGlobal_hs &&\
+	$(ccdebug) GGParser_hs &&\
+#	$(ccdebug) KGparser_hs &&\
+	$(ccdebug) SystemParser_hs &&\
+	$(ccdebug) PomsetSemantics_hs &&\
+	$(ccdebug) sgg_hs &&\
+	$(ccdebug) minimise_hs &&\
+#	$(ccdebug) hgsem_hs &&\
+	$(ccdebug) sysparser_hs\
+	$(ccdebug) gg2pom_hs &&\
+	$(ccdebug) pom2gg_hs &&\
+	$(ccdebug) gg2fsa_hs &&\
+	$(ccmd) chor2dot_hs &&\
+	$(ccdebug) gg2gml_hs
 
 # To get the stack trace, add +RTS -xc at the end of the gmc or BuildGlobal command
 prof:
