@@ -39,6 +39,7 @@ main = do progargs <- getArgs
                     L.map (minimise . fst) (L.map (\p -> proj False gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
               let fsa = (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))
               if ("" == flags!"-o")
+                then putStrLn $ show fsa
                 else writeToFile (dir ++ baseName ++ ".fsa") fsa
               let hs = L.concat $ L.map (\(p, m) -> "m_" ++ p ++ " = " ++ (show m) ++ "\n\n") (L.zip ptps cfsms)
               if not(flags!"-v" == "")
