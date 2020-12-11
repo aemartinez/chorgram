@@ -44,10 +44,10 @@ all:
 	$(MAKE) chor2dot.hs &&\
 	$(MAKE) gg2gml.hs
 
-gmc.hs: SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuff.hs Dependency.hs PartialOrderReduction.hs BranchingProperty.hs HKCBridge.hs PetrifyBridge.hs
+gmc.hs: SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuff.hs BranchingProperty.hs PetrifyBridge.hs FSA.hs
 	$(ccmd) $@
 
-PomsetSemantics.hs: CFSM.hs SyntacticGlobalGraphs.hs Misc.hs DotStuff.hs 
+PomsetSemantics.hs: CFSM.hs SyntacticGlobalGraphs.hs Misc.hs DotStuff.hs
 	$(ccmd) $@
 
 BuildGlobal.hs: PetriNet.hs Misc.hs GlobalGraph.hs
@@ -74,7 +74,7 @@ gg2pom.hs: Misc.hs GGParser.hs PomsetSemantics.hs
 pom2gg.hs: Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs
 	$(ccmd) $@
 
-gg2fsa.hs: Misc.hs GGParser.hs CFSM.hs FSA.hs
+gg2fsa.hs: Misc.hs GGParser.hs CFSM.hs FSA.hs SyntacticGlobalGraphs.hs
 	$(ccmd) $@
 
 chor2dot.hs: Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs GGParser.hs

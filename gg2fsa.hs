@@ -12,12 +12,12 @@ import Misc
 import GGParser
 import CFSM (cfsm2String)
 import FSA (minimise)
-import Data.Set (toList)
-import Data.List as L
-import Data.Map.Strict as M
 import SyntacticGlobalGraphs
 import System.Environment
 import System.Directory(createDirectoryIfMissing)
+import Data.Set (toList)
+import Data.List as L
+import Data.Map.Strict as M
 
 main :: IO ()
 main = do progargs <- getArgs
@@ -40,7 +40,7 @@ main = do progargs <- getArgs
               let fsa = (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))
               if ("" == flags!"-o")
                 then putStrLn $ show fsa
-                else writeToFile (dir ++ baseName ++ ".fsa") fsa
+                else writeToFile (dir ++ baseName ++ ".fsa ") fsa
               let hs = L.concat $ L.map (\(p, m) -> "m_" ++ p ++ " = " ++ (show m) ++ "\n\n") (L.zip ptps cfsms)
               if not(flags!"-v" == "")
                 then writeToFile (dir ++ baseName ++ ".hs") hs
