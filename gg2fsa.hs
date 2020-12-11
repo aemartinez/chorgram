@@ -5,9 +5,6 @@
 -- CFSMs of a global graph.
 --
 
--- let g = Seq [ Emp, Emp, Act ("A", "B") "m" ]
--- let (m,_) = proj False g (M.fromList [(0,"A"), (1,"B")]) "A" "q0" "qe" 1
-
 import Misc
 import GGParser
 import CFSM (cfsm2String)
@@ -37,10 +34,14 @@ main = do progargs <- getArgs
               let cfsms =
                     -- Note loops are not projected (1st arg of proj below)
                     L.map (minimise . fst) (L.map (\p -> proj False gg (M.fromList $ L.zip (range $ L.length ptps) ptps) p "q0" "qe" 1) ptps)
-              let fsa = (L.concat $ L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms))
+              let fsa = L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms)
               if ("" == flags!"-o")
-                then putStrLn $ show fsa
-                else writeToFile (dir ++ baseName ++ ".fsa ") fsa
+                then putStrLn $ L.concat fsa
+                else do
+                     mapM_
+                       (\(p,m) ->
+                          writeToFile (dir ++ baseName ++ (if p=="" then "" else "_cfsm_" ++ p) ++ ".fsa") m)
+                       ([("", L.concat fsa)] ++ (L.zip ptps fsa))
               let hs = L.concat $ L.map (\(p, m) -> "m_" ++ p ++ " = " ++ (show m) ++ "\n\n") (L.zip ptps cfsms)
               if not(flags!"-v" == "")
                 then writeToFile (dir ++ baseName ++ ".hs") hs
