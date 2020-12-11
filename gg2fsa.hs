@@ -43,12 +43,12 @@ main = do progargs <- getArgs
                           writeToFile (dir ++ baseName ++ (if p=="" then "" else "_cfsm_" ++ p) ++ ".fsa") m)
                        ([("", L.concat fsa)] ++ (L.zip ptps fsa))
               let hs = L.concat $ L.map (\(p, m) -> "m_" ++ p ++ " = " ++ (show m) ++ "\n\n") (L.zip ptps cfsms)
-              if not(flags!"-v" == "")
-                then writeToFile (dir ++ baseName ++ ".hs") hs
+              if flags!"-v" == ""
+                then putStr "" --myPrint flags GG2FSA ("\tresult in " ++ dir ++ baseName ++ ".fsa")
+                else writeToFile (dir ++ baseName ++ ".hs") hs
                      >>=
-                     \_ -> myPrint flags GG2FSA ("\tThe result in " ++ dir ++ baseName ++ ".fsa")
+                     \_ -> myPrint flags GG2FSA ("\tThe communicating system and the single CFSMs are in the files " ++ dir ++ baseName ++ "*.fsa")
                      >>=
                      \_ -> myPrint flags GG2FSA ("\tThe haskell representation of the system is in " ++ dir ++ baseName ++ ".hs")
-                else putStr "" --myPrint flags GG2FSA ("\tresult in " ++ dir ++ baseName ++ ".fsa")
 
 
