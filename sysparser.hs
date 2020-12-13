@@ -1,3 +1,10 @@
+--
+-- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
+--
+-- This main parses a communicating system and prints
+-- its Haskell type
+--
+
 import Misc
 import SystemParser
 import Data.List as L
@@ -23,6 +30,7 @@ main = do progargs <- getArgs
 --              let sys =
 --                    (sysgrammar . lexer) txt
               let sys = parseSystem ext txt
-              writeToFile (dir ++ "parsed_" ++ filename ++ ".txt") (show sys)
-              myPrint flags SYS ("result in " ++ dir ++ "parsed_" ++ filename ++ ".txt")
-              myPrint flags SYS "parsing done"
+              putStr $ show sys
+--              writeToFile (dir ++ "parsed_" ++ filename ++ ".txt") (show sys)
+--              myPrint flags SYS ("result in " ++ dir ++ "parsed_" ++ filename ++ ".txt")
+--              myPrint flags SYS "parsing done"

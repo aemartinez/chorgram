@@ -121,7 +121,8 @@ dual :: LTrans -> LTrans -> Bool
 dual tr tr' = (eventOf tr) == (dualAction (eventOf tr'))
 
 addtrans :: LTrans -> CFSM -> CFSM
-addtrans t@( q, e, q' ) ( states, q0, acts, trxs ) = ( (S.union (S.fromList [q,q']) states), q0, (S.insert e acts), (S.insert t trxs) )
+addtrans t@( q, e, q' ) ( states, q0, acts, trxs ) =
+  ( (S.union (S.fromList [q,q']) states), q0, (S.insert e acts), (S.insert t trxs) )
 
 showDir :: Dir -> Map String String -> String
 showDir d flines
@@ -143,7 +144,8 @@ succ :: CFSM -> State -> Action -> State
 succ m q e = head $ S.toList $ S.map (\(_,_,q') -> q') (S.filter (\(_,e',_) -> e == e') (step m q))
 
 succs :: CFSM -> State -> Set (Action, State)
-succs m q = S.map (\( _, e, q' ) -> ( e, q' )) (step m q)
+succs m q =
+  S.map (\( _, e, q' ) -> ( e, q' )) (step m q)
 
 replaceState :: State -> State -> CFSM -> CFSM
 -- replaceState q q' m replaces q with q' in m (substitution q |--> q')

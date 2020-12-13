@@ -1,8 +1,9 @@
 --
 -- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
--- This main returns a file with the .fsa format of the minimised
--- CFSMs of a global graph.
+-- This main returns files with the .fsa format of the minimised
+-- CFSMs of a g-choreography both for the single CFSMs and the
+-- whole communicating system.
 --
 
 import Misc
