@@ -24,14 +24,19 @@ main = do progargs <- getArgs
               createDirectoryIfMissing True dir
               let ( gg, _ ) =
                     (gcgrammar . GCParser.lexer) ggtxt
-              let iter = (read (flags!"-l"))::Int
+              let iter = (read (flags!"-u"))::Int
               let ( pomsets, _ ) =
                     pomsetsOf gg iter 0
               let aux b ps i =
-                    let (f, ext) = if flags!"--gml" == "yes"
-                                   then (pomset2gml, ".graphml")
-                                   else (show, ".txt")
+                    let (f, ext) =
+                          case flags!"--fmt" of
+                            "gml" -> (pomset2gml, ".graphml")
+                            "hs"  -> (show, ".hs")
+                            _ -> error $ usage GC2POM
                     in case ps of
                          [] -> return ()
                          p:ps' -> writeToFile (dir ++ b ++ (show i) ++ ext) (f p) >>= \_ -> aux b ps' (i+1)
               aux baseName (S.toList pomsets) 0
+              if (flags!"-v" == "")
+                then putStrLn ""
+                else myPrint flags GC2POM ("\tThe results are in " ++ dir)

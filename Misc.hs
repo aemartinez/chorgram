@@ -235,40 +235,43 @@ info =
   ),
   (GG, ["Transforms a petri net into a global graph",
         "[-d dirpath] filename",
-        "default: \t dirpath = " ++ dirpath]
+        "default: dirpath = " ++ dirpath]
   ),
   (GC, ["semantics of g-choreographies",
         "[-d dirpath] [-l] [--sloppy] filename [-rg]",
-        "default: \t dirpath = " ++ dirpath,
+        "default: dirpath = " ++ dirpath,
         "\t --sloppy: suppresses the check for well-formedness; set by default",
         "\t -l: adds a legend to dot; not set by default"]
   ),
   (GC2DOT, ["returns the dot format of a g-choreography",
             "[-d dirpath] [-fmt (gml | gc | gmldiff | sloppygml)] filename",
-            "default: \t dirpath = " ++ dirpath,
+            "default: dirpath = " ++ dirpath,
             "\t -fmt = gc"]
   ),
   (GC2FSA, ["returns the communicating system and the proejctions of g-choreography",
             "[-o file-prefix] [-v] filename",
-            "default: \t file-prefix = \"\"    when non-empty file-prefix is used to prefix the filenames where results are stored"]
+            "default: file-prefix = \"\"    when non-empty file-prefix is used to prefix the filenames where results are stored"]
   ),
-  (GC2POM, ["computes the pomset semantics of a g-choreography",
-            "gc2pom [-d dirpath] [-l iter] [--gml] filename",
-            "default: \t dirpath = " ++ dirpath,
-            "\t-l 1"]
+  (GC2POM, ["computes the pomset semantics of a g-choreography and saves it into a file",
+            "gc2pom [-d dirpath] [-u iter] [--fmt (hs | gml)] [-v] filename",
+            "default: dirpath = " ++ dirpath,
+            "\t --fmt hs   generates the haskell representation, otherwise the graphml format",
+            "\t iter = 1   this is the unfolding depth of loops"]
   ),
   (POM2GC, ["computes the g-choreography of a pomset (if any)",
             "[-d dirpath] filename",
-            "default: \t dirpath = " ++ dirpath]
+            "default: dirpath = " ++ dirpath]
   ),
-  (GC2GML, ["[ -d dirpath | -o output-file] filename",
-            "default: \t dirpath = " ++ dirpath]
+  (GC2GML, ["converts a g-choreography into the gml format unfoldling loops according to the -u option",
+            "[-u iter] [-o output-file] filename",
+            "default: iter = 1"
+           ]
   ),
   (SYS, ["prints the haskell data structure corresponding to a communicating system",
          "filename"]
   ),
   (MIN, ["determinises or minimises CFSMs",
-         "[-D (min | det)] [-d dirpath] [-v] filename",
+         "[-D (min | det | no)] [-d dirpath] [-v] filename",
          "default: dirpath = " ++ dirpath,
          "\t -D min"]
   ),
@@ -277,7 +280,7 @@ info =
            "default: dirpath = " ++ dirpath]
   )
   -- (PROD, ["[-d dirpath] [-l] filename",
-  --         "default: \t dirpath = " ++ dirpath]
+  --         "default: dirpath = " ++ dirpath]
   -- )
   ]
 
@@ -346,9 +349,9 @@ defaultFlags cmd = M.insert "-o" ""
                       GC     -> M.fromList [("-d",dirpath), ("-l",""), ("--sloppy","yes")]
                       GC2DOT -> M.fromList [("-d",dirpath), ("-fmt","gc")]
                       GC2FSA -> M.fromList [("-o",""), ("-v","")]
-                      GC2POM -> M.fromList [("-d",dirpath), ("-v",""), ("--gml", "no"), ("-l","1")]
+                      GC2POM -> M.fromList [("-d",dirpath), ("-v",""), ("--fmt", "hs"), ("-u","1")]
                       POM2GC -> M.fromList [("-d",dirpath)]
-                      GC2GML -> M.fromList [("-d",dirpath), ("-v",""), ("-l","1")] -- '-l' unfolding of loops
+                      GC2GML -> M.fromList [("-d",dirpath), ("-v",""), ("-u","1")] -- '-l' unfolding of loops
                       SYS    -> M.fromList [("-d",dirpath), ("-v","")]
                       MIN    -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
                       HGSEM  -> M.fromList [("-d",dirpath), ("-v","")]
@@ -435,14 +438,15 @@ getFlags cmd args =
     --   "-d":y:xs -> M.insert "-d"  y    (getFlags cmd xs)
     --   _         -> error $ usage(cmd)
     GC2POM -> case args of
-      []            -> defaultFlags(cmd)
-      "--gml":xs    -> M.insert "--gml" yes    (getFlags cmd xs)
-      "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
-      "-l":y:xs     -> M.insert "-l"  y        (getFlags cmd xs)
-      _         -> error $ usage(cmd)
+      []           -> defaultFlags(cmd)
+      "--fmt":y:xs -> M.insert "--fmt" y (getFlags cmd xs)
+      "-d":y:xs    -> M.insert "-d" y    (getFlags cmd xs)
+      "-u":y:xs    -> M.insert "-u" y    (getFlags cmd xs)
+      "-v":xs      -> M.insert "-v" yes  (getFlags cmd xs)
+      _            -> error $ usage(cmd)
     POM2GC -> case args of
-      []            -> defaultFlags(cmd)
-      "-d":y:xs     -> M.insert "-d"  y        (getFlags cmd xs)
+      []        -> defaultFlags(cmd)
+      "-d":y:xs -> M.insert "-d"  y        (getFlags cmd xs)
       _         -> error $ usage(cmd)
 
 --
