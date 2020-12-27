@@ -16,7 +16,7 @@ import System.Directory(createDirectoryIfMissing)
 main :: IO ()
 main = do progargs <- getArgs
           if L.null progargs
-            then error $ usage(GC2GML)
+            then putStrLn $ usage GC2GML
             else do
               let ( sourcefile, flags ) = getCmd GC2GML progargs
               ggtxt <- readFile sourcefile

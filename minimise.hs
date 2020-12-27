@@ -16,7 +16,7 @@ import System.FilePath.Posix
 main :: IO ()
 main = do progargs <- getArgs
           if L.null progargs
-            then error $ usage(MIN)
+            then putStrLn $ usage MIN
             else do
               let flags =
                     getFlags MIN (L.take ((length progargs) - 1) progargs)

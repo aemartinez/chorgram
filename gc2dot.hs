@@ -1,7 +1,7 @@
 --
 -- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
--- This file converts sgg or graphml files of choreographies in dot
+-- This file converts gc or graphml files of choreographies in dot
 --
 
 import Misc
@@ -18,7 +18,7 @@ main :: IO ()
 main = do progargs <- getArgs
           flines <- getDotConf
           if L.null progargs
-            then error $ usage(GC2DOT)
+            then putStrLn $ usage GC2DOT
             else do
               let ( sourcefile, flags ) = getCmd GC2DOT progargs
               ggtxt <- readFile sourcefile
@@ -27,7 +27,7 @@ main = do progargs <- getArgs
               let dir = flags!"-d"
               createDirectoryIfMissing True dir
               case flags!"-fmt" of
-                "sgg" -> do
+                "gc" -> do
                   let ( gg, _ ) =
                         (gcgrammar . GCParser.lexer) ggtxt
                   writeToFile (dir ++ baseName ++ ".dot") ("# Input @ " ++ sourcefile ++ "\n\n" ++ show gg)

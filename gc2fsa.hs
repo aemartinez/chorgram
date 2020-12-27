@@ -20,7 +20,7 @@ import Data.Map.Strict as M
 main :: IO ()
 main = do progargs <- getArgs
           if L.null progargs
-            then error $ usage(GC2FSA)
+            then putStrLn $ usage GC2FSA
             else do
               let ( sourcefile, flags ) = getCmd GC2FSA progargs
               ggtxt <- readFile sourcefile
@@ -41,15 +41,16 @@ main = do progargs <- getArgs
                 else do
                      mapM_
                        (\(p,m) ->
-                          writeToFile (dir ++ baseName ++ (if p=="" then "" else "_cfsm_" ++ p) ++ ".fsa") m)
+                          writeToFile ((flags!"-o") ++ (if p=="" then "" else "_cfsm_" ++ p) ++ ".fsa") m)
                        ([("", L.concat fsa)] ++ (L.zip ptps fsa))
+
 ----              let hs = L.concat $ L.map (\(p, m) -> "m_" ++ p ++ " = " ++ (show m) ++ "\n\n") (L.zip ptps cfsms)
-              if flags!"-v" == ""
-                then putStr "" --myPrint flags GC2FSA ("\tresult in " ++ dir ++ baseName ++ ".fsa")
-                else ---- writeToFile (dir ++ baseName ++ ".hs") hs
+--              if flags!"-v" == ""
+--                then putStr "" --myPrint flags GC2FSA ("\tresult in " ++ dir ++ baseName ++ ".fsa")
+--                else ---- writeToFile (dir ++ baseName ++ ".hs") hs
                      ---- >>=
                      ---- \_ ->
-                     myPrint flags GC2FSA ("\tThe communicating system and the single CFSMs are in the *.fsa files in " ++ dir)
+--                     myPrint flags GC2FSA ("\tThe communicating system and the single CFSMs are in the *.fsa files in " ++ dir)
 ----                     >>=
 ----                     \_ -> myPrint flags GC2FSA ("\tThe haskell data structure of the system is in " ++ dir ++ baseName ++ ".hs")
 

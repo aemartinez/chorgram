@@ -24,11 +24,9 @@ import System.Directory(createDirectoryIfMissing)
 
 main :: IO ()
 main = do progargs <- getArgs
-          putStrLn "----"
           flines   <- getDotConf
-          putStrLn "----"
           if L.null progargs
-            then error $ usage(GC)
+            then putStrLn $ usage GC
             else do
               let ( sourcefile, flags ) = getCmd GC progargs
               ggtxt <- readFile sourcefile

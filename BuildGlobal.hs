@@ -16,7 +16,7 @@ import Data.Map
 main :: IO ()
 main =  do progargs <- getArgs
            if L.null progargs
-             then error $ usage(GG)
+             then putStrLn $ usage GG
              else do
                   let flags = getFlags GG $ L.take ((length progargs) - 1) progargs
                   let filename = (flags ! "-d") ++ (if (""== (flags ! "-d")) then "" else [pathSeparator]) ++ (takeFileName $ (last progargs))

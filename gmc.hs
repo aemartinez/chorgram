@@ -61,7 +61,7 @@ printingThread system ts@(confs, _, _, _) filename flines var = do
 main :: IO ()
 main =  do progargs <- getArgs
            if L.null progargs
-             then error $ usage(GMC)
+             then putStrLn $ usage GMC
              else do
                let (sourcefile, flags) =
                      getCmd GMC progargs

@@ -16,7 +16,7 @@ main :: IO ()
 main = do progargs <- getArgs
           flines   <- getDotConf
           if L.null progargs
-            then error $ usage(HGSEM)
+            then putStrLn $ usage HGSEM
             else do
               let ( sourcefile, flags ) = getCmd HGSEM progargs
               ggtxt <- readFile sourcefile

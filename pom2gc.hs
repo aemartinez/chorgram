@@ -14,7 +14,7 @@ import System.Directory(createDirectoryIfMissing)
 main :: IO ()
 main = do progargs <- getArgs
           if L.null progargs
-            then error $ usage(GC2POM)
+            then putStrLn $ usage GC2POM
             else do
               let ( sourcefile, flags ) = getCmd GC2POM progargs
               let ( dir, _, baseName, _ ) =
