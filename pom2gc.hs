@@ -14,9 +14,9 @@ import System.Directory(createDirectoryIfMissing)
 main :: IO ()
 main = do progargs <- getArgs
           if L.null progargs
-            then error $ usage(GG2POM)
+            then error $ usage(GC2POM)
             else do
-              let ( sourcefile, flags ) = getCmd GG2POM progargs
+              let ( sourcefile, flags ) = getCmd GC2POM progargs
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
               createDirectoryIfMissing True dir
@@ -35,5 +35,5 @@ main = do progargs <- getArgs
               case gg of
                 Nothing -> putStrLn "The pomset in not representable as global graph"
                 Just gg' ->
-                  writeToFile (dir ++ baseName ++ ".graphml") (gg2graphml gg') >>=
-                  \_ -> writeToFile (dir ++ baseName ++ ".dot") (gg2dot gg' baseName sizeNode)
+                  writeToFile (dir ++ baseName ++ ".graphml") (gc2graphml gg') >>=
+                  \_ -> writeToFile (dir ++ baseName ++ ".dot") (gc2dot gg' baseName sizeNode)

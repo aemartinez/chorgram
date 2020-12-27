@@ -323,12 +323,12 @@ node2dot :: DotNode -> DotString
 -- DOT representation of GG nodes
 node2dot n = (if n < 0 then "_" else "") ++ (show $ abs n)
       
-gg2dot :: GG -> String -> DotString -> DotString
+gc2dot :: GG -> String -> DotString -> DotString
 --
--- gg2dot gg name transforms a GG in dot format
+-- gc2dot gg name transforms a GG in dot format
 -- TODO: improve on fresh node generation
 --
-gg2dot gg name nodeSize =
+gc2dot gg name nodeSize =
   let maxIdx vs = aux vs 0
         where aux [] v = v + 1
               aux ((v', _):vs') v = aux vs' (max v v')
@@ -453,12 +453,12 @@ gmlrename excluded n j s = if (excluded n)
                            else let id = (if n > 0 then n + j else n - j)
                                 in replace ("<node id=\"" ++ (show n)) ("<node id=\"" ++ (show id)) s
 
-gg2graphml :: GG -> String
+gc2graphml :: GG -> String
 --
--- gg2dot gg name transforms a GG in dot format
+-- gc2dot gg name transforms a GG in dot format
 -- TODO: improve on fresh node generation
 --
-gg2graphml gg =
+gc2graphml gg =
   let header   = --"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:java=\"http://www.yworks.com/xml/yfiles-common/1.0/java\" xmlns:sys=\"http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0\" xmlns:x=\"http://www.yworks.com/xml/yfiles-common/markup/2.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:y=\"http://www.yworks.com/xml/graphml\" xmlns:yed=\"http://www.yworks.com/xml/yed/3\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd\">\n"
         "<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n"
       ogate    = "  <key attr.name=\"open\" attr.type=\"string\" for=\"node\" id=\"open\" />\n"

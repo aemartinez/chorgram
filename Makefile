@@ -15,34 +15,34 @@ gitmsg = "checkpoint"
 
 #
 # Examples of usage of scripts:
-# python cfsm2gg.py -l -df png -dir <path-to-results-directory> <path-to-file>
-# sgg.py --dot "Tpng" --dot "Gsplines=ortho" --sloppy -dir <path-to-results-directory> <path-to-file>
-# cfsm2gg.py -sn -D det -dir /tmp ~/Dropbox/chorgram_experiments/gmc/bank > /tmp/b.txt
+# python cfsm2gc.py -l -df png -dir <path-to-results-directory> <path-to-file>
+# gc.py --dot "Tpng" --dot "Gsplines=ortho" --sloppy -dir <path-to-results-directory> <path-to-file>
+# cfsm2gc.py -sn -D det -dir /tmp ~/Dropbox/chorgram_experiments/gmc/bank > /tmp/b.txt
 # minimise -v -D det -d experiments/open_chor/ experiments/open_chor/ex4_1.fsa
-# gg2fsa ~/Dropbox/chorgram_experiments/examples_sgg/two_buyers_protocol.sgg > experiments/results/two_buyers_protocol/sys.fsa
-# gg2pom -l 2 --gml -d /tmp/ experiments/test/atm.sgg
-# gg2gml -o t.x experiments/test/atm.sgg 
-# pom2gg -d /tmp experiments/jlamp2020/csl7/cc3/closure/0.graphml 
-# chor2dot -d /tmp ~/Dropbox/chorgram_experiments/examples_sgg/two_buyers_protocol.sgg 
-# chor2dot -d /tmp/ -fmt gmldiff /tmp/t.graphml
+# gc2fsa ~/Dropbox/chorgram_experiments/examples_gc/two_buyers_protocol.gc > experiments/results/two_buyers_protocol/sys.fsa
+# gc2pom -l 2 --gml -d /tmp/ experiments/test/atm.gc
+# gc2gml -o t.x experiments/test/atm.gc 
+# pom2gc -d /tmp experiments/jlamp2020/csl7/cc3/closure/0.graphml 
+# gc2dot -d /tmp ~/Dropbox/chorgram_experiments/examples_gc/two_buyers_protocol.gc 
+# gc2dot -d /tmp/ -fmt gmldiff /tmp/t.graphml
 
 
 # gmc dependencies
-# compile: gmc.hs BuildGlobal.hs GGParser.hs SystemParser.hs PomsetSemantics.hs sgg.hs sysparser.hs minimise.hs gg2fsa.hs gg2pom.hs pom2gg.hs minimise.hs gg2gml.hs
+# compile: gmc.hs BuildGlobal.hs GCParser.hs SystemParser.hs PomsetSemantics.hs gc.hs sysparser.hs minimise.hs gc2fsa.hs gc2pom.hs pom2gc.hs minimise.hs gc2gml.hs
 #	$(MAKE) all
 
 all:
 	$(MAKE) gmc_hs &&\
 	$(MAKE) BuildGlobal_hs &&\
 	$(MAKE) PomsetSemantics_hs &&\
-	$(MAKE) sgg_hs &&\
+	$(MAKE) gc_hs &&\
 	$(MAKE) sysparser_hs &&\
 	$(MAKE) minimise_hs &&\
-	$(MAKE) gg2pom_hs &&\
-	$(MAKE) pom2gg_hs &&\
-	$(MAKE) gg2fsa_hs &&\
-	$(MAKE) chor2dot_hs &&\
-	$(MAKE) gg2gml_hs
+	$(MAKE) gc2pom_hs &&\
+	$(MAKE) pom2gc_hs &&\
+	$(MAKE) gc2fsa_hs &&\
+	$(MAKE) gc2dot_hs &&\
+	$(MAKE) gc2gml_hs
 
 gmc_hs: gmc.hs SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuff.hs BranchingProperty.hs PetrifyBridge.hs
 	$(ccmd) $<
@@ -56,10 +56,10 @@ BuildGlobal_hs: BuildGlobal.hs PetriNet.hs Misc.hs GlobalGraph.hs
 PetriNet_hs: PetriNet.hs Misc.hs
 	$(ccmd) $<
 
-sgg_hs: sgg.hs Misc.hs DotStuff.hs GGParser.hs RGGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
+gc_hs: gc.hs Misc.hs DotStuff.hs GCParser.hs RGCParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGC.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
 	$(ccmd) $<
 
-RGGParser_hs: RGGParser.hs Misc.hs DotStuff.hs GGParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGG.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
+RGCParser_hs: RGCParser.hs Misc.hs DotStuff.hs GCParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGC.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
 	$(ccmd) $<
 
 sysparser_hs: sysparser.hs SystemParser.hs
@@ -68,51 +68,51 @@ sysparser_hs: sysparser.hs SystemParser.hs
 minimise_hs: minimise.hs Misc.hs FSA.hs CFSM.hs DotStuff.hs SystemParser.hs
 	$(ccmd) $<
 
-gg2pom_hs: gg2pom.hs Misc.hs GGParser.hs PomsetSemantics.hs
+gc2pom_hs: gc2pom.hs Misc.hs GCParser.hs PomsetSemantics.hs
 	$(ccmd) $<
 
-pom2gg_hs: pom2gg.hs Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs
+pom2gc_hs: pom2gc.hs Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs
 	$(ccmd) $<
 
-gg2fsa_hs: gg2fsa.hs Misc.hs GGParser.hs CFSM.hs FSA.hs SyntacticGlobalGraphs.hs
+gc2fsa_hs: gc2fsa.hs Misc.hs GCParser.hs CFSM.hs FSA.hs SyntacticGlobalGraphs.hs
 	$(ccmd) $<
 
-chor2dot_hs: chor2dot.hs Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs GGParser.hs
+gc2dot_hs: gc2dot.hs Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs GCParser.hs
 	$(ccmd) $<
 
-gg2gml_hs: gg2gml.hs Misc.hs SyntacticGlobalGraphs.hs GGParser.hs
+gc2gml_hs: gc2gml.hs Misc.hs SyntacticGlobalGraphs.hs GCParser.hs
 	$(ccmd) $<
 
 debug:
 	$(ccdebug) gmc_hs &&\
 	$(ccdebug) BuildGlobal_hs &&\
-	$(ccdebug) GGParser_hs &&\
+	$(ccdebug) GCParser_hs &&\
 #	$(ccdebug) KGparser_hs &&\
 	$(ccdebug) SystemParser_hs &&\
 	$(ccdebug) PomsetSemantics_hs &&\
-	$(ccdebug) sgg_hs &&\
+	$(ccdebug) gc_hs &&\
 	$(ccdebug) minimise_hs &&\
 #	$(ccdebug) hgsem_hs &&\
 	$(ccdebug) sysparser_hs\
-	$(ccdebug) gg2pom_hs &&\
-	$(ccdebug) pom2gg_hs &&\
-	$(ccdebug) gg2fsa_hs &&\
-	$(ccmd) chor2dot_hs &&\
-	$(ccdebug) gg2gml_hs
+	$(ccdebug) gc2pom_hs &&\
+	$(ccdebug) pom2gc_hs &&\
+	$(ccdebug) gc2fsa_hs &&\
+	$(ccmd) gc2dot_hs &&\
+	$(ccdebug) gc2gml_hs
 
 # To get the stack trace, add +RTS -xc at the end of the gmc or BuildGlobal command
 prof:
 	$(ccmd) $(profiling) gmc.hs && ghc --make  $(profiling) BuildGlobal.hs
 
 clean:
-	@rm -f *~ *.o *.hi SystemParser.* GGParser.* KGparser.* gmc sgg BuildGlobal sysparser $(cfgfile) *.info *.log
+	@rm -f *~ *.o *.hi SystemParser.* GCParser.* KGparser.* gmc gc BuildGlobal sysparser $(cfgfile) *.info *.log
 	$(info >>> cleaning done.)
 
 parser:
-	happy -a -i  GGGrammar.y -o GGParser.hs && $(ccmd) GGParser.hs
+	happy -a -i  GCGrammar.y -o GCParser.hs && $(ccmd) GCParser.hs
 	happy -a -i  SystemGrammar.y -o SystemParser.hs && $(ccmd) SystemParser.hs
-	happy -a -i  RGGGrammar.y -o RGGParser.hs && $(ccmd) RGGParser.hs
-#	happy -a -i  KGGrammar.y -o KGparser.hs && $(ccmd) KGparser.hs
+	happy -a -i  RGCGrammar.y -o RGCParser.hs && $(ccmd) RGCParser.hs
+#	happy -a -i  KGCrammar.y -o KGparser.hs && $(ccmd) KGparser.hs
 
 config:
 	@echo "experiments\t"$(experimentsdir) > $(cfgdir)/$(cfgfile)

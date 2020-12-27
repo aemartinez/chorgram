@@ -4,7 +4,7 @@
 
 
 import Misc
-import GGParser
+import GCParser
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict
@@ -15,15 +15,15 @@ import System.Directory(createDirectoryIfMissing)
 main :: IO ()
 main = do progargs <- getArgs
           if L.null progargs
-            then error $ usage(GG2POM)
+            then error $ usage(GC2POM)
             else do
-              let ( sourcefile, flags ) = getCmd GG2POM progargs
+              let ( sourcefile, flags ) = getCmd GC2POM progargs
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
               createDirectoryIfMissing True dir
               let ( gg, _ ) =
-                    (gggrammar . GGParser.lexer) ggtxt
+                    (gcgrammar . GCParser.lexer) ggtxt
               let iter = (read (flags!"-l"))::Int
               let ( pomsets, _ ) =
                     pomsetsOf gg iter 0

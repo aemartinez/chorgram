@@ -4,7 +4,7 @@
 -- This module contains function to project a GG & REG to Erlang
 --
 
-module ErlanGG where
+module ErlanGC where
 
 import SyntacticGlobalGraphs
 import Misc
@@ -46,20 +46,20 @@ erlAtom pre s = case s of
 guard2erl :: ReversionGuard -> String
 guard2erl g = if M.null g then "\" \"" else "\"" ++ show g ++ "\""
 --
--- rgg2erl ln _rgg generates a string encoding _rgg in Erlang's format
+-- rgc2erl ln _rgg generates a string encoding _rgg in Erlang's format
 --         for the REGs' syntax
 -- Pre: Branches must me decorated with the selector and guards
 --      must be Erlang expressions and ln is a strictly positive integer
 -- Post: a string in the format expected by encoding.erl
 --
-rgg2erl :: Int -> RGG -> (String, Int)
-rgg2erl ln _rgg =
+rgc2erl :: Int -> RGG -> (String, Int)
+rgc2erl ln _rgg =
   let sep = ", "
   in case _rgg of
     Tca (s,r) m -> (erlTuple [show ln, erlTuple ["com", erlAtom "ptp_" s, erlAtom "ptp_" r, erlAtom "msg_" m] ], 1 + ln)
     Rap rggs ->
       let aux = \rg -> \(t, l) ->
-            let (t', l') = rgg2erl l rg in
+            let (t', l') = rgc2erl l rg in
             case (t, t') of
               ("","") -> ("", l')
               ("", _) -> (erlList t', l')
@@ -68,7 +68,7 @@ rgg2erl ln _rgg =
       in (erlTuple [show ln', erlTuple ["par", "[" ++ threads ++ "]"]], 1 + ln')
     Arb p branch ->
       let aux = \(rg, g) -> \(t, l) ->
-            let (t', l') = rgg2erl l rg in
+            let (t', l') = rgc2erl l rg in
               case (t', t) of
                 ("", _)  -> (t, l)
                 (_, "")  -> (erlList $ erlTuple [erlList t', guard2erl g], l')
@@ -77,7 +77,7 @@ rgg2erl ln _rgg =
       in (erlTuple [show ln', erlTuple ["bra", erlAtom "ptp_" p, erlList branches]], 1 + ln')
     Qes rggs ->
       let aux = \rg -> \(t,l) ->
-            let (t',l') = rgg2erl l rg in
+            let (t',l') = rgc2erl l rg in
             case (t,t') of
               ("","") -> ("", l')
               ("", _) -> (t', l')
@@ -85,6 +85,6 @@ rgg2erl ln _rgg =
           (seq, ln') = L.foldr aux ("", ln) rggs
       in (erlList seq, ln') 
     Per p rgg g ->
-      let (body, ln') = rgg2erl ln rgg
+      let (body, ln') = rgc2erl ln rgg
       in (erlTuple [show ln', erlTuple ["rec", erlAtom "ptp_" p, erlTuple [erlList body, guard2erl g]]], 1 + ln')
 

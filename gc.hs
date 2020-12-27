@@ -9,14 +9,14 @@
 
 import Misc
 import DotStuff
-import GGParser
-import RGGParser
+import GCParser
+import RGCParser
 import CFSM
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
 import SyntacticGlobalGraphs
-import ErlanGG
+import ErlanGC
 import HGSemantics
 import BCGBridge
 import System.Environment
@@ -28,36 +28,36 @@ main = do progargs <- getArgs
           flines   <- getDotConf
           putStrLn "----"
           if L.null progargs
-            then error $ usage(SGG)
+            then error $ usage(GC)
             else do
-              let ( sourcefile, flags ) = getCmd SGG progargs
+              let ( sourcefile, flags ) = getCmd GC progargs
               ggtxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
               createDirectoryIfMissing True dir              
               if (M.notMember "-rg" flags)
                 then do
-                myPrint flags SGG "start"
+                myPrint flags GC "start"
                 let ( gg, names ) =
-                      (gggrammar . GGParser.lexer) ggtxt
+                      (gcgrammar . GCParser.lexer) ggtxt
                 let ptps =
                       list2map $ S.toList names
                 writeToFile (dir ++ "in_sgg_parsed.txt") ("Input @ " ++ sourcefile ++ "\n\n" ++ show gg)
-                  >>= \_ -> myPrint flags SGG ("\t" ++ dir ++ "in_sgg_parsed.txt: is the abstract syntax tree of the gg in input")
+                  >>= \_ -> myPrint flags GC ("\t" ++ dir ++ "in_sgg_parsed.txt: is the abstract syntax tree of the gg in input")
                 -- let norm = normGG gg
                 -- let fact = factorise norm
                 -- let fact = factorise gg
-                let sgg2file s s' graph =
-                      writeToFile (dir ++ s) (gg2dot graph (baseName ++ s') (flines!ggsizenode))
-                sgg2file "graph_sgg.dot" ""  gg   >>= \_ -> myPrint flags SGG ("\t" ++ dir ++ "graph_sgg.dot: is the input gg")
-                -- sgg2file "norm_sgg.dot" "norm" norm >>= \_ -> putStrLn $ "\t" ++ dir ++ "norm_sgg.dot:  is the normalised initial gg"
-                -- sgg2file "fact_sgg.dot" "fact" fact >>= \_ -> putStrLn $ "\t" ++ dir ++ "fact_sgg.dot:  is the factorised initial gg"
+                let sgc2file s s' graph =
+                      writeToFile (dir ++ s) (gc2dot graph (baseName ++ s') (flines!ggsizenode))
+                sgc2file "graph_sgg.dot" ""  gg   >>= \_ -> myPrint flags GC ("\t" ++ dir ++ "graph_sgg.dot: is the input gg")
+                -- sgc2file "norm_sgg.dot" "norm" norm >>= \_ -> putStrLn $ "\t" ++ dir ++ "norm_sgg.dot:  is the normalised initial gg"
+                -- sgc2file "fact_sgg.dot" "fact" fact >>= \_ -> putStrLn $ "\t" ++ dir ++ "fact_sgg.dot:  is the factorised initial gg"
                 let ( _, hg ) =
                       -- sem (M.member "--sloppy" flags) (-1) fact ptps
                       sem (M.member "--sloppy" flags) (-1) gg ptps
                 writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines)
                   >>=
-                  \_ -> myPrint flags SGG ("\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg")
+                  \_ -> myPrint flags GC ("\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg")
                 let path i ext =
                       mkFileName (ptps!i) dir "cfsm" ext
                 let legend m i =
@@ -71,8 +71,8 @@ main = do progargs <- getArgs
                       else ""
                 let output l =
                       case l of
-                        []   -> (myPrint flags SGG "end")
-                        i:ls -> (myPrint flags SGG ("\t" ++ (path i "") ++ " is the machine for participant " ++ (ptps!i) ++ " in both .fsa and .aut format"))
+                        []   -> (myPrint flags GC "end")
+                        i:ls -> (myPrint flags GC ("\t" ++ (path i "") ++ " is the machine for participant " ++ (ptps!i) ++ " in both .fsa and .aut format"))
                           >>= (\_ -> writeToFile (path i ".dot") (dottifyCfsm cfsm (ptps!i) (legend cfsm i) flines) )
                           >>= (\_ -> writeToFile (path i ".aut") (cfsm2bcg cfsm flines) )
                           >>= (\_ -> writeToFile (path i ".fsa") (cfsm2String (ptps!i) cfsm) )
@@ -82,7 +82,7 @@ main = do progargs <- getArgs
                 else do
                 -- TODO: the compilation to erlang should be better integrated with the rest
                 let (rgg, _) =
-                      (rgggrammar . RGGParser.lexer) ggtxt
+                      (rgcgrammar . RGCParser.lexer) ggtxt
                 writeToFile (dir ++ "in_rgg_parsed.txt") (show rgg)
                   >>=
-                  (\_ -> writeToFile (dir ++ "reg.txt") (if (head $ fst (rgg2erl 1 rgg)) == '[' then fst (rgg2erl 1 rgg) else erlList $ fst (rgg2erl 1 rgg)))
+                  (\_ -> writeToFile (dir ++ "reg.txt") (if (head $ fst (rgc2erl 1 rgg)) == '[' then fst (rgc2erl 1 rgg) else erlList $ fst (rgc2erl 1 rgg)))

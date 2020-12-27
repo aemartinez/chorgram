@@ -63,7 +63,7 @@
 -- after '..', so is the rest of a line.
 --
 -- The parser generator is Haskell's 'Happy' and the parser
--- (GGParser.hs) is obtained by typing 'make parser'.
+-- (GCParser.hs) is obtained by typing 'make parser'.
 --
 -- Basic syntactic checks are made during the parsing (e.g, (i) that
 -- sender and receiver of interactions have to be different and (2)
@@ -75,9 +75,9 @@
 -- TODO: add line numbers
 --
 {
-module GGParser where
+module GCParser where
 import SyntacticGlobalGraphs
-import ErlanGG
+import ErlanGC
 import Data.Set as S (empty, singleton, intersection, union, unions, difference, fromList, difference, toList, member, foldr, Set)
 import Data.List as L
 import qualified Data.Map as M (keys, empty, insert, union, Map)
@@ -85,7 +85,7 @@ import Misc
 import CFSM
 }
 
-%name gggrammar
+%name gcgrammar
 %tokentype { Token }
 %error { parseError }
 
@@ -335,5 +335,5 @@ ggsptp ps g = case g of
                Rep g' p    -> S.union ps (ggsptp (S.singleton p) g')
 
 myErr :: String -> a
-myErr err = error ("sggparser: ERROR - " ++ err)
+myErr err = error ("gcparser: ERROR - " ++ err)
 }

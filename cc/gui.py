@@ -40,7 +40,7 @@ class Workspace:
 
     def gen_choreography_graphml(self):
         os.system(
-            "gg2gml %s > %s"
+            "gc2gml %s > %s"
             % (self.sgg_absolute_path, self.get_root_folder() + "/choreography.graphml")
         )
 
@@ -82,7 +82,7 @@ class Workspace:
             glob.glob(join(self.get_semantics_folder() + '*.dot')):
             os.remove(f) # Cleanup old semantics
 
-        cmd = "gg2pom -d %s/ --gml %s" % (
+        cmd = "gc2pom -d %s/ --gml %s" % (
             os.path.dirname(self.sgg_absolute_path),
             self.sgg_absolute_path,
         )
@@ -408,7 +408,7 @@ UI_INFO = """
       <menuitem action='CC3' />
       <menu action='CounterexampleMenu'>
         <menuitem action='pom2sgg' />
-        <menuitem action='sgg2diff' />
+        <menuitem action='sgc2diff' />
       </menu>
       <separator />
       <menuitem action='Termination' />
@@ -594,11 +594,11 @@ class MainWindow(Gtk.Window):
         action_pom2sgg.connect("activate", self.on_menu_pom2sgg)
         action_group.add_action_with_accel(action_pom2sgg, "<Control>g")
 
-        action_sgg2diff = Gtk.Action(
-            "sgg2diff", "Compare", "Compare Choreography", None
+        action_sgc2diff = Gtk.Action(
+            "sgc2diff", "Compare", "Compare Choreography", None
         )
-        action_sgg2diff.connect("activate", self.on_menu_sgg2diff)
-        action_group.add_action_with_accel(action_sgg2diff, "<Control>d")
+        action_sgc2diff.connect("activate", self.on_menu_sgc2diff)
+        action_group.add_action_with_accel(action_sgc2diff, "<Control>d")
 
         action_termination = Gtk.Action(
             "Termination", "Termination", "Termination Condition", None
@@ -744,7 +744,7 @@ class MainWindow(Gtk.Window):
         win = CostWindow(self)
         win.show()
 
-    def on_menu_sgg2diff(self, widget):
+    def on_menu_sgc2diff(self, widget):
         model, treeiter = self.selection.get_selected()
         if treeiter is None:
             return

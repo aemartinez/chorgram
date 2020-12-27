@@ -241,7 +241,7 @@ sem iter mu gg ptps =
                               S.singleton e1,
                               S.singleton e2
                              )
-                        else error (msgFormat SGG "Something wrong in a fork: " ++ (show (Par ggs)))
+                        else error (msgFormat GC "Something wrong in a fork: " ++ (show (Par ggs)))
    Bra ggs     -> (i, fromJust hg')
      where ( mu', l )  = semList iter mu (S.toList ggs) ptps
            i   = 1 + mu'
@@ -249,16 +249,16 @@ sem iter mu gg ptps =
            hg' = if iter || (wb ggs && isJust hgu)
                  then unionHG hgu
                       (Just ( S.fromList $ L.concat $ L.map aux l, e, e', fstOfHG $ fromJust hgu, lstOfHG $ fromJust hgu ))
-                 else error (msgFormat SGG "Violation of well-branchedness: " ++ show (Bra ggs))
+                 else error (msgFormat GC "Violation of well-branchedness: " ++ show (Bra ggs))
            e   = S.singleton (i, Nothing)
            e'  = S.singleton ((-i), Nothing)
-           aux = \x -> if isJust x then let x' = fromJust x in [(e, minOfHG x')] ++ [(maxOfHG x', e')] else error (msgFormat SGG "ERROR ...")
+           aux = \x -> if isJust x then let x' = fromJust x in [(e, minOfHG x')] ++ [(maxOfHG x', e')] else error (msgFormat GC "ERROR ...")
    Seq ggs     -> case ggs of
                    []            -> ( mu, emptyHG )
                    [g']          -> sem iter mu g' ptps
                    gg':gg'':ggs' -> if iter || (ws pg pg')
                                     then hgs
-                                    else error (msgFormat SGG "Violation of well-sequencedness: " ++ show (Seq ggs))
+                                    else error (msgFormat GC "Violation of well-sequencedness: " ++ show (Seq ggs))
                      where hgs           = (mu'', (seqHG pg pg'))
                            ( mu', pg )   = sem iter mu gg' ptps
                            ( mu'', pg' ) = sem iter mu' (Seq (gg'':ggs')) ptps
@@ -266,7 +266,7 @@ sem iter mu gg ptps =
      where ps                = ggptp S.empty gg'
            ( mu', hgb )     = if iter || S.member p ps
                               then sem iter mu gg' ptps
-                              else error (msgFormat SGG "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
+                              else error (msgFormat GC "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))
            ( i, suf )       = ( 1+mu' , show i )
            ( eL, eE )       = (S.singleton (i, Just ( ( p , p ) , LoopSnd , lpref ++ suf )), S.singleton ((-i), Just ( ( p , p ) , LoopRcv , epref ++ suf )))
            rel              = S.fromList ([( S.singleton e , eE ) | e <- S.toList $ maxOfHG $ hgb] ++
@@ -307,7 +307,7 @@ cp2dot ev = "node" ++ (replaceChar '-' '_' $ show $ fst ev) ++ suf
                      ( _, Receive, _ ) -> "rcv"
                      ( _, LoopSnd, _ ) -> subjectOf act
                      ( _, LoopRcv, _ ) -> subjectOf act
-                     _                 -> error (msgFormat SGG "ERROR " ++ show ev)
+                     _                 -> error (msgFormat GC "ERROR " ++ show ev)
 
 ev2dot :: E -> Map String String -> String
 ev2dot ev@(_, Nothing) _  = cp2dot ev ++ cpV
@@ -321,4 +321,4 @@ ev2dot ev@(_, Just ((s,r), d, m)) flines =
                   Receive -> " ? " ++ (rmChar '\"' $ show m) ++ "\", shape=" ++ (flines!evshape)
                   LoopSnd -> (rmChar '\"' $ show m) ++ "\", shape=" ++ (flines!evshape) ++ ", fontcolor=" ++ (flines!loopcol)
                   LoopRcv -> (rmChar '\"' $ show m) ++ "\", shape=" ++ (flines!evshape) ++ ", fontcolor=" ++ (flines!loopcol)
-                  _       -> error (msgFormat SGG "ERROR " ++ show (d, (s,r), m))
+                  _       -> error (msgFormat GC "ERROR " ++ show (d, (s,r), m))

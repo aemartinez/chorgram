@@ -2,8 +2,8 @@ CHORGRAM
 
 A tool chain for
 
-- converting communicating finite state machines (CFSMs) to global graphs (GGs)
-- projecting GGs on CFSMs
+- converting communicating finite state machines (CFSMs) to global choreographies (GCs)
+- projecting GCs on CFSMs
 - check multiparty compatibility
 
 Chorgram is written in haskell and uses hkc and petrify as auxiliary
@@ -23,21 +23,21 @@ BCGBridge.hs: from our notation to BCG. This is very much work in progress to
 
 BranchingProperty.hs: checks the branching property
 
-BuildGlobal.hs: from petri nets in GGs
+BuildGlobal.hs: from petri nets in global graphs
 
 CFSM.hs: data and functions on CFSMs
 
-cfsm2gg.py: checks gmc of system of CFSMs and builds its GG
+cfsm2gc.py: checks gmc of system of CFSMs and builds its GC
 
 Dependency.hs
 
 DotStuff.hs: configuration for dot
 
-gg2fsa.hs: projects a global graph on its CFSMs in .fsa format
+gc2fsa.hs: projects a global graph on its CFSMs in .fsa format
 
-GGGrammar.y: lex/yacc parser generator for the syntax of GGs
+GCGrammar.y: lex/yacc parser generator for the syntax of GCs
 
-GlobalGraph.hs: data and functions on GGs
+GlobalGraph.hs: data and functions on GCs
 
 gmc.hs: generalised multiparty compatibility checker
 
@@ -55,13 +55,13 @@ PetriNet.hs: utils on Petri nets
 
 Representability.hs: representability checker
 
-SemanticGlobalGraphs.hs: computes the semantics of GGs...well, not really yet! The 'sloopy' option is the default, due to my 'lazy' option
+SemanticGlobalGraphs.hs: computes the semantics of GCs...well, not really yet! The 'sloopy' option is the default, due to my 'lazy' option
 
-sgg.hs: extracts the semantics of a GGs and its (non minimised) projections
+gc.hs: extracts the semantics of a GCs and its (non minimised) projections
 
-sgg.py: python script for post-processing of the output of sgg.hs
+gc.py: python script for post-processing of the output of gc.hs
 
-SyntacticGlobalGraphs.hs: an editor for GGs
+SyntacticGlobalGraphs.hs: an editor for GCs
 
 sysparser.hs: parses the process algebraic presentation of systems CFSMs (.sys format)
 

@@ -29,7 +29,7 @@ class Workspace():
         return os.path.dirname(self.sgg_absolute_path)
     
     def gen_choreography_graphml(self):
-        os.system("../gg2gml %s > %s" % (
+        os.system("../gc2gml %s > %s" % (
             self.sgg_absolute_path,
             self.get_root_folder() + "/choreography.graphml"
         ))
@@ -68,7 +68,7 @@ class Workspace():
     def gen_semantics(self):
         # I should ensure this goes in the third position and remove all the past semantics from the tree
         self.delete_folder(self.get_semantics_folder())
-        cmd = "../gg2pom -d %s/ --gml %s" % (
+        cmd = "../gc2pom -d %s/ --gml %s" % (
             self.get_root_folder(), 
             self.sgg_absolute_path
         )
@@ -323,7 +323,7 @@ UI_INFO = """
       <menuitem action='CC3' />
       <menu action='CounterexampleMenu'>
         <menuitem action='pom2sgg' />
-        <menuitem action='sgg2diff' />
+        <menuitem action='sgc2diff' />
       </menu>
       <separator />
       <menuitem action='Termination' />
@@ -504,9 +504,9 @@ class MainWindow(Gtk.Window):
         action_pom2sgg.connect("activate", self.on_menu_pom2sgg)
         action_group.add_action_with_accel(action_pom2sgg, "<Control>g")
 
-        action_sgg2diff = Gtk.Action("sgg2diff", "Compare", "Compare Choreography", None)
-        action_sgg2diff.connect("activate", self.on_menu_sgg2diff)
-        action_group.add_action_with_accel(action_sgg2diff, "<Control>d")
+        action_sgc2diff = Gtk.Action("sgc2diff", "Compare", "Compare Choreography", None)
+        action_sgc2diff.connect("activate", self.on_menu_sgc2diff)
+        action_group.add_action_with_accel(action_sgc2diff, "<Control>d")
         
         action_termination = Gtk.Action("Termination", "Termination", "Termination Condition", None)
         action_termination.connect("activate", self.on_menu_termination)
@@ -633,7 +633,7 @@ class MainWindow(Gtk.Window):
         win = CostWindow(self)
         win.show()
         
-    def on_menu_sgg2diff(self, widget):
+    def on_menu_sgc2diff(self, widget):
         model, treeiter = self.selection.get_selected()
         if treeiter is None:
             return

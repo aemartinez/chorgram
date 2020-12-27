@@ -33,4 +33,4 @@ main = do progargs <- getArgs
                     sem (M.member "--sloppy" flags) (-1) gg ptps
               writeToFile (dir ++ "sem_sgg.dot") (hg2dot hg flines)
                 >>=
-                \_ -> myPrint flags SGG ("\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg")
+                \_ -> myPrint flags GC ("\t" ++ dir ++ "sem_sgg.dot: is the semantics of the initial gg")

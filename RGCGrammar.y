@@ -29,9 +29,9 @@
 -- TODO: add line numbers
 --
 {
-module RGGParser where
+module RGCParser where
 import SyntacticGlobalGraphs
-import ErlanGG
+import ErlanGC
 import Data.List as L
 import Data.Set as S (empty, null, intersection, union, difference, toList, fromList, member, Set)
 import qualified Data.Map as M (keys, empty, insert, union, Map)
@@ -39,7 +39,7 @@ import Misc
 import CFSM
 }
 
-%name rgggrammar
+%name rgcgrammar
 %tokentype { Token }
 %error { parseError }
 -- %monad { P }
@@ -290,5 +290,5 @@ emptyG g = case g of
              _   -> False
   
 myErr :: String -> a
-myErr err = error ("sggparser: ERROR - " ++ err)
+myErr err = error ("sgcparser: ERROR - " ++ err)
 }

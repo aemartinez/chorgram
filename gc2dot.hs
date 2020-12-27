@@ -6,7 +6,7 @@
 
 import Misc
 import DotStuff
-import GGParser
+import GCParser
 import Data.List as L
 import Data.Map.Strict as M
 import SyntacticGlobalGraphs
@@ -18,9 +18,9 @@ main :: IO ()
 main = do progargs <- getArgs
           flines <- getDotConf
           if L.null progargs
-            then error $ usage(CHOR2DOT)
+            then error $ usage(GC2DOT)
             else do
-              let ( sourcefile, flags ) = getCmd CHOR2DOT progargs
+              let ( sourcefile, flags ) = getCmd GC2DOT progargs
               ggtxt <- readFile sourcefile
               let ( _, _, baseName, _ ) =
                     setFileNames sourcefile flags
@@ -29,14 +29,14 @@ main = do progargs <- getArgs
               case flags!"-fmt" of
                 "sgg" -> do
                   let ( gg, _ ) =
-                        (gggrammar . GGParser.lexer) ggtxt
+                        (gcgrammar . GCParser.lexer) ggtxt
                   writeToFile (dir ++ baseName ++ ".dot") ("# Input @ " ++ sourcefile ++ "\n\n" ++ show gg)
-                  writeToFile (dir ++ baseName ++ ".dot") (gg2dot gg baseName (flines!ggsizenode))
+                  writeToFile (dir ++ baseName ++ ".dot") (gc2dot gg baseName (flines!ggsizenode))
                 "gml" -> do
                   xml <- readFile sourcefile
                   case pomset2gg $ xgml2pomset xml of
                     Nothing -> writeToFile (dir ++ baseName ++ ".dot") "Nothing"
-                    Just gg' -> writeToFile (dir ++ baseName ++ ".dot") (gg2dot gg' baseName sizeNode)
+                    Just gg' -> writeToFile (dir ++ baseName ++ ".dot") (gc2dot gg' baseName sizeNode)
                 "gmldiff" -> do
                   xml <- readFile sourcefile
                   writeToFile (dir ++ baseName ++ ".dot") (xgmldiff2dot baseName xml flines)

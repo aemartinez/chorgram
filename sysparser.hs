@@ -2,7 +2,7 @@
 -- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
 -- This main parses a communicating system and prints
--- its Haskell type
+-- its corresponding Haskell's data structure
 --
 
 import Misc
@@ -24,13 +24,7 @@ main = do progargs <- getArgs
               let filename =
                     takeFileName sourcefile
               txt <- readFile sourcefile
-              let (dir, _, _, ext) =
+              let (_, _, _, ext) =
                     setFileNames filename flags
---              let _ = lexer txt
---              let sys =
---                    (sysgrammar . lexer) txt
               let sys = parseSystem ext txt
               putStr $ show sys
---              writeToFile (dir ++ "parsed_" ++ filename ++ ".txt") (show sys)
---              myPrint flags SYS ("result in " ++ dir ++ "parsed_" ++ filename ++ ".txt")
---              myPrint flags SYS "parsing done"
