@@ -22,6 +22,7 @@ data Command = GMC
   | GC
   | GC2DOT
   | GC2FSA
+  | PROJ
   | GC2POM
   | POM2GC
   | GC2GML
@@ -30,7 +31,9 @@ data Command = GMC
   | HGSEM -- deprecated
 --  | PROD
    deriving (Ord, Eq)
-data Flag    = Deadlock | Action | Config | Path | Prop deriving (Eq)
+
+data Flag    = Deadlock | Action | Config | Path | Prop
+   deriving (Eq)
 
 -- Some useful functions
 
@@ -248,9 +251,14 @@ info =
             "default: dirpath = " ++ dirpath,
             "\t -fmt = gc"]
   ),
-  (GC2FSA, ["returns the communicating system and the proejctions of g-choreography",
-            "[-o file-prefix] [-v] filename",
-            "default: file-prefix = \"\"    when non-empty file-prefix is used to prefix the filenames where results are stored"]
+  (GC2FSA, ["returns the communicating system and the projections of g-choreography in the fsa format",
+            "[-o pref] [-v] filename",
+            "pref is used to prefix the filenames where results are stored"]
+  ),
+  (PROJ, ["returns the fsa format of the projection of a g-choreography on a specific participant",
+          "[-D (min | det | no)] [-l (True | False)] [-v] filename ptp",
+            "default: -D no",
+            "\t -l False"]
   ),
   (GC2POM, ["computes the pomset semantics of a g-choreography and saves it into a file",
             "gc2pom [-d dirpath] [-u iter] [--fmt (hs | gml)] [-v] filename",
@@ -284,28 +292,29 @@ info =
   -- )
   ]
 
-getUsage :: Command -> String
-getUsage cmd =
+usage :: Command -> String
+usage cmd =
   let (descr, use) = (head $ info!cmd, tail $ info!cmd)
       msg = L.foldr (\s ln -> s ++ "\n\t" ++ ln) "" use
   in  cmdName cmd ++ ": " ++ descr ++ "\n   Usage: " ++ cmdName(cmd) ++ " " ++ msg
 
-usage :: Command -> String
--- Message on how to use a command
-usage cmd =
-  case cmd of
-      GMC -> getUsage GMC -- "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-nf] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ./aux \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
-      GG -> getUsage GG -- "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-      GC -> getUsage GC -- "gc [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-      GC2DOT -> getUsage GC2DOT -- "gc2dot [-d dirpath] [-fmt gml | -fmt sgg | -fmt sloppygml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t-fmt = sgg\n\t"
-      GC2FSA -> getUsage GC2FSA -- "gc2fsa [-v] [-d dirpath | -o output-file] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
-      GC2POM -> getUsage GC2POM -- "gc2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
-      POM2GC -> getUsage POM2GC -- "pom2gc [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
-      GC2GML -> getUsage GC2GML -- "gc2gml [ -d dirpath | -o output-file] filename\n\t default: \t dirpath = " ++ dirpath
-      SYS -> getUsage SYS -- "sysparser filename"
-      MIN -> getUsage MIN -- "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
-      HGSEM -> getUsage HGSEM -- "hgsem [-d dirpath] [-v] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
-      -- PROD     -> getUsage PROD -- "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+-- usage :: Command -> String
+-- -- Message on how to use a command
+-- usage cmd =
+--   case cmd of
+--       GMC -> getUsage GMC -- "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-nf] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ./aux \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
+--       GG -> getUsage GG -- "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+--       GC -> getUsage GC -- "gc [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+--       GC2DOT -> getUsage GC2DOT -- "gc2dot [-d dirpath] [-fmt gml | -fmt sgg | -fmt sloppygml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t-fmt = sgg\n\t"
+--       GC2FSA -> getUsage GC2FSA -- "gc2fsa [-v] [-d dirpath | -o output-file] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+--       PROJ -> getUsage PROJ -- "gc2fsa [-v] [-d dirpath | -o output-file] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+--       GC2POM -> getUsage GC2POM -- "gc2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
+--       POM2GC -> getUsage POM2GC -- "pom2gc [-d dirpath] filename\n\t default: \t dirpath = " ++ dirpath
+--       GC2GML -> getUsage GC2GML -- "gc2gml [ -d dirpath | -o output-file] filename\n\t default: \t dirpath = " ++ dirpath
+--       SYS -> getUsage SYS -- "sysparser filename"
+--       MIN -> getUsage MIN -- "minimise [-D detmode] [-d dirpath] [-v] filename\n\t default: dirpath = " ++ dirpath ++ "\n\t\t  detmode = min\n"
+--       HGSEM -> getUsage HGSEM -- "hgsem [-d dirpath] [-v] [--sloppy] filename\n\t default: \t dirparth = " ++ dirpath ++ "\n"
+--       -- PROD     -> getUsage PROD -- "cfsmprod [-d dirpath] [-l] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
                
 
 cmdName :: Command -> String
@@ -316,6 +325,7 @@ cmdName cmd =
     GC      -> "gc"
     GC2DOT -> "gc2dot"
     GC2FSA   -> "gc2fsa"
+    PROJ   -> "proj"
     GC2POM   -> "gc2pom"
     POM2GC   -> "pom2gc"
     GC2GML   -> "gc2gml"
@@ -349,6 +359,7 @@ defaultFlags cmd = M.insert "-o" ""
                       GC     -> M.fromList [("-d",dirpath), ("-l",""), ("--sloppy","yes")]
                       GC2DOT -> M.fromList [("-d",dirpath), ("-fmt","gc")]
                       GC2FSA -> M.fromList [("-o",""), ("-v","")]
+                      PROJ   -> M.fromList [("-D","no"), ("-l", "False"), ("-v","")]
                       GC2POM -> M.fromList [("-d",dirpath), ("-v",""), ("--fmt", "hs"), ("-u","1")]
                       POM2GC -> M.fromList [("-d",dirpath)]
                       GC2GML -> M.fromList [("-d",dirpath), ("-v",""), ("-u","1")] -- '-l' unfolding of loops
@@ -408,6 +419,10 @@ getFlags cmd args =
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
       "-o":y:xs     -> M.insert "-o" y   (getFlags cmd xs)
+      _             -> error $ usage(cmd)
+    PROJ -> case args of
+      []            -> defaultFlags(cmd)
+      "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GC2GML -> case args of
       []            -> defaultFlags(cmd)

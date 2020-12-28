@@ -77,6 +77,10 @@ pom2gc_hs: pom2gc.hs Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuf
 gc2fsa_hs: gc2fsa.hs Misc.hs GCParser.hs CFSM.hs FSA.hs SyntacticGlobalGraphs.hs
 	$(ccmd) $<
 
+proj_hs: proj.hs Misc.hs GCParser.hs CFSM.hs FSA.hs SyntacticGlobalGraphs.hs
+	$(ccmd) $<
+
+
 gc2dot_hs: gc2dot.hs Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs GCParser.hs
 	$(ccmd) $<
 
