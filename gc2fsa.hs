@@ -32,8 +32,8 @@ main = do progargs <- getArgs
               let ptp_index =
                     M.fromList $ L.zip (range $ L.length ptps) ptps
               let cfsms =
-                    -- Note loops are not projected (1st arg of proj below)
-                    L.map (minimise . fst) (L.map (\p -> proj False gg ptp_index p "q0" "qe" 1) ptps)
+                    -- Note loops are not projected (1st arg of projx below)
+                    L.map (minimise . fst) (L.map (\p -> projx False gg ptp_index p "q0" "qe" 1) ptps)
               let fsa = L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms)
               if ("" == flags!"-o")
                 then putStrLn $ L.concat fsa

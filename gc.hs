@@ -75,7 +75,7 @@ main = do progargs <- getArgs
                           >>= (\_ -> writeToFile (path i ".aut") (cfsm2bcg cfsm flines) )
                           >>= (\_ -> writeToFile (path i ".fsa") (cfsm2String (ptps!i) cfsm) )
                           >>= (\_ -> output ls)
-                          where cfsm = fst $ proj False gg ptps (ptps!i) "q0" "qe" 0
+                          where cfsm = fst $ projx False gg ptps (ptps!i) "q0" "qe" 0
                 output $ range (S.size names)
                 else do
                 -- TODO: the compilation to erlang should be better integrated with the rest

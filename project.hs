@@ -11,7 +11,7 @@ import DotStuff (getDotConf)
 import GCParser (gcgrammar, lexer)
 import CFSM (cfsm2String, emptyCFSM, dottifyCfsm)
 import FSA (minimise,determinise)
-import SyntacticGlobalChoreographies (proj,unfoldingProj)
+import SyntacticGlobalChoreographies (proj)
 import System.Environment
 import Data.Set (toList)
 import Data.List as L
@@ -38,16 +38,7 @@ main = do progargs <- getArgs
                 then do 
                   let loops =
                         (read (flags!"-u"))::Int
-                  let cfsm =
-                        case L.elemIndex ptp ptps of
-                          Nothing -> emptyCFSM -- error $ msgFormat PROJ (ptp ++ " does not belong to " ++ (show ptps))
-                          Just _ ->
-                            (case flags!"-D" of
-                               "min" -> (minimise . fst)
-                               "det" -> (determinise . fst)
-                               _ -> fst
-                            ) (proj (loops > -1) gc ptps_map ptp "q0" "qe" 1)
-                      cfsm_ =
+                      cfsm =
                         case L.elemIndex ptp ptps of
                           Nothing -> emptyCFSM
                           Just _ ->
@@ -55,8 +46,8 @@ main = do progargs <- getArgs
                                "min" -> (minimise . fst)
                                "det" -> (determinise . fst)
                                _ -> fst
-                            ) (unfoldingProj gc "q0" "qe" ptp loops ptps_map)
-                  putStrLn $ --CFSM.cfsm2String ptp cfsm_ ++
-                    "\n\n" ++ (CFSM.dottifyCfsm cfsm_ ptp "" flines)
+                            ) (proj gc "q0" "qe" ptp loops ptps_map)
+                  putStrLn $ --CFSM.cfsm2String ptp cfsm ++
+                    "\n\n" ++ (CFSM.dottifyCfsm cfsm ptp "" flines)
                 else do mapM_ (\(k,v) -> putStrLn $ (show k) ++ " |--> " ++ (show v)) (M.toList ptps_map)
 
