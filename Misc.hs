@@ -250,18 +250,21 @@ info =
         "\t -l: adds a legend to dot; not set by default"]
   ),
   (GC2DOT, ["returns the dot format of a g-choreography",
-            "[-d dirpath] [-fmt (gml | gc | gmldiff | sloppygml)] filename",
+            "[-d dirpath] [--fmt (gml | gc | gmldiff | sloppygml)] filename",
             "default: dirpath = " ++ dirpath,
-            "\t -fmt = gc"]
+            "\t --fmt = gc"]
   ),
   (GC2FSA, ["returns the communicating system and the projections of g-choreography in the fsa format",
-            "[-o pref] [-v] filename",
-            "pref is used to prefix the filenames where results are stored"]
+            "[-o pref] [-u iter] [-v] filename",
+            "default: iter = -1",
+            "\t pref is used to prefix the filenames where results are stored"]
   ),
   (PROJ, ["returns the fsa format of the projection of a g-choreography on a specific participant",
-          "[-D (min | det | no)] [-u iter] [-v] filename ptp",
+          "[-D (min | det | no)] [--fmt (dot | fsa)] [-u iter] [-v] filename ptp",
             "default: -D no",
+            "\t --fmt fsa",
             "\t -v diplays the mapping index |--> ptp",
+            "\t if ptp=\"all\", all participants are projected",
             "\t iter = -1 (non unfolding semantics)"]
   ),
   (GC2POM, ["computes the pomset semantics of a g-choreography and saves it into a file",
@@ -309,7 +312,7 @@ usage cmd =
 --       GMC -> getUsage GMC -- "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-nf] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ./aux \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
 --       GG -> getUsage GG -- "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
 --       GC -> getUsage GC -- "gc [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
---       GC2DOT -> getUsage GC2DOT -- "gc2dot [-d dirpath] [-fmt gml | -fmt sgg | -fmt sloppygml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t-fmt = sgg\n\t"
+--       GC2DOT -> getUsage GC2DOT -- "gc2dot [-d dirpath] [--fmt (gml | sgg | sloppygml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t-fmt = sgg\n\t"
 --       GC2FSA -> getUsage GC2FSA -- "gc2fsa [-v] [-d dirpath | -o output-file] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
 --       PROJ -> getUsage PROJ -- "gc2fsa [-v] [-d dirpath | -o output-file] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
 --       GC2POM -> getUsage GC2POM -- "gc2pom [-d dirpath] [-l iter] [--gml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t\t\t-l 1\n"
@@ -361,9 +364,9 @@ defaultFlags cmd = M.insert "-o" ""
                                            ]
                       GG     -> M.fromList [("-d",dirpath), ("-v","")]
                       GC     -> M.fromList [("-d",dirpath), ("-l",""), ("--sloppy","yes")]
-                      GC2DOT -> M.fromList [("-d",dirpath), ("-fmt","gc")]
-                      GC2FSA -> M.fromList [("-o",""), ("-v","")]
-                      PROJ   -> M.fromList [("-D","no"), ("-u", "-1"), ("-v","")]
+                      GC2DOT -> M.fromList [("-d",dirpath), ("--fmt","gc")]
+                      GC2FSA -> M.fromList [("-o",""), ("-u", "-1"), ("-v","")]
+                      PROJ   -> M.fromList [("-D","no"), ("-u", "-1"), ("--fmt", "fsa"), ("-v","")]
                       GC2POM -> M.fromList [("-d",dirpath), ("-v",""), ("--fmt", "hs"), ("-u","1")]
                       POM2GC -> M.fromList [("-d",dirpath)]
                       GC2GML -> M.fromList [("-d",dirpath), ("-v",""), ("-u","1")] -- '-l' unfolding of loops
@@ -416,17 +419,19 @@ getFlags cmd args =
       _             -> error $ usage(cmd)
     GC2DOT -> case args of
       []            -> defaultFlags(cmd)
-      "-fmt":y:xs   -> M.insert "-fmt" y (getFlags cmd xs)
+      "--fmt":y:xs  -> M.insert "--fmt" y (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GC2FSA -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "-u":y:xs     -> M.insert "-u" y (getFlags cmd xs)
       "-o":y:xs     -> M.insert "-o" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
     PROJ -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "--fmt":y:xs  -> M.insert "--fmt" y (getFlags cmd xs)
       "-u":y:xs     -> M.insert "-u" y (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GC2GML -> case args of

@@ -35,7 +35,6 @@ all:
 	$(MAKE) gmc_hs &&\
 	$(MAKE) BuildGlobal_hs &&\
 	$(MAKE) PomsetSemantics_hs &&\
-	$(MAKE) gc_hs &&\
 	$(MAKE) sysparser_hs &&\
 	$(MAKE) minimise_hs &&\
 	$(MAKE) gc2pom_hs &&\
@@ -44,6 +43,7 @@ all:
 	$(MAKE) gc2fsa_hs &&\
 	$(MAKE) gc2dot_hs &&\
 	$(MAKE) gc2gml_hs
+#	$(MAKE) gcsem_hs &&\
 
 gmc_hs: gmc.hs SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuff.hs BranchingProperty.hs PetrifyBridge.hs
 	$(ccmd) $<
@@ -57,8 +57,8 @@ BuildGlobal_hs: BuildGlobal.hs PetriNet.hs Misc.hs GlobalGraph.hs
 PetriNet_hs: PetriNet.hs Misc.hs
 	$(ccmd) $<
 
-gc_hs: gc.hs Misc.hs DotStuff.hs GCParser.hs RGCParser.hs CFSM.hs SyntacticGlobalChoreographies.hs ErlanGC.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
-	$(ccmd) $<
+# gcsem_hs: gcsem.hs Misc.hs DotStuff.hs GCParser.hs RGCParser.hs CFSM.hs SyntacticGlobalChoreographies.hs ErlanGC.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
+#	$(ccmd) $<
 
 RGCParser_hs: RGCParser.hs Misc.hs DotStuff.hs GCParser.hs CFSM.hs SyntacticGlobalChoreographies.hs ErlanGC.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
 	$(ccmd) $<

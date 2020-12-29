@@ -1,7 +1,7 @@
 --
 -- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
--- This main returns minimised CFSMs in the fsa format of a
+-- This main returns minimised projections in the fsa format of a
 -- g-choreography both for the single CFSMs and the whole
 -- communicating system.
 --
@@ -29,11 +29,12 @@ main = do progargs <- getArgs
               let ptps =
                     Data.Set.toList names
               -- TODO: fix this String -> [CFSM] -> [[String]] -> System inefficiency
-              let ptp_index =
+              let ptp_map =
                     M.fromList $ L.zip (range $ L.length ptps) ptps
+              let loops =
+                    (read (flags!"-u"))::Int
               let cfsms =
-                    -- Note loops are not projected (1st arg of projx below)
-                    L.map (minimise . fst) (L.map (\p -> projx False gg ptp_index p "q0" "qe" 1) ptps)
+                    L.map (minimise . fst) (L.map (\p -> projx False gg ptp_map p "q0" "qe" 1) ptps)
               let fsa = L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms)
               if ("" == flags!"-o")
                 then putStrLn $ L.concat fsa

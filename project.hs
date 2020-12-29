@@ -1,15 +1,15 @@
 --
 -- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
--- This main returns files with the .fsa format of the minimised
--- CFSMs of a g-choreography both for the single CFSMs and the
--- whole communicating system.
+-- This main returns the fsa or dot format of the projections of a
+-- g-choreography both for the single CFSMs and the whole
+-- communicating system
 --
 
 import Misc
 import DotStuff (getDotConf)
 import GCParser (gcgrammar, lexer)
-import CFSM (cfsm2String, emptyCFSM, dottifyCfsm)
+import CFSM (cfsm2String, emptyCFSM, dottifyCfsm, printCfsm)
 import FSA (minimise,determinise)
 import SyntacticGlobalChoreographies (proj)
 import System.Environment
@@ -38,16 +38,37 @@ main = do progargs <- getArgs
                 then do 
                   let loops =
                         (read (flags!"-u"))::Int
-                      cfsm =
-                        case L.elemIndex ptp ptps of
-                          Nothing -> emptyCFSM
-                          Just _ ->
-                            (case flags!"-D" of
-                               "min" -> (minimise . fst)
-                               "det" -> (determinise . fst)
-                               _ -> fst
-                            ) (proj gc "q0" "qe" ptp loops ptps_map)
-                  putStrLn $ --CFSM.cfsm2String ptp cfsm ++
-                    "\n\n" ++ (CFSM.dottifyCfsm cfsm ptp "" flines)
+                      handleND =
+                        case flags!"-D" of
+                          "min" -> (minimise . fst)
+                          "det" -> (determinise . fst)
+                          _ -> fst
+                      output =
+                        if ptp=="all"
+                        then
+                          let cs =
+                                case (flags!"--fmt") of
+                                  "fsa" -> L.map (\p -> CFSM.cfsm2String p (handleND $ proj gc "q0" "qe" p loops ptps_map)) ptps
+                                  "dot" -> L.map (\(p,s) -> "\nsubgraph " ++ p ++ "{\n label=\"" ++ p ++ "\"\n" ++ s ++ "\n}")
+                                                 (L.map (\p -> (p, CFSM.printCfsm (handleND $ proj gc "q0" "qe" p loops ptps_map) p flines)) ptps)
+                                  _ -> error $ msgFormat PROJ ("unknown format " ++ (flags!"--fmt"))
+                              (pre,post) =
+                                case (flags!"--fmt") of
+                                  "fsa" -> ("", "")
+                                  "dot" -> ("digraph all{\n", "\n}")
+                                  _ -> error $ msgFormat PROJ ("unknown format " ++ (flags!"--fmt"))
+                          in pre ++ (L.foldr (++) "" cs) ++ post
+                        else
+                          case L.elemIndex ptp ptps of
+                            Nothing ->
+                              if (flags!"--fmt") == "fsa"
+                              then CFSM.cfsm2String ptp emptyCFSM
+                              else dottifyCfsm emptyCFSM ptp "" flines
+                            Just _ ->
+                              case (flags!"--fmt") of
+                                "fsa" -> CFSM.cfsm2String ptp (handleND (proj gc "q0" "qe" ptp loops ptps_map))
+                                "dot" -> dottifyCfsm (handleND (proj gc "q0" "qe" ptp loops ptps_map)) ptp "" flines
+                                _ -> error $ msgFormat PROJ ("unknown format " ++ (flags!"--fmt"))
+                  putStrLn output
                 else do mapM_ (\(k,v) -> putStrLn $ (show k) ++ " |--> " ++ (show v)) (M.toList ptps_map)
 

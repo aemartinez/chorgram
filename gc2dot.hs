@@ -26,7 +26,7 @@ main = do progargs <- getArgs
                     setFileNames sourcefile flags
               let dir = flags!"-d"
               createDirectoryIfMissing True dir
-              case flags!"-fmt" of
+              case flags!"--fmt" of
                 "gc" -> do
                   let ( gg, _ ) =
                         (gcgrammar . GCParser.lexer) ggtxt
@@ -43,4 +43,4 @@ main = do progargs <- getArgs
                 "sloppygml" -> do
                   xml <- readFile sourcefile
                   writeToFile (dir ++ baseName ++ ".dot") (xgml2dot baseName xml flines)
-                _ -> error ("ERROR: unknown format " ++ show (flags!"-fmt"))
+                _ -> error ("ERROR: unknown format " ++ show (flags!"--fmt"))
