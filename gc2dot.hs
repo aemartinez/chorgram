@@ -9,7 +9,7 @@ import DotStuff
 import GCParser
 import Data.List as L
 import Data.Map.Strict as M
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import PomsetSemantics
 import System.Environment
 import System.Directory(createDirectoryIfMissing)

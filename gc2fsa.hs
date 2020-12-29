@@ -10,7 +10,7 @@ import Misc
 import GCParser
 import CFSM (cfsm2String)
 import FSA (minimise)
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import System.Environment
 import Data.Set (toList)
 import Data.List as L

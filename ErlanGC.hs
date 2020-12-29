@@ -6,7 +6,7 @@
 
 module ErlanGC where
 
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import Misc
 import CFSM
 import Data.List as L

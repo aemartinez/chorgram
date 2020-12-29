@@ -76,7 +76,7 @@
 --
 {
 module GCParser where
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import ErlanGC
 import Data.Set as S (empty, singleton, intersection, union, unions, difference, fromList, difference, toList, member, foldr, Set)
 import Data.List as L

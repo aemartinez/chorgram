@@ -39,6 +39,7 @@ all:
 	$(MAKE) sysparser_hs &&\
 	$(MAKE) minimise_hs &&\
 	$(MAKE) gc2pom_hs &&\
+	$(MAKE) project_hs &&\
 	$(MAKE) pom2gc_hs &&\
 	$(MAKE) gc2fsa_hs &&\
 	$(MAKE) gc2dot_hs &&\
@@ -47,7 +48,7 @@ all:
 gmc_hs: gmc.hs SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuff.hs BranchingProperty.hs PetrifyBridge.hs
 	$(ccmd) $<
 
-PomsetSemantics_hs: PomsetSemantics.hs CFSM.hs SyntacticGlobalGraphs.hs Misc.hs DotStuff.hs
+PomsetSemantics_hs: PomsetSemantics.hs CFSM.hs SyntacticGlobalChoreographies.hs Misc.hs DotStuff.hs
 	$(ccmd) $<
 
 BuildGlobal_hs: BuildGlobal.hs PetriNet.hs Misc.hs GlobalGraph.hs
@@ -56,10 +57,10 @@ BuildGlobal_hs: BuildGlobal.hs PetriNet.hs Misc.hs GlobalGraph.hs
 PetriNet_hs: PetriNet.hs Misc.hs
 	$(ccmd) $<
 
-gc_hs: gc.hs Misc.hs DotStuff.hs GCParser.hs RGCParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGC.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
+gc_hs: gc.hs Misc.hs DotStuff.hs GCParser.hs RGCParser.hs CFSM.hs SyntacticGlobalChoreographies.hs ErlanGC.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
 	$(ccmd) $<
 
-RGCParser_hs: RGCParser.hs Misc.hs DotStuff.hs GCParser.hs CFSM.hs SyntacticGlobalGraphs.hs ErlanGC.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
+RGCParser_hs: RGCParser.hs Misc.hs DotStuff.hs GCParser.hs CFSM.hs SyntacticGlobalChoreographies.hs ErlanGC.hs HGSemantics.hs BCGBridge.hs DotStuff.hs
 	$(ccmd) $<
 
 sysparser_hs: sysparser.hs SystemParser.hs
@@ -71,20 +72,20 @@ minimise_hs: minimise.hs Misc.hs FSA.hs CFSM.hs DotStuff.hs SystemParser.hs
 gc2pom_hs: gc2pom.hs Misc.hs GCParser.hs PomsetSemantics.hs
 	$(ccmd) $<
 
-pom2gc_hs: pom2gc.hs Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs
+pom2gc_hs: pom2gc.hs Misc.hs PomsetSemantics.hs SyntacticGlobalChoreographies.hs DotStuff.hs
 	$(ccmd) $<
 
-gc2fsa_hs: gc2fsa.hs Misc.hs GCParser.hs CFSM.hs FSA.hs SyntacticGlobalGraphs.hs
+gc2fsa_hs: gc2fsa.hs Misc.hs GCParser.hs CFSM.hs FSA.hs SyntacticGlobalChoreographies.hs
 	$(ccmd) $<
 
-proj_hs: proj.hs Misc.hs GCParser.hs CFSM.hs FSA.hs SyntacticGlobalGraphs.hs
+project_hs: project.hs Misc.hs GCParser.hs CFSM.hs FSA.hs SyntacticGlobalChoreographies.hs
 	$(ccmd) $<
 
 
-gc2dot_hs: gc2dot.hs Misc.hs PomsetSemantics.hs SyntacticGlobalGraphs.hs DotStuff.hs GCParser.hs
+gc2dot_hs: gc2dot.hs Misc.hs PomsetSemantics.hs SyntacticGlobalChoreographies.hs DotStuff.hs GCParser.hs
 	$(ccmd) $<
 
-gc2gml_hs: gc2gml.hs Misc.hs SyntacticGlobalGraphs.hs GCParser.hs
+gc2gml_hs: gc2gml.hs Misc.hs SyntacticGlobalChoreographies.hs GCParser.hs
 	$(ccmd) $<
 
 debug:

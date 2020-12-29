@@ -273,7 +273,7 @@ cfsmProd (m:ms) = if ms==[]
 
 -- cfsmUnion q0 l returns the union of the CFSMs in l with initial state q0
 cfsmUnion :: State -> [CFSM] -> CFSM
-cfsmUnion q0 l = (L.foldr (\(states, _, _,_) -> S.union states) (S.singleton q0)l,
+cfsmUnion q0 l = (L.foldr (\(states, _, _,_) -> S.union states) (S.singleton q0) l,
                   q0,
                   L.foldr (\( _, _, acts, _ ) -> S.union acts) S.empty l,
                   L.foldr (\( _, _, _, trxs ) -> S.union trxs) S.empty l)

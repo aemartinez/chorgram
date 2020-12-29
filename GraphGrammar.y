@@ -35,7 +35,7 @@
 --
 {
 module GGparser where
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import Data.List as L
 import Data.Set as S
 import Misc

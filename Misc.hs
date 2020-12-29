@@ -40,6 +40,9 @@ data Flag    = Deadlock | Action | Config | Path | Prop
 list2map :: [a] -> Map Int a
 list2map l = M.fromList [(p,l!!p) | p <- [0 .. (L.length l) - 1 ] ]
 
+inv :: (Ord a, Ord b) => Map a b -> Map b a
+inv m = M.fromList $ (L.zip (M.elems m) (M.keys m))
+     
 intersect :: (Ord a) => Set a -> Set a -> Bool
 intersect x y = not(S.null (S.intersection x y))
 
@@ -256,9 +259,10 @@ info =
             "pref is used to prefix the filenames where results are stored"]
   ),
   (PROJ, ["returns the fsa format of the projection of a g-choreography on a specific participant",
-          "[-D (min | det | no)] [-l (True | False)] [-v] filename ptp",
+          "[-D (min | det | no)] [-u iter] [-v] filename ptp",
             "default: -D no",
-            "\t -l False"]
+            "\t -v diplays the mapping index |--> ptp",
+            "\t iter = -1 (non unfolding semantics)"]
   ),
   (GC2POM, ["computes the pomset semantics of a g-choreography and saves it into a file",
             "gc2pom [-d dirpath] [-u iter] [--fmt (hs | gml)] [-v] filename",
@@ -359,7 +363,7 @@ defaultFlags cmd = M.insert "-o" ""
                       GC     -> M.fromList [("-d",dirpath), ("-l",""), ("--sloppy","yes")]
                       GC2DOT -> M.fromList [("-d",dirpath), ("-fmt","gc")]
                       GC2FSA -> M.fromList [("-o",""), ("-v","")]
-                      PROJ   -> M.fromList [("-D","no"), ("-l", "False"), ("-v","")]
+                      PROJ   -> M.fromList [("-D","no"), ("-u", "-1"), ("-v","")]
                       GC2POM -> M.fromList [("-d",dirpath), ("-v",""), ("--fmt", "hs"), ("-u","1")]
                       POM2GC -> M.fromList [("-d",dirpath)]
                       GC2GML -> M.fromList [("-d",dirpath), ("-v",""), ("-u","1")] -- '-l' unfolding of loops
@@ -423,6 +427,7 @@ getFlags cmd args =
     PROJ -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "-u":y:xs     -> M.insert "-u" y (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GC2GML -> case args of
       []            -> defaultFlags(cmd)

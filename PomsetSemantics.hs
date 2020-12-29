@@ -12,7 +12,7 @@ import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
 import CFSM
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import Text.XML.HXT.Parser.XmlParsec(xreadDoc)
 import Data.Tree.NTree.TypeDefs
 import Text.XML.HXT.DOM.TypeDefs
@@ -63,7 +63,7 @@ pomsetsOf gg iter e =
            lab = M.fromList [(e, (c, Send, m)), (e+1, (c, Receive, m) )]
            interactionPom = (S.fromList [e, e+1], (S.singleton (e, e+1)), lab)
         in (S.singleton interactionPom, e+2)
-      LAct c m -> pomsetsOf (Act c m) iter e
+--      LAct c m -> pomsetsOf (Act c m) iter e
       Par ggs -> (combine (tail pomsets) (head pomsets), e'')
         where (pomsets, e'') = L.foldl aux ([], e) ggs
               aux = \(gs, e') g ->

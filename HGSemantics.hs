@@ -10,7 +10,7 @@ module HGSemantics where
 import Data.Set as S
 import Data.List as L
 import Data.Maybe
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import Misc
 import CFSM
 import DotStuff
@@ -263,7 +263,7 @@ sem iter mu gg ptps =
                            ( mu', pg )   = sem iter mu gg' ptps
                            ( mu'', pg' ) = sem iter mu' (Seq (gg'':ggs')) ptps
    Rep gg' p -> ( mu', hgr )
-     where ps                = ggptp S.empty gg'
+     where ps                = gcptp S.empty gg'
            ( mu', hgb )     = if iter || S.member p ps
                               then sem iter mu gg' ptps
                               else error (msgFormat GC "Participant " ++ p ++ " is not in the loop: " ++ show (Rep gg' p))

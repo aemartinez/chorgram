@@ -9,7 +9,7 @@ import GCParser
 import Data.Set (toList)
 import Data.List as L
 import Data.Map.Strict as M
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import System.Environment
 import System.Directory(createDirectoryIfMissing)
 

@@ -6,7 +6,7 @@
 import Misc
 import Data.List as L
 import PomsetSemantics
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import DotStuff
 import System.Environment
 import System.Directory(createDirectoryIfMissing)

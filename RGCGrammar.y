@@ -30,7 +30,7 @@
 --
 {
 module RGCParser where
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import ErlanGC
 import Data.List as L
 import Data.Set as S (empty, null, intersection, union, difference, toList, fromList, member, Set)

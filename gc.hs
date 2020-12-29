@@ -15,7 +15,7 @@ import CFSM
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
-import SyntacticGlobalGraphs
+import SyntacticGlobalChoreographies
 import ErlanGC
 import HGSemantics
 import BCGBridge
