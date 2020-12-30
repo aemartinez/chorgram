@@ -13,7 +13,7 @@ import Data.Map.Strict as M
 import Misc
 import CFSM
 import DotStuff
-import Data.String.Utils(replace)
+import Data.String.Utils (replace)
 
 -- A syntactic global graph is a set of nodes, a source, a sink, and a
 -- set of edges We assume that cp's will be automatically generated
@@ -27,212 +27,12 @@ data GG = Emp
         | Rep GG Ptp
     deriving (Eq, Ord, Show)
 
--- type Endpoint = String
-
-normGG :: GG -> GG
---
--- Syntactic global graphs can be normalised by flattening nested |
--- and + the name normGG is misleading.
---
--- The function is based on the following structural rules:
--- (o) + (o) = (o)
--- ( GG, _|_, (o) ) abelian monoid
--- ( GG, _;_, (o) ) monoid
--- G + G' = G' + G
--- G;(G1 + G2) = G;G1 + G;G2
--- (G1 | G2) ; (G1' | G2') = G1;G1' | G2;G2'   if ptps(G2) \cap ptps(G1') = ptps(G1) \cap ptps(G2') = {}
---
--- the last equation is not applied yet
---
-normGG gg =
-  case gg of
-    Seq ggs   -> let ngs = [g | g <- (L.map normGG ggs), g /= Emp]
-                 in (if ngs ==[] then Emp else Seq ngs)
-    Rep gg' p -> Rep (normGG gg') p
-    Par ggs   -> let ngs = [g | g <- (normPar ggs), g /= Emp]
-                 in (case ngs of
-                        [] -> Emp
-                        [g] -> g
-                        _   -> Par $ L.sort ngs
-                    )
-    Bra ggs   -> let nb = S.filter (\g -> g /= Emp) (normBra $ S.toList ggs)
-                 in (case S.size nb of
-                        0 -> Emp
-                        1 -> head $ S.toList nb
-                        _ -> Bra nb
-                    )
-    _         -> gg
-  where normPar gs = case gs of
-                       []   -> []
-                       [_]  -> gs
-                       g:l' -> let ng = normGG g
-                               in (case ng of
-                                      Par ggs' -> normPar (ggs' ++ l')
-                                      _        -> [ng] ++ (normPar l')
-                                  )
-        normBra gs = case gs of
-                       []   -> S.empty
-                       [g]  -> let ng = normGG g
-                               in (if ng == Emp then S.empty else S.singleton ng)
-                       g:l' -> let ng = normGG g
-                               in (case ng of
-                                      Bra ggs' -> normBra ((S.toList ggs') ++ l')
-                                      _        -> S.union (S.singleton ng) (normBra l')
-                                  )
-
-startGG :: GG -> GG -> Bool
---
--- start g g' checks if g is a prefix of g'
---
-startGG g g' = let ng = normGG g
-                   ng' = normGG g'
-               in (case ng' of
-                      Seq ggs -> startGG ng (head ggs)
-                      Bra ggs -> L.all (startGG ng) l
-                        where l = S.toList ggs
-                      _       -> False
-                  )
-
-
-factorise :: GG -> GG
---
--- factorise gg rewrites a GG in normal form by factorising the common
--- parts of branches
--- PRE : gg in normal form
--- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
---
-factorise gg =
-  case gg of
-    Emp       -> Emp
-    Act _ _   -> gg
---    LAct _ _  -> gg
-    Par ggs   -> Par (L.map factorise ggs)
-    Bra ggs   ->
-      if S.null ggs
-      then Emp
-      else
-        let prefix     = prefOf (S.elemAt 0 ggs)
-            part       = S.partition (startGG prefix) ggs
-            prefOf gg' =
-              case gg' of
-                Seq ggs' -> if L.null ggs' then error $ show (S.elemAt 0 ggs) else head ggs'
-                _        -> gg'
-            ggSet      = fst part
-        in normGG (Bra (S.union (fact prefix ggSet) (rest $ snd part)))
-      where fact prefix ggSet =
-              if S.size ggSet == 1
-              then ggSet
-              else S.singleton (Seq [prefix, factorise (Bra (S.map suffOf ggSet))])
-            suffOf gg'        =
-              case gg' of
-                Seq ggs' -> if L.length ggs' == 1 then Emp else Seq (tail ggs')
-                _        -> Emp
-            rest ggSet'       =
-              if S.size ggSet' == 1
-              then ggSet'
-              else S.singleton $ factorise (Bra ggSet')
-    Seq ggs   -> Seq (L.map factorise ggs)
-    Rep gg' p -> Rep (factorise gg') p
-
-
--- factoriseNew :: GG -> GG
--- --
--- -- factoriseNew gg rewrites a GG in normal form by factorising the common
--- -- parts of branches
--- -- PRE : gg in normal form
--- -- POST: application of the congruenze law g;g1 + g;g2 = g;(g1+g2) from left to right
--- --
--- factoriseNew gg = let ngg = normGG gg
---                   in (case ngg of
---                         Par ggs   -> Par (L.map factoriseNew ggs)
---                         Seq ggs   -> Seq (L.map factoriseNew ggs)
---                         Rep gg' p -> Rep (factoriseNew gg') p
---                         Bra ggs   -> let (seqs, o) = S.partition isSeq ggs
---                                          candidate = case (S.size seqs, S.size o) of
---                                                        (0, 0) -> error "Something very strange here"
---                                                        (_, 0) -> Seq (L.minimumBy (O.comparing L.length) ([l | Seq l <- S.toList seqs]))
---                                                        (0, _) -> ngg
---                                      in (if S.null seqs
---                                          then candidate
---                                          else combine (split candidate)
---                                         )
---                           where isSeq   = \_gg -> case _gg of Seq _ -> True; _ -> False
---                                 combine = \(p, s) -> normGG Seq [p, Bra s]
---                                 split   = \gc -> if check candidate seqs
---                                                  then 
---                         _         -> ngg
---                      )
-
-wb :: Set GG -> Bool
---
--- PRE : the input ggs are factorised
--- POST: returns True iff th list is well-branched
---        
-wb ggs =
-  let ps             = S.toList $ gcptp S.empty (Bra ggs)
-      disj (x, y) = S.null $ S.intersection x y
---      same (x, y)    = x == y
-      firstActs p gg =
-        case sevAt p gg of
-          Emp               -> (S.empty, S.empty)
-          act@(Act (s,_) _) ->
-            if s == p
-            then (S.singleton act, S.empty)
-            else (S.empty, S.singleton act)
-          -- act@(LAct (s,_) _) ->
-          --   if s == p
-          --   then (S.singleton act, S.empty)
-          --   else (S.empty, S.singleton act)
-          Par ggs'' ->
-            L.foldr aux (S.empty, S.empty) ggs''
-            where aux gg_ (fA,fP) =
-                    let (fA',fP') = firstActs p gg_
-                    in (S.union fA fA', S.union fP fP')
-          Bra ggs'' ->
-            S.foldr aux (S.empty, S.empty) ggs''
-            where aux =
-                    \gg_ (fA,fP) -> let (fA',fP') = firstActs p gg_ in ((S.union fA fA'), (S.union fP fP'))
-          Seq ggs'' ->
-            case ggs'' of
-              []    -> (S.empty, S.empty)
-              gg':_ ->
-                if res == (S.empty, S.empty)
-                then firstActs p (Seq (tail ggs''))
-                else res
-                where res = firstActs p gg'
-          Rep gg' _        -> firstActs p gg'
-      matrix         = M.fromList [(p, L.map (firstActs p) (S.toList ggs)) | p <- ps ]
-      check prop f p = L.all (\pairs -> prop (f pairs)) (matrix!p)
-      active         = S.fromList ([ p | p <- ps, check (\x -> not (S.null x)) fst p ])
-      passive        = S.fromList ([ p | p <- ps, check (\x -> not (S.null x)) snd p ])
-      getpairs l res =
-        case l of
-          []   -> res
-          e:l' -> getpairs l' (res ++ [(e,e') | e' <- l'])
-  in S.null ggs || (
-                    L.all (\p -> check (\x -> S.null x) fst p || check (\x -> not (S.null x)) fst p) ps &&
-                    L.all (\p -> check (\x -> S.null x) snd p || check (\x -> not (S.null x)) snd p) ps &&
-                    (S.size active == 1) && (disj (active, passive)) &&
-                    L.all disj (getpairs (L.map fst (matrix!(S.elemAt 0 active))) []) &&
-                    L.all (\p -> L.all disj (getpairs (L.map snd (matrix!p)) [])) (S.toList passive)
-                   )
-
-sevAt :: Ptp -> GG -> GG
-sevAt p gg =
-  case gg of
-    Emp                -> Emp
-    act@(Act (s,r) _)  -> if (s==p || r==p) then act else Emp
---    act@(LAct (s,r) _) -> if (s==p || r==p) then act else Emp
-    Par ggs            -> Par (L.map (sevAt p) ggs)
-    Bra ggs            -> Bra (S.map (sevAt p) ggs)
-    Seq ggs            -> Seq (L.map (sevAt p) ggs)
-    Rep gg' p'         -> Rep (sevAt p gg') p'
                       
 gcptp :: Set Ptp -> GG -> Set Ptp
+gcptp ptps g =
 --
 -- gcptp computes the set of participants of a global graph
 --
-gcptp ptps g =
   case g of
     Emp          -> ptps
     Act (s,r) _  -> S.union ptps (S.fromList [s,r])
@@ -376,12 +176,6 @@ projx loopFlag gg pmap p q0 qe n =
         where c = if (p == s)
                   then ((show $ inverse!p, show $ inverse!r), Send, m)
                   else ((show $ inverse!s, show $ inverse!p), Receive, m)
-      -- LAct(s,r) m -> if (p/=s && p/=r)
-      --                then dm qe Tau
-      --                else (((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0, c, qe))), qe)
-      --   where c = if (p == s)
-      --             then ((show $ inverse!p, show $ inverse!r), LoopSnd, m)
-      --             else ((show $ inverse!s, show $ inverse!p), LoopRcv, m)
       Par ggs -> (replaceState (initialOf m) q0 (S.insert qe (statesOf m),
                                                  initialOf m,
                                                  S.insert (taul Tau) (actionsOf m),
@@ -430,20 +224,7 @@ projx loopFlag gg pmap p q0 qe n =
               (loop', ql) = projx False (helper (lpref ++ suf)) pmap p q (q0 ++ suf) (n + 2)
               loop        = replaceState ql q0 loop'
               (exit, qe') = projx False (helper (epref ++ suf)) pmap p q qe (n + 2)
---              helper msg  = Par (L.map (\p'' -> LAct (p',p'') msg) (S.toList $ S.delete p' bodyptps))
               helper msg  = Par (L.map (\p'' -> Act (p',p'') msg) (S.toList $ S.delete p' bodyptps))
-
-
--- projAll :: GG -> [Endpoint] -> State -> State -> Int -> System
--- projAll gg ps q0 qe n = (L.map (\p -> fst $ proj gg (idxOffset p ps 0) mps (p++q0) (p++qe) n) ps, mps)
---
--- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ ps are all the participants of gg
--- POST: the system corresponding to GG wrt ps
--- n is a counter for fresh state generation
--- q0 and qe are used to generate  (entry and exit) nodes of each participant
--- Note that the resulting system is made of NON-MINIMISED machines
---
---     where mps = M.fromList [(p,ps!!p) | p <- [0 .. (L.length ps) - 1 ]]
 
 
 -- Representing GGs in DOT format
@@ -473,7 +254,6 @@ gc2dot gg name nodeSize =
                           in case gg_ of
                                Emp      -> (vs, as)
                                Act _ _  -> ((L.init vs) ++ [(i, dotLabelOf gg_ )] ++ [sink], attach i i)
---                               LAct _ _ -> ((L.init vs) ++ [(i, dotLabelOf gg_ )] ++ [sink], attach i i)
                                Par ggs  -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
                                    where (vs', as') = unionsPD forkV joinV notgate i (rename (\v -> not (notgate v)) i graphs)
                                          graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) ggs)
@@ -514,13 +294,13 @@ dotLabelOf :: GG -> DotString
 dotLabelOf gg = case gg of
               Emp         -> sourceV
               Act (s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]\n"
---              LAct(s,r) m -> dotLabelOf (Act (s,r) m)
               Par _       -> forkV
               Bra _       -> branchV
               Seq _       -> ""
               Rep _ _     -> ""
 
 catPD :: ((DotNode, DotString) -> Bool) -> PD -> PD -> PD
+catPD included (vs, as) (vs', as') = (vs'', as'')
 --
 -- catPD (vs,as) (vs',as') appends (vs', as') attaching its
 -- source to the nodes of (vs,as) entering the sink of (vs,as)
@@ -532,7 +312,6 @@ catPD :: ((DotNode, DotString) -> Bool) -> PD -> PD -> PD
 --       embedding the second just before the sink of (vs,as); the
 --       source of the resulting graph is the source of (vs,as)
 --
-catPD included (vs, as) (vs', as') = (vs'', as'')
   where vs'' = (L.init vs) ++ (L.filter included vs') ++ [L.last vs]        
         as'' = [ (n, m) | (n, m) <- as, not((n, m) € maxs) ] ++
                [ (n, m) | (n, _) <- maxs, (_, m) <- min_   ] ++
@@ -543,8 +322,10 @@ catPD included (vs, as) (vs', as') = (vs'', as'')
         max_ = maxR as'
 
 renameVertex :: (DotNode -> Bool) -> PD -> DotNode -> PD
-renameVertex excluded (vs, as) offset = ([(newNode excluded s offset, l) | (s,l) <- vs],
-                                         [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as])
+renameVertex excluded (vs, as) offset =
+  ([(newNode excluded s offset, l) | (s,l) <- vs],
+   [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as]
+  )
 
 
 --
@@ -580,68 +361,72 @@ gmlCloseGate :: Int -> GMLTAGS -> String
 gmlCloseGate idn gate = gmlNode (gmldata "close" (show gate)) (-idn)
 
 gmlrename :: (Int -> Bool) -> Int -> Int -> String -> String
-gmlrename excluded n j s = if (excluded n)
-                           then s
-                           else let idn = (if n > 0 then n + j else n - j)
-                                in replace ("<node id=\"" ++ (show n)) ("<node id=\"" ++ (show idn)) s
+gmlrename excluded n j s =
+  if (excluded n)
+  then s
+  else
+    let idn = (if n > 0 then n + j else n - j)
+    in replace ("<node id=\"" ++ (show n)) ("<node id=\"" ++ (show idn)) s
 
 gc2graphml :: GG -> String
+gc2graphml gg =
 --
 -- gc2dot gg name transforms a GG in dot format
 -- TODO: improve on fresh node generation
 --
-gc2graphml gg =
   let header   = --"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:java=\"http://www.yworks.com/xml/yfiles-common/1.0/java\" xmlns:sys=\"http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0\" xmlns:x=\"http://www.yworks.com/xml/yfiles-common/markup/2.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:y=\"http://www.yworks.com/xml/graphml\" xmlns:yed=\"http://www.yworks.com/xml/yed/3\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd\">\n"
-        "<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n"
+        "<?xml version=\"1.0\" encoding=\"utf-8\"? standalone=\"no\">\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n"
       ogate    = "  <key attr.name=\"open\" attr.type=\"string\" for=\"node\" id=\"open\" />\n"
       cgate    = "  <key attr.name=\"close\" attr.type=\"string\" for=\"node\" id=\"close\" />\n"
       sender   = "  <key attr.name=\"sender\" attr.type=\"string\" for=\"node\" id=\"sender\" />\n"
       receiver = "  <key attr.name=\"receiver\" attr.type=\"string\" for=\"node\" id=\"receiver\" />\n"
       payload  = "  <key attr.name=\"payload\" attr.type=\"string\" for=\"node\" id=\"payload\" />\n"
-      source   = ""--  <key attr.name=\"source\" attr.type=\"string\" for=\"node\" id=\"source\" />\n"
+--      source   = ""--  <key attr.name=\"source\" attr.type=\"string\" for=\"node\" id=\"source\" />\n"
 --      sink     = ""--"  <key attr.name=\"sink\" attr.type=\"string\" for=\"node\" id=\"sink\" />\n"
-      yattr    = ""--  <key for=\"node\" id=\"ylabel\" yfiles.type=\"nodegraphics\"/>"
+--      yattr    = ""--  <key for=\"node\" id=\"ylabel\" yfiles.type=\"nodegraphics\"/>"
       edir     = "  <graph edgedefault=\"directed\">\n"
       footer   = "  </graph>\n</graphml>\n"
       maxIdx vs = aux vs 0
         where aux [] v = v + 1
               aux ((v', _):vs') v = aux vs' (max v v')
       dummyGG n = ([(n, gmlOpenGate n Loop), (-n, gmlCloseGate n Loop)], [(n, -n)])
-      helper vs as gg_  = let (sink, i) = (L.last vs, 1 + (maxIdx vs))
-                              attach idx idx' = [(s, t)   | (s, t) <- as, t /= fst sink] ++
-                                                [(s, idx) | (s, t) <- as, t == fst sink] ++
-                                                [(idx', fst sink)]
-                              notgate = \v -> v /= i && v /= (-i)
-                          in case gg_ of
-                               Emp -> (vs, as)
-                               Act _ _  -> ((L.init vs) ++ [(i, gmlNode (gmlLabelOf gg_) i)] ++ [sink], attach i i)
---                               LAct _ _ -> ((L.init vs) ++ [(i, gmlNode (gmlLabelOf gg_) i)] ++ [sink], attach i i)
-                               Par ggs -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
-                                   where (vs', as') = gather (gmlOpenGate i Fork)
-                                                             (gmlCloseGate i Join)
-                                                             notgate
-                                                             i
-                                                             (rename (not.notgate) i graphs)
-                                         graphs = (L.map (helper [(i, (gmlOpenGate i Fork)), ((-i), (gmlCloseGate i Join))] [(i, (-i))]) ggs)
-                               Bra ggs -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
-                                   where (vs', as') = gather (gmlOpenGate i Branch)
-                                                             (gmlCloseGate i Merge)
-                                                             notgate
-                                                             i
-                                                             (rename (not.notgate) i graphs)
-                                         graphs = S.toList (S.map (helper [(i, (gmlOpenGate i Branch)), ((-i), (gmlCloseGate i Merge))] [(i, (-i))]) ggs)
-                               Seq ggs -> graphy ggs vs as
-                                   where graphy ggs_ vs_ as_ = case ggs_ of
-                                                                []       -> (vs_,as_)
-                                                                Emp:ggs' -> graphy ggs' vs_ as_
-                                                                gg':ggs' -> graphy ggs' vs'' as''
-                                                                    where (vs0,as0) = helper [(idx,""),(-idx,"")] [(idx,-idx)] gg'
-                                                                          (vs',as') = renameVertex notgate (vs0,as0) (1 + maxIdx vs0)
-                                                                          (vs'',as'') = catPD (\(_,l) -> l /= "") (vs_, as_) (vs', as')
-                                                                          idx = 1 + maxIdx vs_
-                               Rep gg' _ -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ ((-i,i):as'))
-                                   where (evs, eas) = dummyGG i
-                                         (vs', as') = helper evs eas gg'
+      helper vs as gg_  =
+        let (sink, i) = (L.last vs, 1 + (maxIdx vs))
+            attach idx idx' =
+              [(s, t)   | (s, t) <- as, t /= fst sink] ++
+              [(s, idx) | (s, t) <- as, t == fst sink] ++
+              [(idx', fst sink)]
+            notgate = \v -> v /= i && v /= (-i)
+        in case gg_ of
+          Emp -> (vs, as)
+          Act _ _  -> ((L.init vs) ++ [(i, gmlNode (gmlLabelOf gg_) i)] ++ [sink], attach i i)
+          --                               LAct _ _ -> ((L.init vs) ++ [(i, gmlNode (gmlLabelOf gg_) i)] ++ [sink], attach i i)
+          Par ggs -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
+            where (vs', as') =
+                    gather (gmlOpenGate i Fork)
+                    (gmlCloseGate i Join)
+                    notgate
+                    i
+                    (rename (not.notgate) i graphs)
+                  graphs = (L.map (helper [(i, (gmlOpenGate i Fork)), ((-i), (gmlCloseGate i Join))] [(i, (-i))]) ggs)
+          Bra ggs -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
+            where (vs', as') =
+                    gather (gmlOpenGate i Branch) (gmlCloseGate i Merge) notgate i (rename (not.notgate) i graphs)
+                  graphs = S.toList (S.map (helper [(i, (gmlOpenGate i Branch)), ((-i), (gmlCloseGate i Merge))] [(i, (-i))]) ggs)
+          Seq ggs -> graphy ggs vs as
+            where graphy ggs_ vs_ as_ =
+                    case ggs_ of
+                      []       -> (vs_,as_)
+                      Emp:ggs' -> graphy ggs' vs_ as_
+                      gg':ggs' -> graphy ggs' vs'' as''
+                        where (vs0,as0) =
+                                helper [(idx,""),(-idx,"")] [(idx,-idx)] gg'
+                              (vs',as') = renameVertex notgate (vs0,as0) (1 + maxIdx vs0)
+                              (vs'',as'') = catPD (\(_,l) -> l /= "") (vs_, as_) (vs', as')
+                              idx = 1 + maxIdx vs_
+          Rep gg' _ -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ ((-i,i):as'))
+            where (evs, eas) = dummyGG i
+                  (vs', as') = helper evs eas gg'
         where rename excluded offset pds =
                 case pds of
                   [] -> []
@@ -649,7 +434,7 @@ gc2graphml gg =
                                       [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as1]) : (rename excluded (1 + offset + maxIdx vs1) pds')
               gather gl gl' included idx pds =
                 ([(idx,gl)] ++ [(v,l) | (v,l) <- L.concat  $ L.map fst pds, (included v)] ++ [((-idx),gl')],
-                  L.concatMap snd pds)
+                 L.concatMap snd pds)
       gmlNodes vs  = L.concatMap (\(_, s) -> s) vs
       gmlEdges as  = L.concatMap (\(s, t) -> gmlEdge s t) as
       (evs_, eas_) = ([(1, (gmlOpenGate 1 Source)), (-1, gmlCloseGate 1 Sink)], [(1, -1)])
@@ -660,9 +445,9 @@ gc2graphml gg =
      sender ++
      receiver ++
      payload ++
-     source ++
+--     source ++
 --     sink ++
-     yattr ++
+--     yattr ++
      edir ++
      (gmlNodes vertexes) ++
      (gmlEdges edges) ++

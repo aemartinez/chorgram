@@ -2,8 +2,9 @@
 #
 # Author: Emilio Tuosto <emilio@le.ac.uk>
 #
-# This script converts a system of CFSMs in graphml formato to the
+# This script converts a system of CFSMs in graphml format to the
 # 'fsa' format of chorgram
+#
 
 import getopt, sys
 import networkx as nx
@@ -44,7 +45,11 @@ def graphml_to_fsa(gr,ptps,init_sbj):
     fsa_stop = ".marking %s\n.end\n"
     # convert each edge into a transition of the fsa
     (q0,sbj) = (init_sbj[0],init_sbj[1])
-    fsa_trx = "\n".join([" ".join([mkQ(s), to_fsa_action(gr.edges[s, t],ptps), mkQ(t)]) for (s,t) in gr.edges()])
+    fsa_trx = "\n".join([" ".join([mkQ(s),
+                                   to_fsa_action(gr.edges[s, t],ptps),
+                                   mkQ(t)])
+                         for (s,t) in gr.edges()]
+    )
     return "\n".join([fsa_start % sbj, fsa_trx, fsa_stop % q0])
 
 def graphsml_to_fsa(gmldir):

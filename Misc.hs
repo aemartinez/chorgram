@@ -259,7 +259,7 @@ info =
             "default: iter = -1",
             "\t pref is used to prefix the filenames where results are stored"]
   ),
-  (PROJ, ["returns the fsa format of the projection of a g-choreography on a specific participant",
+  (PROJ, ["returns the projection of a g-choreography on a specific participant",
           "[-D (min | det | no)] [--fmt (dot | fsa)] [-u iter] [-v] filename ptp",
             "default: -D no",
             "\t --fmt fsa",

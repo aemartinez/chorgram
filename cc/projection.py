@@ -5,9 +5,9 @@ import os
 
 def attr_to_label(attr):
     if "in" in attr:
-        return("%s%s?%s" % (attr["partner"], attr["subject"], attr["in"]))
+        return("%s %s?%s" % (attr["partner"], attr["subject"], attr["in"]))
     else:
-        return("%s%s!%s" % (attr["subject"], attr["partner"], attr["out"]))
+        return("%s %s!%s" % (attr["subject"], attr["partner"], attr["out"]))
 
 def is_state_terminating(pomsets):
     for pom in pomsets:
