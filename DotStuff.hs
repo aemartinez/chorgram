@@ -1,7 +1,7 @@
 --
 -- Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
--- This module contains function to map GG and HG to DOT
+-- This module contains function to map GC and HG to DOT
 --
 
 module DotStuff where
@@ -104,8 +104,8 @@ initwidth = "initwidth"
 initcol :: String
 initcol = "initcol"
 
-ggnodesep :: String
-ggnodesep = "ggnodesep"
+gcnodesep :: String
+gcnodesep = "gcnodesep"
 
 nodefont :: String
 nodefont = "nodefont"
@@ -113,17 +113,17 @@ nodefont = "nodefont"
 edgefont :: String
 edgefont = "edgefont"
 
-gglines :: String
-gglines = "gglines"
+gclines :: String
+gclines = "gclines"
 
-ggfmt :: String
-ggfmt = "ggfmt"
+gcfmt :: String
+gcfmt = "gcfmt"
 
-ggsizenode :: String
-ggsizenode = "ggsizenode"
+gcsizenode :: String
+gcsizenode = "gcsizenode"
 
-ggarr :: String
-ggarr = "ggarr"
+gcarr :: String
+gcarr = "gcarr"
 
 hecol :: String
 hecol = "hecol"

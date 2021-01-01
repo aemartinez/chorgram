@@ -18,17 +18,16 @@ import Data.String.Utils (replace)
 -- A syntactic global graph is a set of nodes, a source, a sink, and a
 -- set of edges We assume that cp's will be automatically generated
 -- (uniquely) during parsing
-data GG = Emp
+data GC = Emp
         | Act Channel Message
---        | LAct Channel Message
-        | Par [GG]
-        | Bra (Set GG)
-        | Seq [GG]
-        | Rep GG Ptp
+        | Par [GC]
+        | Bra (Set GC)
+        | Seq [GC]
+        | Rep GC Ptp
     deriving (Eq, Ord, Show)
 
                       
-gcptp :: Set Ptp -> GG -> Set Ptp
+gcptp :: Set Ptp -> GC -> Set Ptp
 gcptp ptps g =
 --
 -- gcptp computes the set of participants of a global graph
@@ -36,7 +35,6 @@ gcptp ptps g =
   case g of
     Emp          -> ptps
     Act (s,r) _  -> S.union ptps (S.fromList [s,r])
---    LAct (s,r) _ -> S.union ptps (S.fromList [s,r])
     Par gs       -> S.union ptps (S.unions $ L.map (gcptp S.empty) gs)
     Bra gs       -> S.union ptps (S.unions $ S.toList (S.map (gcptp S.empty) gs))
     Seq gs       -> S.union ptps (S.unions (L.map (gcptp S.empty) gs))
@@ -48,7 +46,7 @@ loopBack q = "__l__" ++ q
 loopExit :: State -> State
 loopExit q = "__e__" ++ q
 
-proj :: GG -> State -> State -> Ptp -> Int -> P -> (CFSM, State)
+proj :: GC -> State -> State -> Ptp -> Int -> P -> (CFSM, State)
 proj gc q0 qe p n pmap =
 --
 -- PRE : actions are well formed (wffActions) ^ q0 /= qe
@@ -153,7 +151,7 @@ proj gc q0 qe p n pmap =
                   (cfsm_body, _) = proj g qel q0 p (n-1) pmap
               in (cfsmUnion q0 [cfsm_loop, cfsm_exit, cfsm_body], qe)
 
-projx :: Bool -> GG -> P -> Ptp -> State -> State -> Int -> (CFSM, State)
+projx :: Bool -> GC -> P -> Ptp -> State -> State -> Int -> (CFSM, State)
 projx loopFlag gg pmap p q0 qe n =
 --
 -- PRE : actions are well formed (wffActions) ^ q0 /= qe ^ p is a participant of gg
@@ -227,25 +225,27 @@ projx loopFlag gg pmap p q0 qe n =
               helper msg  = Par (L.map (\p'' -> Act (p',p'') msg) (S.toList $ S.delete p' bodyptps))
 
 
--- Representing GGs in DOT format
+-- Representing GCs in DOT format
 
 -- The dot graph is a pair made of a list of nodes and a list of edges
 type PD = ([(DotNode, DotString)], [(DotNode, DotNode)])
 
 node2dot :: DotNode -> DotString
--- DOT representation of GG nodes
-node2dot n = (if n < 0 then "_" else "") ++ (show $ abs n)
+node2dot n =
+-- DOT representation of GC nodes
+  (if n < 0 then "_" else "") ++ (show $ abs n)
       
-gc2dot :: GG -> String -> DotString -> DotString
+gc2dot :: GC -> String -> DotString -> DotString
+gc2dot gg name nodeSize =
 --
--- gc2dot gg name transforms a GG in dot format
+-- gc2dot transforms a GC in dot format giving it name 'name'
+-- and setting the size of nodes to 'nodeSize'
 -- TODO: improve on fresh node generation
 --
-gc2dot gg name nodeSize =
   let maxIdx vs = aux vs 0
         where aux [] v = v + 1
               aux ((v', _):vs') v = aux vs' (max v v')
-      dummyGG n = ([(n, branchV), (-n, mergeV)], [(n, -n)])
+      dummyGC n = ([(n, branchV), (-n, mergeV)], [(n, -n)])
       helper vs as gg_  = let (sink, i)       = (L.last vs, 1 + (maxIdx vs))
                               attach idx idx' = [(s, t)   | (s, t) <- as, t /= fst sink] ++
                                                 [(s, idx) | (s, t) <- as, t == fst sink] ++
@@ -259,7 +259,7 @@ gc2dot gg name nodeSize =
                                          graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) ggs)
                                Bra ggs  -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
                                    where (vs', as') = unionsPD branchV mergeV notgate i (rename (\v -> not (notgate v)) i graphs)
-                                         (evs, eas) = dummyGG i
+                                         (evs, eas) = dummyGC i
                                          graphs     = S.toList (S.map (helper evs eas) ggs)
                                Seq ggs -> graphy ggs vs as
                                    where graphy ggs_ vs_ as_ = case ggs_ of
@@ -272,7 +272,7 @@ gc2dot gg name nodeSize =
                                                                           idx         = 1 + maxIdx vs_
                                Rep gg' _ -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ ((-i,i):as'))
                                    where
-                                     (evs, eas) = dummyGG i
+                                     (evs, eas) = dummyGC i
                                      (vs', as') = helper evs eas gg'
         where rename excluded offset pds
                 = case pds of
@@ -290,7 +290,7 @@ gc2dot gg name nodeSize =
       (header,  footer) = ("digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n", "\n}\n")
   in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
 
-dotLabelOf :: GG -> DotString
+dotLabelOf :: GC -> DotString
 dotLabelOf gg = case gg of
               Emp         -> sourceV
               Act (s,r) m -> " [label = \"" ++ s ++ " &rarr; " ++ r ++ " : " ++ m ++ "\", shape=rectangle, fontname=helvetica, fontcolor=MidnightBlue]\n"
@@ -341,11 +341,9 @@ gmlstyle tag = ""
 gmldata :: String -> String -> String
 gmldata k v = "      <data key=\"" ++ k ++ "\">" ++ v ++ "</data>\n"
 
-gmlLabelOf :: GG -> String
+gmlLabelOf :: GC -> String
 gmlLabelOf gg = case gg of
               Act (s,r) m -> (gmldata "sender" s ++ gmldata "receiver" r ++ gmldata "payload" m)
---                ++ "      <data key=\"ylabel\">\n        <y:ShapeNode>\n          <y:Geometry height=\"30.0\" width=\"30.0\" x=\"63.0\" y=\"322.0\"/>\n          <y:Fill color=\"#FFCC00\" transparent=\"false\"/>\n          <y:BorderStyle color=\"#000000\" raised=\"false\" type=\"line\" width=\"1.0\"/>\n          <y:NodeLabel alignment=\"center\" autoSizePolicy=\"content\" fontFamily=\"Dialog\" fontSize=\"12\" fontStyle=\"plain\" hasBackgroundColor=\"false\" hasLineColor=\"false\" height=\"17.96875\" horizontalTextPosition=\"center\" iconTextGap=\"4\" modelName=\"custom\" textColor=\"#000000\" verticalTextPosition=\"bottom\" visible=\"true\" width=\"140.0\" x=\"-5.9052734375\" xml:space=\"preserve\" y=\"6.015625\">" ++  (show s) ++ " -> " ++ (show r) ++ " : " ++ (show m) ++ "<y:LabelModel><y:SmartNodeLabelModel distance=\"4.0\"/></y:LabelModel><y:ModelParameter><y:SmartNodeLabelModelParameter labelRatioX=\"0.0\" labelRatioY=\"0.0\" nodeRatioX=\"0.0\" nodeRatioY=\"0.0\" offsetX=\"0.0\" offsetY=\"0.0\" upX=\"0.0\" upY=\"-1.0\"/></y:ModelParameter></y:NodeLabel>\n          <y:Shape type=\"rectangle\"/>\n        </y:ShapeNode>\n      </data>\n"
---              LAct(s,r) m -> gmlLabelOf (Act (s,r) m)
               _       -> ""
 
 gmlNode :: String -> Int -> String
@@ -368,10 +366,10 @@ gmlrename excluded n j s =
     let idn = (if n > 0 then n + j else n - j)
     in replace ("<node id=\"" ++ (show n)) ("<node id=\"" ++ (show idn)) s
 
-gc2graphml :: GG -> String
+gc2graphml :: GC -> String
 gc2graphml gg =
 --
--- gc2dot gg name transforms a GG in dot format
+-- gc2dot gg name transforms a GC in dot format
 -- TODO: improve on fresh node generation
 --
   let header   = --"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:java=\"http://www.yworks.com/xml/yfiles-common/1.0/java\" xmlns:sys=\"http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0\" xmlns:x=\"http://www.yworks.com/xml/yfiles-common/markup/2.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:y=\"http://www.yworks.com/xml/graphml\" xmlns:yed=\"http://www.yworks.com/xml/yed/3\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd\">\n"
@@ -381,6 +379,7 @@ gc2graphml gg =
       sender   = "  <key attr.name=\"sender\" attr.type=\"string\" for=\"node\" id=\"sender\" />\n"
       receiver = "  <key attr.name=\"receiver\" attr.type=\"string\" for=\"node\" id=\"receiver\" />\n"
       payload  = "  <key attr.name=\"payload\" attr.type=\"string\" for=\"node\" id=\"payload\" />\n"
+-- TODO: check that cc works as before commenting the next 3 lines
 --      source   = ""--  <key attr.name=\"source\" attr.type=\"string\" for=\"node\" id=\"source\" />\n"
 --      sink     = ""--"  <key attr.name=\"sink\" attr.type=\"string\" for=\"node\" id=\"sink\" />\n"
 --      yattr    = ""--  <key for=\"node\" id=\"ylabel\" yfiles.type=\"nodegraphics\"/>"
@@ -389,7 +388,7 @@ gc2graphml gg =
       maxIdx vs = aux vs 0
         where aux [] v = v + 1
               aux ((v', _):vs') v = aux vs' (max v v')
-      dummyGG n = ([(n, gmlOpenGate n Loop), (-n, gmlCloseGate n Loop)], [(n, -n)])
+      dummyGC n = ([(n, gmlOpenGate n Loop), (-n, gmlCloseGate n Loop)], [(n, -n)])
       helper vs as gg_  =
         let (sink, i) = (L.last vs, 1 + (maxIdx vs))
             attach idx idx' =
@@ -400,7 +399,6 @@ gc2graphml gg =
         in case gg_ of
           Emp -> (vs, as)
           Act _ _  -> ((L.init vs) ++ [(i, gmlNode (gmlLabelOf gg_) i)] ++ [sink], attach i i)
-          --                               LAct _ _ -> ((L.init vs) ++ [(i, gmlNode (gmlLabelOf gg_) i)] ++ [sink], attach i i)
           Par ggs -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
             where (vs', as') =
                     gather (gmlOpenGate i Fork)
@@ -425,7 +423,7 @@ gc2graphml gg =
                               (vs'',as'') = catPD (\(_,l) -> l /= "") (vs_, as_) (vs', as')
                               idx = 1 + maxIdx vs_
           Rep gg' _ -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ ((-i,i):as'))
-            where (evs, eas) = dummyGG i
+            where (evs, eas) = dummyGC i
                   (vs', as') = helper evs eas gg'
         where rename excluded offset pds =
                 case pds of

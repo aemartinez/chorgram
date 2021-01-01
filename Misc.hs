@@ -18,7 +18,7 @@ type Edge vertex label = (vertex, label, vertex)
 type Graph vertex label = (Set vertex, vertex, Set label, Set(Edge vertex label))
 
 data Command = GMC
-  | GG
+  | BGG
   | GC
   | GC2DOT
   | GC2FSA
@@ -36,18 +36,48 @@ data Flag    = Deadlock | Action | Config | Path | Prop
    deriving (Eq)
 
 -- Some useful functions
+     
+intersect :: Ord a => Set a -> Set a -> Bool
+intersect x y = not(S.null (S.intersection x y))
+
+pairwiseDisjoint :: (Ord k, Ord a) => Map k (Set a) -> Maybe (k, k)
+pairwiseDisjoint f =
+-- returns the pair of keys (k1,k2) such that intersect [f k1, f k2]
+  case M.keys f of
+    [] -> Nothing
+    [_] -> Nothing
+    x:y:_ ->
+      if Misc.intersect (f!x) (f!y)
+      then Just (x,y)
+      else
+        let f' = pairwiseDisjoint (M.delete y f)
+        in
+          case f' of
+            Nothing -> pairwiseDisjoint (M.delete x f)
+            _ -> f'
+
+equivalenceClass :: (Eq a, Ord a) => Set (a,a) ->  a -> Set a
+equivalenceClass rel z = S.fold (S.union) S.empty $ 
+                         S.map (\(x,y) -> S.insert x (S.singleton y)) (S.filter (\(x,y) -> x == z || y ==z) rel)
+
+cartProd :: (Ord a, Ord b) => Set a -> Set b -> Set (a,b)
+cartProd sa sb = S.fromList $ [(x,y) | x <- (S.toList sa), y <- (S.toList sb)]
+
+justFilter :: (Ord a) => Set (Maybe a) -> Set a
+justFilter set = helper (S.toList set)
+    where helper (x:xs) = case x of 
+                            Just y -> S.insert y (helper xs)
+                            Nothing -> helper xs
+          helper [] = S.empty
+
+dropElems :: Ord a => (a -> Bool) -> Set a -> Set a
+dropElems f x = S.foldr (\e y -> if (f e) then y else (S.insert e y)) S.empty x
 
 list2map :: [a] -> Map Int a
 list2map l = M.fromList [(p,l!!p) | p <- [0 .. (L.length l) - 1 ] ]
 
 inv :: (Ord a, Ord b) => Map a b -> Map b a
 inv m = M.fromList $ (L.zip (M.elems m) (M.keys m))
-     
-intersect :: (Ord a) => Set a -> Set a -> Bool
-intersect x y = not(S.null (S.intersection x y))
-
-dropElems :: Ord a => (a -> Bool) -> Set a -> Set a
-dropElems f x = S.foldr (\e y -> if (f e) then y else (S.insert e y)) S.empty x
 
 findId :: (Eq a, Show a, Show k) => a -> [(k, a)] -> k
 findId e m = case m of
@@ -138,10 +168,6 @@ equivalenceRelation ys = transitiveClosure (L.nub $ addPairs ys)
                                  else (y,x):(addPairs xs)
           addPairs [] = []
         
-
-equivalenceClass :: (Eq a, Ord a) => Set (a,a) ->  a -> Set a
-equivalenceClass rel z = S.fold (S.union) S.empty $ 
-                         S.map (\(x,y) -> S.insert x (S.singleton y)) (S.filter (\(x,y) -> x == z || y ==z) rel)
           
 transitiveClosure :: (Eq a) =>  [(a, a)] -> [(a, a)]
 -- http://stackoverflow.com/questions/19212558/transitive-closure-from-a-list-using-haskell
@@ -162,16 +188,6 @@ reflexoTransitiveClosure els closure =
 -- PRE: closure must be a binary relation over the elements in els
 -- POST: returns the reflexo-transitive closure of the relation in the 2nd argument
   L.nub $ (transitiveClosure closure) ++ [(a, a) | a <- els]
-
-cartProd :: (Ord a, Ord b) => Set a -> Set b -> Set (a,b)
-cartProd sa sb = S.fromList $ [(x,y) | x <- (S.toList sa), y <- (S.toList sb)]
-
-justFilter :: (Ord a) => Set (Maybe a) -> Set a
-justFilter set = helper (S.toList set)
-    where helper (x:xs) = case x of 
-                            Just y -> S.insert y (helper xs)
-                            Nothing -> helper xs
-          helper [] = S.empty
 
 pairsof :: [a] -> [(a,a)]
 pairsof xs = zip (everyOtherEl xs) (everyOtherEl (tail xs))
@@ -239,8 +255,8 @@ info =
          "\t tpattern = \"- - - -\"",
          "\t detmode = no    possible values are: min | det | no"]
   ),
-  (GG, ["Transforms a petri net into a global graph",
-        "[-d dirpath] filename",
+  (BGG, ["Transforms a petri net into a global graph",
+        "[-d dirpath] [-v] filename",
         "default: dirpath = " ++ dirpath]
   ),
   (GC, ["semantics of g-choreographies",
@@ -310,7 +326,7 @@ usage cmd =
 -- usage cmd =
 --   case cmd of
 --       GMC -> getUsage GMC -- "gmc [-c configfile] [-b | --bound number] [-l] [-m | --multiplicity number] [-sn] [-D detmode] [-d | --dir dirpath] [-fs | --fontsize fontsize] [-ts] [-nf] [-cp cpattern] [-tp tpattern] [-v] filename \n   defaults: \t configfile = ./aux \n\t\t bound = 0 \n\t\t mutiplicity = 0 \n\t\t dirpath = " ++ dirpath ++ "\n\t\t fontsize = 8 \n\t\t cpattern = \"\" \n\t\t tpattern = \"- - - -\"\n\t\t detmode = no\n"
---       GG -> getUsage GG -- "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
+--       BGG -> getUsage GC -- "BuildGlobal [-d | --dir dirpath] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
 --       GC -> getUsage GC -- "gc [-d dirpath] [-v] [-l] [--sloppy] filename [-rg]\n\t default: \t dirpath = " ++ dirpath ++ "\n"
 --       GC2DOT -> getUsage GC2DOT -- "gc2dot [-d dirpath] [--fmt (gml | sgg | sloppygml] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n\t-fmt = sgg\n\t"
 --       GC2FSA -> getUsage GC2FSA -- "gc2fsa [-v] [-d dirpath | -o output-file] filename\n\t default: \t dirpath = " ++ dirpath ++ "\n"
@@ -327,18 +343,18 @@ usage cmd =
 cmdName :: Command -> String
 cmdName cmd =
   case cmd of
-    GMC      -> "gmc"
-    GG       -> "gg"
-    GC      -> "gc"
+    GMC    -> "gmc"
+    BGG    -> "BuildGlobal"
+    GC     -> "gc"
     GC2DOT -> "gc2dot"
-    GC2FSA   -> "gc2fsa"
+    GC2FSA -> "gc2fsa"
     PROJ   -> "proj"
-    GC2POM   -> "gc2pom"
-    POM2GC   -> "pom2gc"
-    GC2GML   -> "gc2gml"
-    SYS      -> "systemparser"
-    MIN      -> "minimise"
-    HGSEM    -> "hgsem"
+    GC2POM -> "gc2pom"
+    POM2GC -> "pom2gc"
+    GC2GML -> "gc2gml"
+    SYS    -> "systemparser"
+    MIN    -> "minimise"
+    HGSEM  -> "hgsem"
 --    PROD     -> "cfsmprod"
 
 
@@ -362,8 +378,8 @@ defaultFlags cmd = M.insert "-o" ""
                                             ("-p", ""),
                                             ("-D","no")    -- 'min' for minimisation, 'det' for determinisation, 'no' for nothing
                                            ]
-                      GG     -> M.fromList [("-d",dirpath), ("-v","")]
-                      GC     -> M.fromList [("-d",dirpath), ("-l",""), ("--sloppy","yes")]
+                      BGG    -> M.fromList [("-d",dirpath), ("-v","")]
+                      GC     -> M.fromList [("-d",dirpath), ("-v",""), ("-l",""), ("--sloppy","yes")]
                       GC2DOT -> M.fromList [("-d",dirpath), ("--fmt","gc")]
                       GC2FSA -> M.fromList [("-o",""), ("-u", "-1"), ("-v","")]
                       PROJ   -> M.fromList [("-D","no"), ("-u", "-1"), ("--fmt", "fsa"), ("-v","")]
@@ -404,7 +420,7 @@ getFlags cmd args =
       "-p":y:xs          -> M.insert "-p"  y      (getFlags cmd xs)
       "-v":xs            -> M.insert "-v"  yes    (getFlags cmd xs) -- turn on verbose mode
       _                  -> error $ usage(cmd)
-    GG  ->  case args of
+    BGG  ->  case args of
       []        -> defaultFlags(cmd)
       "-d":y:xs -> M.insert "-d" y   (getFlags cmd xs)
       "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)

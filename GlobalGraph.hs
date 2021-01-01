@@ -27,8 +27,8 @@ type Arc = (Vertex, Vertex)
 
 type GlobalGraph = (Set Vertex, Set Arc)
 
-emptyGG :: GlobalGraph
-emptyGG = (S.empty, S.empty)
+emptyGC :: GlobalGraph
+emptyGC = (S.empty, S.empty)
 
 nodeNumber :: GlobalGraph -> Int
 nodeNumber (vs, _) = S.size vs
@@ -36,8 +36,8 @@ nodeNumber (vs, _) = S.size vs
 transNumber :: GlobalGraph -> Int
 transNumber (_, as) = S.size as
 
-sizeGG :: GlobalGraph -> (Int,Int)
-sizeGG (vs,as) = (S.size vs, S.size as)
+sizeGC :: GlobalGraph -> (Int,Int)
+sizeGC (vs,as) = (S.size vs, S.size as)
 
 isPort :: Vertex -> Bool
 isPort x = case x of
@@ -59,8 +59,8 @@ isSilent x = case x of
                VT (Silent _) -> True
                _             -> False                           
                        
-isGGNode :: Vertex -> Bool
-isGGNode x = not (isPlace x || isSilent x)
+isGCNode :: Vertex -> Bool
+isGCNode x = not (isPlace x || isSilent x)
 
 isSink :: Vertex -> Bool
 isSink t = case t of
@@ -87,14 +87,14 @@ precG (_, arcs) v =  S.map (\(x,_) -> x) $ S.filter (\(_,y) -> y == v) arcs
 -- TRANSFORMATION NUMBER THREE
 --
 net2globalgraph :: Net -> GlobalGraph
-net2globalgraph pn@(pplaces, _, events, _) = unionGG (transfPlace pplaces) (transfTrans events)
-  where transfPlace ps = S.fold unionGG emptyGG $ S.map (\x -> unionGG (intoPlace pn x) (outofPlace pn x)) ps
+net2globalgraph pn@(pplaces, _, events, _) = unionGC (transfPlace pplaces) (transfTrans events)
+  where transfPlace ps = S.fold unionGC emptyGC $ S.map (\x -> unionGC (intoPlace pn x) (outofPlace pn x)) ps
         --
-        transfTrans ts = S.fold unionGG emptyGG $ S.map (\x -> unionGG (intoTransition pn x) (outofTransition pn x)) ts
+        transfTrans ts = S.fold unionGC emptyGC $ S.map (\x -> unionGC (intoTransition pn x) (outofTransition pn x)) ts
 
 
-unionGG :: GlobalGraph -> GlobalGraph -> GlobalGraph
-unionGG (vs1, acs1) (vs2, acs2) =  (nvs, S.union arcs addarcs) -- ((S.union vs1 vs2),(S.union acs1 acs2)) 
+unionGC :: GlobalGraph -> GlobalGraph -> GlobalGraph
+unionGC (vs1, acs1) (vs2, acs2) =  (nvs, S.union arcs addarcs) -- ((S.union vs1 vs2),(S.union acs1 acs2)) 
   where
     port1 = S.filter isPort vs1
     port2 = S.filter isPort vs2
@@ -188,8 +188,8 @@ outofTransition pn t =
 --
 -- TRANFORMATION NUMBER FOUR (CLEAN UP)
 --
-cleanupGG :: GlobalGraph -> GlobalGraph
-cleanupGG = replaceNode
+cleanupGC :: GlobalGraph -> GlobalGraph
+cleanupGC = replaceNode
   -- let (v,a) =  replaceNode gg
   -- in (S.fold S.union S.empty $ S.map (\(x,y) -> S.insert x (S.singleton y)) a, a)
     
@@ -198,7 +198,7 @@ replaceNode :: GlobalGraph -> GlobalGraph
 replaceNode gg@(vs, arcs) = 
   let replace = [ ( (x,p) , (p',x') ) |
                   (x,p) <- (S.toList arcs), (p',x') <- (S.toList arcs),
-                  ((p==p') && not (isGGNode p) && ((S.size $ succG gg p) == 1 || (S.size $ precG gg p) == 1) )]
+                  ((p==p') && not (isGCNode p) && ((S.size $ succG gg p) == 1 || (S.size $ precG gg p) == 1) )]
   in if (L.length replace) > 0
      then let ((x,p) , (_,x') ) = head replace
           in if (S.size $ succG gg p) == 1 && (S.size $ precG gg p) == 1
@@ -300,7 +300,7 @@ allSinks (vs, _) = S.filter isSink vs
 
 globalGraph2String :: GlobalGraph -> String
 globalGraph2String gg@(vs , arcs) = 
-  let header =  "digraph GG {\nnode [width="++ (sizeNode) ++ ",height=" ++ (sizeNode) ++ "];\n\n"
+  let header =  "digraph GC {\nnode [width="++ (sizeNode) ++ ",height=" ++ (sizeNode) ++ "];\n\n"
       footer = "\n}\n"
       st_vertices = S.fold (++) ""
                     (S.map (\x -> "\t" ++ (printVertexId x)++" ["++(printVertexLabel x)++", "++(printVertexGraphics x)++"];\n") vs)

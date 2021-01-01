@@ -206,7 +206,7 @@ unionsHG [] = Just emptyHG
 unionsHG (hg:hgs) = if (isJust hg) && (isJust hg') then unionHG hg hg' else Nothing
   where hg' = unionsHG hgs
 
-semList :: Bool -> Mu -> [GG] -> P -> (Mu,[Maybe HG])
+semList :: Bool -> Mu -> [GC] -> P -> (Mu,[Maybe HG])
 semList iter mu ggs ptps = case ggs of
                        []        -> (mu,[])
                        (gg:ggs') -> (mu'', ([Just hg'] ++ rest))
@@ -220,9 +220,9 @@ semList iter mu ggs ptps = case ggs of
 -- The labels of the events correspond to those used in proj (again
 -- this is the case for iteration)
 --
-sem :: Bool -> Mu -> GG -> P -> (Mu, HG)
+sem :: Bool -> Mu -> GC -> P -> (Mu, HG)
 sem iter mu gg ptps =
-  case gg of    -- Note: no longer normalisation and factorisation...factorise $ normGG gg
+  case gg of    -- Note: no longer normalisation and factorisation...factorise $ normGC gg
    Emp         -> ( mu, emptyHG )
    Act (s,r) m -> ( i, ( rel, S.singleton e, S.singleton e', rel, rel ) )
        where i   = 1 + mu

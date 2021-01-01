@@ -1,7 +1,7 @@
 --
 -- Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
--- This module contains function to project a GG & REG to Erlang
+-- This module contains function to project a GC & REG to Erlang
 --
 
 module ErlanGC where
@@ -16,12 +16,12 @@ import Data.Char
 -- A syntactic reversible global graph is like a syntactic global
 -- graph with guards and selectors on branches; for simplicity we
 -- consider just binary parallel and branches
-data RGG = Pme
+data RGC = Pme
          | Tca Channel Message
-         | Rap [RGG]
-         | Arb Ptp [(RGG, ReversionGuard)]
-         | Qes [RGG]
-         | Per Ptp RGG ReversionGuard
+         | Rap [RGC]
+         | Arb Ptp [(RGC, ReversionGuard)]
+         | Qes [RGC]
+         | Per Ptp RGC ReversionGuard
          deriving (Eq, Ord, Show)
 
 type Endpoint = String
@@ -52,7 +52,7 @@ guard2erl g = if M.null g then "\" \"" else "\"" ++ show g ++ "\""
 --      must be Erlang expressions and ln is a strictly positive integer
 -- Post: a string in the format expected by encoding.erl
 --
-rgc2erl :: Int -> RGG -> (String, Int)
+rgc2erl :: Int -> RGC -> (String, Int)
 rgc2erl ln _rgg =
   let sep = ", "
   in case _rgg of

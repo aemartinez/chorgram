@@ -10,7 +10,7 @@
 --
 -- the binary operators | and ; are given in ascending order of
 -- precedence.  The parser generator is Haskell's 'Happy' and the
--- parser (RGGParser.hs) is obtained by typing'make parser'.
+-- parser (RGCParser.hs) is obtained by typing'make parser'.
 --
 -- The only syntactic check made (right now) during the parsing are
 -- (i) that sender and receiver of interactions have to be different,
@@ -253,7 +253,7 @@ catchErr m k = case m of
       		Ok a     -> Ok a
 		Failed e -> k e
 
-checkGuard :: (RGG, Set Ptp) -> ReversionGuard -> ((RGG, Set Ptp), ReversionGuard)
+checkGuard :: (RGC, Set Ptp) -> ReversionGuard -> ((RGC, Set Ptp), ReversionGuard)
 checkGuard g m = let tmp = [ x | x <- M.keys m, not (S.member x (snd g)) ] in
                  if L.null tmp
                  then (g, m)
@@ -274,7 +274,7 @@ checkGuard g m = let tmp = [ x | x <- M.keys m, not (S.member x (snd g)) ] in
 
 
 -- checkToken 'flattens', parallel and sequential composition
-checkToken :: Token -> RGG -> [RGG]
+checkToken :: Token -> RGC -> [RGC]
 checkToken t g = case t of
                    TokenraP -> case g of
                                  Rap l -> l
@@ -284,7 +284,7 @@ checkToken t g = case t of
                                  _ -> [g]
                    _        -> [g]
 
-emptyG :: RGG -> Bool
+emptyG :: RGC -> Bool
 emptyG g = case g of
              Pme -> True
              _   -> False

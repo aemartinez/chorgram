@@ -47,7 +47,7 @@ labOf (_, _, lab) = lab
 sprod :: Ord t => Ord t' => Set t -> Set t' -> Set (t,t')
 sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
 
-pomsetsOf :: GG -> Int -> Event -> (Set Pomset, Event)
+pomsetsOf :: GC -> Int -> Event -> (Set Pomset, Event)
 pomsetsOf gg iter e =
   -- PRE: gg is well-formed; e is the 'counter' of the events
   -- POST: returns the set of pomsets [[gg]] with n-unfolds of each loop for n = |iter|
@@ -170,7 +170,7 @@ components (events, rel, _) = S.foldr aux S.empty events
                            L.map snd [(x,y) | (x,y) <- r, x == e]
                 in connected (e:visited) (tovisit' ++ todo) (S.union acc (S.fromList todo))
 
-pomset2gg :: Pomset -> Maybe GG
+pomset2gg :: Pomset -> Maybe GC
 pomset2gg p@(_, _, lab) =
   let
     interactionsPomset = mkInteractions p
