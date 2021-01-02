@@ -26,7 +26,6 @@ data GC = Emp
         | Rep GC Ptp
     deriving (Eq, Ord, Show)
 
-                      
 gcptp :: Set Ptp -> GC -> Set Ptp
 gcptp ptps g =
 --
