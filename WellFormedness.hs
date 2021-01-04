@@ -162,15 +162,9 @@ check c p branching =
 
 isActive :: Ptp -> Set GC -> Bool
 isActive p branching = check Active p branching
-  -- case check Active p branching of
-  --   [] -> True
-  --   _ -> False
 
 isPassive :: Ptp -> Set GC -> Bool
 isPassive p branching = check Passive p branching
-  -- case check Passive p branching of
-  --   [] -> True
-  --   _ -> False
 
 nothing :: Ord a => Maybe a -> Bool
 nothing = \x -> x == Nothing
@@ -217,49 +211,17 @@ dependency (min_int, oth) gc =
       then dependency (min_int, oth) gc'
       else dependency (S.insert p min_int, oth) gc'
 
-ws :: Set GC -> Set GC -> GC -> Set GC
-ws acc tbc gc =
--- checks for well-sequencedness and returns a g-choreography that
--- cannot be put in sequence with its subsequent g-choreography (if any)
-  let (f, gc') = cutFirst gc
-      tbc' = S.union tbc (S.filter (\a -> not $ S.member (sender a) (S.map receiver acc)) f)
-      acc' = S.union acc (f S.\\ tbc')
-  in
-    if simplifyGC gc' == Emp
-    then S.union acc' tbc'
-    else ws acc' tbc' gc'
-  
---  S.empty
---   case gc of
---     Emp -> tbc
---     Act (_, _) _ -> tbc
---     Par gs ->
---       let aux g (a,t) =
---             (S.union acc (getInteractions g), S.union t (getInteractions g S.\\ [a | a <- S.toList acc, ] ))
---       in L.foldr aux (acc, tbc) gs
---     Bra gs ->
---       let tmp = S.map (ws acc tbc) gs
---       in S.foldr S.union acc tmp
---     Seq gs ->
---       case gs of
---         [] -> tbc
---         [g] -> ws acc tbc g
---         g:gs' ->
---           let
---             (fstg, cntg) = cutFirst g
-            
---               aux p = S.fromList [a | a <- S.toList $ getInteractions g, p == receiver a]
---               ints' = getInteractions g'
---               tmp = S.fold S.union acc (L.foldr (\p -> ints' S.\\ (aux p)) S.empty [a | a <- ints', sender a == p])
---           in ws tmp ws (Seq (g':gs'))
---           -- case (ws g, ws g') of
---           --   (Nothing, Just x) -> Just x
---           --   (Just x, _) -> Just x
---           --   (Nothing, Nothing) ->
---           --     if sequentiable g g'
---           --     then ws acc (Seq (g':gs'))
---           --     else ws acc (Seq (g:gs'))
---     Rep gc' q -> ws acc tbc gc'
+-- ws :: Set GC -> Set GC -> GC -> Set GC
+-- ws acc tbc gc =
+-- -- checks for well-sequencedness and returns a g-choreography that
+-- -- cannot be put in sequence with its subsequent g-choreography (if any)
+--   let (f, gc') = cutFirst gc
+--       tbc' = S.union tbc (S.filter (\a -> not $ S.member (sender a) (S.map receiver acc)) f)
+--       acc' = S.union acc (f S.\\ tbc')
+--   in
+--     if simplifyGC gc' == Emp
+--     then S.union acc' tbc'
+--     else ws acc' tbc' gc'
 
 wf :: GC -> Maybe (GC, GC)
 wf gc =
