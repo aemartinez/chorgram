@@ -172,8 +172,94 @@ isPassive p branching = check Passive p branching
   --   [] -> True
   --   _ -> False
 
-wb :: GC -> Maybe (GC, GC)
-wb gc = Nothing
+nothing :: Ord a => Maybe a -> Bool
+nothing = \x -> x == Nothing
+
+cutFirst :: GC -> (Set GC, GC)
+cutFirst gc =
+-- separates the first interactions of gc from the rest
+  case simplifyGC gc of
+    Emp -> (S.empty, Emp)
+    Act (_, _) _ -> (S.singleton $ simplifyGC gc, Emp)
+    Par gs ->
+      let tmp = L.map cutFirst gs
+      in (S.unions (L.map fst tmp), Par (L.map snd tmp))
+    Bra gs ->
+      let tmp = S.map cutFirst gs
+      in (S.unions (S.map fst tmp), Bra (S.map snd tmp))
+    Seq gs ->
+      let (f,r) = cutFirst (L.head gs)
+      in (f, Seq (r:(L.tail gs)))
+    Rep gc' p ->
+      let (f,r) = cutFirst gc'
+      in (f, Rep r p)
+
+dependency :: (Set Ptp, Set Ptp) -> GC -> (Set Ptp, Set Ptp)
+dependency (min_int, oth) gc =
+-- computes the set of senders of minimal interactions s and those
+-- participants whose actions causally depend on actions of the ones
+-- in min
+  case gc of
+    Emp -> (min_int, oth)
+    Act (s, r) _ ->
+      if S.member s oth
+      then (min_int, S.insert r oth)
+      else (S.insert s min_int, S.insert r oth)
+    Par gs ->
+      let tmp = L.map (dependency (min_int, oth)) gs
+      in (S.unions $ L.map fst tmp, S.unions $ L.map snd tmp)
+    Bra gs -> 
+      let tmp = S.map (dependency (min_int, oth)) gs
+      in (S.unions $ S.map fst tmp, S.unions $ S.map snd tmp)
+    Seq gs -> L.foldl (\(m,o) g -> dependency (m,o) g) (min_int, oth) gs
+    Rep gc' p ->
+      if S.member p oth
+      then dependency (min_int, oth) gc'
+      else dependency (S.insert p min_int, oth) gc'
+
+ws :: Set GC -> Set GC -> GC -> Set GC
+ws acc tbc gc =
+-- checks for well-sequencedness and returns a g-choreography that
+-- cannot be put in sequence with its subsequent g-choreography (if any)
+  let (f, gc') = cutFirst gc
+      tbc' = S.union tbc (S.filter (\a -> not $ S.member (sender a) (S.map receiver acc)) f)
+      acc' = S.union acc (f S.\\ tbc')
+  in
+    if simplifyGC gc' == Emp
+    then S.union acc' tbc'
+    else ws acc' tbc' gc'
+  
+--  S.empty
+--   case gc of
+--     Emp -> tbc
+--     Act (_, _) _ -> tbc
+--     Par gs ->
+--       let aux g (a,t) =
+--             (S.union acc (getInteractions g), S.union t (getInteractions g S.\\ [a | a <- S.toList acc, ] ))
+--       in L.foldr aux (acc, tbc) gs
+--     Bra gs ->
+--       let tmp = S.map (ws acc tbc) gs
+--       in S.foldr S.union acc tmp
+--     Seq gs ->
+--       case gs of
+--         [] -> tbc
+--         [g] -> ws acc tbc g
+--         g:gs' ->
+--           let
+--             (fstg, cntg) = cutFirst g
+            
+--               aux p = S.fromList [a | a <- S.toList $ getInteractions g, p == receiver a]
+--               ints' = getInteractions g'
+--               tmp = S.fold S.union acc (L.foldr (\p -> ints' S.\\ (aux p)) S.empty [a | a <- ints', sender a == p])
+--           in ws tmp ws (Seq (g':gs'))
+--           -- case (ws g, ws g') of
+--           --   (Nothing, Just x) -> Just x
+--           --   (Just x, _) -> Just x
+--           --   (Nothing, Nothing) ->
+--           --     if sequentiable g g'
+--           --     then ws acc (Seq (g':gs'))
+--           --     else ws acc (Seq (g:gs'))
+--     Rep gc' q -> ws acc tbc gc'
 
 wf :: GC -> Maybe (GC, GC)
 wf gc =
@@ -218,16 +304,19 @@ wb gc =
         Just x -> x
     Bra gs ->
       let ptps = gcptp S.empty gc
-          gc' = S.map firstOnly gs
-          getActive = S.filter (\p -> isActive p (S.map simplifyGC gc')) ptps
-          getPassive = S.filter (\p -> isPassive p (S.map (\g -> simplifyGC $ filterPtp p g) gs)) ptps
+          gc' = S.map (simplifyGC . firstOnly) gs
+          getActive = S.filter (\p -> isActive p gc') ptps
+          getPassive = S.filter (\p -> isPassive p gs) ptps
       in
         if S.size getActive /= 1
         then Just Emp
         else
           if (S.size getPassive) /= (S.size ptps) - 1
           then Just Emp
-          else Nothing
+          else
+            if L.all (\g -> (fst $ dependency (S.empty, S.empty) g) == getActive) gs
+            then Nothing
+            else Just Emp
     Seq gs ->
       case L.find (\x -> x /= Nothing) (L.map wb gs) of
         Nothing -> Nothing
