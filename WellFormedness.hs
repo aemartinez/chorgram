@@ -5,8 +5,19 @@
 -- it is very basic since (almost) the simplest form of
 -- well-branchedness is checked and well-sequencedness is not checked.
 --
--- TODO: change the codomain of wb to some more informative data type
---       to improve feedback
+-- At the moment there are some limitations, but in some sense this
+-- implementation complements PomCho's closure conditions because the
+-- checking is just syntactic. Here are the limitations we have so
+-- far (TODO):
+--
+--  - well-sequencedness not implemented (actually it is just the
+--    constant function \x -> True)
+--  - the function wb to check for well-branchedness just returns a
+--    boolean; it would be good that in case the properties do not
+--    hold it returned more informative feedback to highlight the
+--    problem
+--  - try to generalise the checking of well-branchedness as per the
+--    paper of JLAMP 2019; this is non trivial
 --
 
 module WellFormedness where
@@ -32,6 +43,7 @@ getInteractions gc =
     Seq gs -> S.unions (S.fromList $ L.map getInteractions gs)
     Rep gc' _ -> getInteractions gc'
 
+-- Basic functions to check the nature of a g-choreography
 isAct :: GC -> Bool
 isAct (Act _ _) = True
 isAct _ = False
@@ -44,17 +56,18 @@ isEmp :: GC -> Bool
 isEmp Emp = True
 isEmp _ = False
 
+-- Extracting information from an action
 sender :: GC -> Ptp
 sender (Act (s, _) _) = s
-sender _ = ""
+sender gc = error $ "\'sender\' applied to " ++ (show gc)
 
 receiver :: GC -> Ptp
 receiver (Act (_, r) _) = r
-receiver _ = ""
+receiver gc = error $ "\'receiver\' applied to " ++ (show gc)
 
 filterPtp :: Ptp -> GC -> GC
 filterPtp p gc =
--- projects gc on p
+-- projects gc on p...without splitting interactions
   case gc of
     Emp -> Emp
     Act (s,r) _ ->
@@ -165,9 +178,6 @@ isActive p branching = check Active p branching
 
 isPassive :: Ptp -> Set GC -> Bool
 isPassive p branching = check Passive p branching
-
-nothing :: Ord a => Maybe a -> Bool
-nothing = \x -> x == Nothing
 
 cutFirst :: GC -> (Set GC, GC)
 cutFirst gc =

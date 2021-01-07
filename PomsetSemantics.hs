@@ -316,8 +316,8 @@ xgml2dot name xml flines =
   -- violating the sgg format) in dot format
   --
   "digraph " ++ name ++ " {\n\tnode [width="    -- The string is just a dot notation with nodes and
-  ++ flines!ggsizenode ++ ", height="           -- edges computed by the auxiliary function aux
-  ++ flines!ggsizenode ++ "]\n"
+  ++ flines!gcsizenode ++ ", height="           -- edges computed by the auxiliary function aux
+  ++ flines!gcsizenode ++ "]\n"
   ++ (aux (xreadDoc xml) M.empty)
   ++ "}\n"
   where
@@ -367,7 +367,7 @@ xgml2dot name xml flines =
                    "Join" -> joinV
                    _ -> error (msgFormat POM2GC "Bad closing gate at node " ++ nodeId ++ "\t" ++ (show datum))
                else if L.elem "payload" xkeys then
-                 "[label = \"" ++ tmpMap!"sender" ++ flines!ggarr ++ tmpMap!"receiver" ++ ":" ++ tmpMap!"payload" ++ "\", shape=rectangle, fontname=" ++ flines!nodefont ++ ", fontcolor=MidnightBlue]\n"
+                 "[label = \"" ++ tmpMap!"sender" ++ flines!gcarr ++ tmpMap!"receiver" ++ ":" ++ tmpMap!"payload" ++ "\", shape=rectangle, fontname=" ++ flines!nodefont ++ ", fontcolor=MidnightBlue]\n"
                else myError POM2GC ("Bad element at node " ++ nodeId ++ "\t" ++ (show datum))
       in dot ++ (dotline d)
 
@@ -377,8 +377,8 @@ xgmldiff2dot name xml flines =
   -- transforms a graphml file representing the difference of
   -- choreographies in dot format
   "digraph " ++ name ++ " {\n\tnode [width="    -- The string is just a dot notation with nodes and
-  ++ flines!ggsizenode ++ ", height="           -- edges computed by the auxiliary function aux
-  ++ flines!ggsizenode ++ "]\n"
+  ++ flines!gcsizenode ++ ", height="           -- edges computed by the auxiliary function aux
+  ++ flines!gcsizenode ++ "]\n"
   ++ (aux (xreadDoc xml) M.empty)
   ++ "}\n"
   where
@@ -412,7 +412,7 @@ xgmldiff2dot name xml flines =
               ++ n ++ " [label=\""
               ++ m!"sender"
               ++ mark "sender-change-to" ls
-              ++ flines!ggarr
+              ++ flines!gcarr
               ++ m!"receiver"
               ++ mark "receiver-change-to" ls
               ++ ":"
@@ -465,6 +465,6 @@ xgmldiff2dot name xml flines =
                    "Join" -> joinV
                    _ -> myError POM2GC ("Bad closing gate at node " ++ nodeId ++ "\t" ++ (show datum))
                else if L.elem "payload" xkeys then
-                 "[label = \"" ++ tmpMap!"sender" ++ flines!ggarr ++ tmpMap!"receiver" ++ ":" ++ tmpMap!"payload" ++ "\", shape=rectangle, fontname=" ++ flines!nodefont ++ ", fontcolor=MidnightBlue]\n"
+                 "[label = \"" ++ tmpMap!"sender" ++ flines!gcarr ++ tmpMap!"receiver" ++ ":" ++ tmpMap!"payload" ++ "\", shape=rectangle, fontname=" ++ flines!nodefont ++ ", fontcolor=MidnightBlue]\n"
                else myError POM2GC ("Bad element at node " ++ nodeId ++ "\t" ++ (show datum))
       in dot ++ (dotline d) ++ (diffRender tmpMap (Node nodeId) (L.intersect diffkeys xkeys))

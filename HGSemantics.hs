@@ -294,7 +294,7 @@ hg2dot (rel,_,_,_,_) flines =
         nodes    = S.map (\ev -> "\t" ++ (ev2dot ev flines)) (S.foldr S.union S.empty (S.map (\(x,y) -> (S.union x y)) rel))
         edges    = S.fromList [he2dot (S.elemAt i rel) flines i | i <- [0 .. (S.size rel) -1] ]
         stuff    = L.concat $ (S.toList nodes) ++ (S.toList edges)
-        nodeSize = flines!ggsizenode
+        nodeSize = flines!gcsizenode
 
 
 cp2dot :: E -> String

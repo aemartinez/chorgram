@@ -31,7 +31,7 @@ main = do progargs <- getArgs
                   let ( gg, _ ) =
                         (gcgrammar . GCParser.lexer) ggtxt
                   writeToFile (dir ++ baseName ++ ".dot") ("# Input @ " ++ sourcefile ++ "\n\n" ++ show gg)
-                  writeToFile (dir ++ baseName ++ ".dot") (gc2dot gg baseName (flines!ggsizenode))
+                  writeToFile (dir ++ baseName ++ ".dot") (gc2dot gg baseName (flines!gcsizenode))
                 "gml" -> do
                   xml <- readFile sourcefile
                   case pomset2gg $ xgml2pomset xml of

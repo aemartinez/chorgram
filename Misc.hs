@@ -92,7 +92,7 @@ isSublist l1 l2 =
 
 range :: Int -> [Int]
 range i
-  | i <= 0    = [i+1 .. 0]
+  | i < 0    = [i+1 .. 0]
   | otherwise = [0 .. i-1]
 
 flatten :: [[a]] -> [a]
@@ -119,6 +119,9 @@ isAlpha c = c € ([x | x <- ['0'.. 'z'] ++ ['$', '#', '&', '~', '\"', '_'],
 isPtp :: String -> Bool
 -- Names of participants have to begin with a letter
 isPtp s = (s /= []) && ( ((head s) € (['a'.. 'z'] ++ ['A'.. 'Z'])) && (L.all isAlpha (tail s)) )
+
+-- isNothing :: Ord a => Maybe a -> Bool
+-- isNothing = \x -> x == Nothing
 
 idxOffset :: (Num a, Eq b) => b -> [b] -> a -> a
 -- PRE:  

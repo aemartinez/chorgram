@@ -132,7 +132,7 @@ showDir d flines
     | d == Break   = " " ++ flines!breakLoop ++ " "
     | d == LoopSnd = " " ++ flines!sndm ++ " "
     | d == LoopRcv = " " ++ flines!rcvm ++ " "
-    | otherwise    = error ("Non sense: " ++ show d ++ " is not a valid")
+    | otherwise    = error ("Non sense: " ++ show d ++ " is not valid")
 
 -- 
 -- Basic Functions (for TS constructions)
@@ -267,7 +267,7 @@ ptrans m m' ((s,t):pairs) v =
 
 cfsmProd :: [CFSM] -> CFSM
 cfsmProd [] = emptyCFSM
-cfsmProd (m:ms) = if ms==[]
+cfsmProd (m:ms) = if ms == []
                   then m
                   else twoProd m (cfsmProd ms)
 
@@ -443,7 +443,7 @@ cfsm2fsm flines (states, initn, _, trans) =
 
 system2String :: System -> String
 system2String (cfsms, ptps) =
-  L.concat [ cfsm2String (ptps!i) (cfsms!!i) | i <- [ 0 .. (L.length cfsms) - 1 ] ]
+  L.concat [ cfsm2String (ptps!i) (cfsms!!i) | i <- (range $ L.length cfsms) ]
 
 system2file :: FilePath -> String -> Map String String -> System -> IO()
 system2file file ext flines sys =

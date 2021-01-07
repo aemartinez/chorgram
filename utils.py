@@ -5,6 +5,10 @@
 import os
 import os.path
 
+RND_SIZE = 100
+RND_PTPS = 20
+RND_MSGS = 20
+
 def debugMsg(debug, cmd, msg, force = False):
     """Prints debugging messages"""
     if (debug or force):

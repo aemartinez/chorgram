@@ -325,7 +325,7 @@ nodelabel n sep = rmChar '\"' (helper n)
 eventLabel :: Int -> KEvent -> Map String String -> String
 eventLabel k (q, q', s, r, d, msg) flines
     | k < 1     =
-      let interaction = s ++ flines!ggarr ++ r ++ ":" ++ (show msg) in rmChar '\"' $ 
+      let interaction = s ++ flines!gcarr ++ r ++ ":" ++ (show msg) in rmChar '\"' $ 
           case flines!tslab of
             "simple" -> interaction
             _        -> "<" ++ (show q) ++ "," ++ (show q') ++ "," ++ interaction ++ ">"
