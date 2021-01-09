@@ -10,6 +10,11 @@
 # bound by the number of participants of the choice.
 #
 
+# Bad programming style...never show this code to students;
+# nonetheless, have a look at https://dl.acm.org/doi/10.1145/356635.356640
+# :)
+
+
 import random
 import sys
 import os
@@ -74,6 +79,9 @@ gates = ["seq", "par", "sel", "emp", "rep"]
 indent = "  "
 level = 0
 
+# A few auxiliary functions for pretty-printing and uniform
+# representation of names / syntax
+
 def mkIndent(s):
     return "\n" + (level*indent) + s
 
@@ -90,6 +98,9 @@ def mkBlock(b):
 def mkArrow(s, r, m):
     return mkIndent("{} -> {}: {}".format(mkPtp(s), mkPtp(r), m))
 
+# The functions for random generations start;
+# there is a function for each construct of g-choreographies
+#
 def getInteraction(sender = None, receiver = None, m = None):
     assert (sender == None and receiver == None) or (sender != None and receiver != None), "Either both sender and receiver or none"
     if sender == None:
@@ -117,13 +128,14 @@ def getBra(a = None, p = None, m = None, branching = 5):
     passive = p if p else pts[1:]
     b = random.randint(2, branching)
     branches = [(random.sample(passive, len(passive)) , (m if m else "") + str(i)) for i in range(1,b+1)]
-#    return (active, (mkIndent("+")).join(map((lambda x: mkChoice(active, x[0], mkMsg(x[1], "b"))), branches)))
     return (active, (mkIndent("+")).join(map((lambda x: mkGC([active], x[0], mkMsg(x[1], "b"))), branches)))
 
 def getLoop():
     pts = random.sample(range(1,ptps+1), random.randint(2,ptps))
     return (pts[0], mkGC([pts[0]], pts[1:], mkMsg(random.randint(1,RND_MSGS))))
-    
+
+# getGC put's all the stuff above together
+
 def getGC():
     t = datetime.now()
     random.seed(t)
@@ -161,6 +173,12 @@ def getGC():
             raise ("unknown gate: " + gate)
     return res
 
+# mkGC is similar to getGC but for the fact that it uses getBra
+# differently: getGC "triggers" the generation of a random loop, while
+# mkGC ensures that branches are combined enforcing well-branchedness
+# once the involved participants are chosen and assigned a role in the
+# choice
+
 def mkGC(aware, ptps, brc):
     assert ptps == [] or aware != [], "No one's aware!"
     global level
@@ -181,14 +199,15 @@ def mkGC(aware, ptps, brc):
             level = level + 1
             res = mkGC(aware, ptps[:l], brc) + mkIndent("|") + mkGC(aware, ptps[l:], brc)
             level = level - 1
-            res = mkIndent("{") + res + mkIndent("}")
+            res = mkIndent("{.. parallel of: " + ", ".join([str(x) for x in aware + ptps])) + res + mkIndent("}")
         elif gate == "sel":
             active = random.choice(aware)
             level = level + 1
             (active, body) = getBra(a = active, p = ptps[:l], m = brc)
             level = level - 1
             cntd = mkGC(aware + ptps[:l], ptps[l:], brc)
-            res = (mkIndent("sel " + mkPtp(active) + " {") + body + mkIndent("}"))
+            act = mkPtp(active)
+            res = (mkIndent("sel " + act + " {.. choice among: " + act + ", " + ", ".join([str(x) for x in ptps[:l]])) + body + mkIndent("}"))
             res = res + ";" + mkGC(aware + ptps[:l], ptps[l:], brc)
         elif gate == "rep":
             level = level + 1
