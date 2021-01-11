@@ -29,30 +29,36 @@ from utils import *
 
 # Get inputs
 parser = argparse.ArgumentParser(description="gcgen: generates random well-formed g-choreographies")
-parser.add_argument("-v", "--verbose",
-                    dest = "debug",
-                    action = "store_true",
-                    help = "Run in verbose mode")
-parser.add_argument("-o", "--output",
-                    dest = "output",
-                    default = "",
-                    help = "store results in files {default = \"\"}")
-parser.add_argument("-s", "--size",
-                    dest = "size",
-                    default = -1,
-                    help = "bound to the size of the generated g-choreographies; -1 stops randomly {default = -1}")
-parser.add_argument("-p", "--participants",
-                    dest = "ptps",
-                    default = -1,
-                    help = "maximal number of participants in the generated g-choreographies; -1 random {default = -1}")
-parser.add_argument("-m", "--messages",
-                    dest = "msgs",
-                    default = -1,
-                    help = "maximal number of messages in the generated g-choreographies; -1 random {default = -1}")
-parser.add_argument("-n", "--gc",
-                    dest = "gc",
-                    default = 1,
-                    help = "number of g-choreographies to generate; use '-1' for generating infititely many g-choreographies {default = 1}")
+parser.add_argument(
+    "-v", "--verbose",
+    dest = "debug",
+    action = "store_true",
+    help = "Run in verbose mode")
+parser.add_argument(
+    "-o", "--output",
+    dest = "output",
+    default = "",
+    help = "store results in files {default = \"\"}")
+parser.add_argument(
+    "-s", "--size",
+    dest = "size",
+    default = -1,
+    help = "bound to the size of the generated g-choreographies; -1 stops randomly {default = -1}")
+parser.add_argument(
+    "-p", "--participants",
+    dest = "ptps",
+    default = -1,
+    help = "maximal number of participants in the generated g-choreographies; -1 random {default = -1}")
+parser.add_argument(
+    "-m", "--messages",
+    dest = "msgs",
+    default = -1,
+    help = "maximal number of messages in the generated g-choreographies; -1 random {default = -1}")
+parser.add_argument(
+    "-n", "--gc",
+    dest = "gc",
+    default = 1,
+    help = "number of g-choreographies to generate; use '-1' for generating infititely many g-choreographies {default = 1}")
 args = parser.parse_args()
 
 size = int(args.size) if int(args.size) > -1 else random.randint(1,RND_SIZE)
@@ -62,9 +68,10 @@ ngcs = int(args.gc)
 outs = args.output
 
 cmd = ".. "
-debugMsg(args.debug,
-         cmd,
-         "Size: {}\tMax participants: {}\tMax messages: {}".format(str(size), str(ptps), str(msgs))
+debugMsg(
+    args.debug,
+    cmd,
+    "Size: {}\tMax participants: {}\tMax messages: {}".format(str(size), str(ptps), str(msgs))
 )
 
 def decSize():
@@ -130,8 +137,9 @@ def getBra(a = None, p = None, m = None, branching = 5):
     branches = [(random.sample(passive, len(passive)) , (m if m else "") + str(i)) for i in range(1,b+1)]
     return (active, (mkIndent("+")).join(map((lambda x: mkGC([active], x[0], mkMsg(x[1], "b"))), branches)))
 
-def getLoop():
+def getLoop(ctrl = None):
     pts = random.sample(range(1,ptps+1), random.randint(2,ptps))
+    pts = pts if ctrl==None else [ctrl] + pts
     return (pts[0], mkGC([pts[0]], pts[1:], mkMsg(random.randint(1,RND_MSGS))))
 
 # getGC put's all the stuff above together
@@ -207,13 +215,14 @@ def mkGC(aware, ptps, brc):
             level = level - 1
             cntd = mkGC(aware + ptps[:l], ptps[l:], brc)
             act = mkPtp(active)
-            res = (mkIndent("sel " + act + " {.. choice among: " + act + ", " + ", ".join([str(x) for x in ptps[:l]])) + body + mkIndent("}"))
+            res = (mkIndent("sel " + act + " {.. choice among: " + act + ", " + ", ".join([mkPtp(x) for x in ptps[:l]])) + body + mkIndent("}"))
             res = res + ";" + mkGC(aware + ptps[:l], ptps[l:], brc)
         elif gate == "rep":
             level = level + 1
-            body = mkGC(aware, ptps, brc)
+            p = aware[0]
+            body = mkGC([p], aware[1:] + ptps, brc)
             level = level - 1
-            res = (mkIndent("repeat " + mkPtp(ptps[0]) + " {") + body + mkIndent("}"))
+            res = (mkIndent("repeat " + mkPtp(p) + " {") + body + mkIndent("}"))
         else:
             raise ("unknown gate: " + gate)
     return res
