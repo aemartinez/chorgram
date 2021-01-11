@@ -142,7 +142,10 @@ simplifyGC gc =
               _ -> S.singleton g
           (bra, oth) = S.partition isBra gcs'
           flatBra = S.unions $ S.map rmBra bra
-      in Bra (S.union flatBra oth)
+      in
+        if all isEmp gcs'
+        then Emp
+        else Bra (S.union flatBra oth)
     Rep gc' p ->
       let body = simplifyGC gc'
       in
