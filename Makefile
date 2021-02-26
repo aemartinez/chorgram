@@ -13,6 +13,21 @@ logfile = $(logdir)/experiments.log
 os := $(shell uname -s)
 gitmsg = "checkpoint"
 
+all:
+	$(MAKE) gmc_hs &&\
+	$(MAKE) wb_hs &&\
+	$(MAKE) BuildGlobal_hs &&\
+	$(MAKE) PomsetSemantics_hs &&\
+	$(MAKE) sysparser_hs &&\
+	$(MAKE) minimise_hs &&\
+	$(MAKE) gc2pom_hs &&\
+	$(MAKE) project_hs &&\
+	$(MAKE) pom2gc_hs &&\
+	$(MAKE) gc2fsa_hs &&\
+	$(MAKE) gc2dot_hs &&\
+	$(MAKE) gc2gml_hs
+#	$(MAKE) gcsem_hs &&\
+
 #
 # Examples of usage of scripts:
 # python cfsm2gc.py -l -df png -dir <path-to-results-directory> <path-to-file>
@@ -30,21 +45,6 @@ gitmsg = "checkpoint"
 # gmc dependencies
 # compile: gmc.hs BuildGlobal.hs GCParser.hs SystemParser.hs PomsetSemantics.hs gc.hs sysparser.hs minimise.hs gc2fsa.hs gc2pom.hs pom2gc.hs minimise.hs gc2gml.hs
 #	$(MAKE) all
-
-all:
-	$(MAKE) gmc_hs &&\
-	$(MAKE) BuildGlobal_hs &&\
-	$(MAKE) PomsetSemantics_hs &&\
-	$(MAKE) sysparser_hs &&\
-	$(MAKE) minimise_hs &&\
-	$(MAKE) gc2pom_hs &&\
-	$(MAKE) project_hs &&\
-	$(MAKE) pom2gc_hs &&\
-	$(MAKE) gc2fsa_hs &&\
-	$(MAKE) gc2dot_hs &&\
-	$(MAKE) gc2gml_hs\
-	$(MAKE) wb_hs
-#	$(MAKE) gcsem_hs &&\
 
 gmc_hs: gmc.hs SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuff.hs BranchingProperty.hs PetrifyBridge.hs
 	$(ccmd) $<
@@ -89,7 +89,7 @@ gc2dot_hs: gc2dot.hs Misc.hs PomsetSemantics.hs SyntacticGlobalChoreographies.hs
 gc2gml_hs: gc2gml.hs Misc.hs SyntacticGlobalChoreographies.hs GCParser.hs
 	$(ccmd) $<
 
-wb_hs: wb.hs Misc.hs SyntacticGlobalChoreographies.hs GCParser.hs WellFormedness
+wb_hs: wb.hs Misc.hs GCParser.hs WellFormedness.hs
 	$(ccmd) $<
 
 debug:
@@ -108,6 +108,7 @@ debug:
 	$(ccdebug) gc2fsa_hs &&\
 	$(ccmd) gc2dot_hs &&\
 	$(ccdebug) gc2gml_hs
+	$(ccdebug) wb_hs
 
 # To get the stack trace, add +RTS -xc at the end of the gmc or BuildGlobal command
 prof:

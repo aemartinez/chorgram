@@ -30,7 +30,7 @@ data Command = GMC
   | MIN
   | WB
   | HGSEM -- deprecated
---  | PROD
+-- | PROD
    deriving (Ord, Eq)
 
 data Flag    = Deadlock | Action | Config | Path | Prop
