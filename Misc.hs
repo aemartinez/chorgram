@@ -28,6 +28,7 @@ data Command = GMC
   | GC2GML
   | SYS
   | MIN
+  | WB
   | HGSEM -- deprecated
 --  | PROD
    deriving (Ord, Eq)
@@ -309,6 +310,9 @@ info =
          "default: dirpath = " ++ dirpath,
          "\t -D min"]
   ),
+  (WB, ["checks for well-branchedness",
+         "[-v] filename"]
+  ),
   (HGSEM, ["computes the hypergraph semantics of a g-choreography (deprecated)",
            "[-d dirpath] [-v] [--sloppy] filename",
            "default: dirpath = " ++ dirpath]
@@ -357,6 +361,7 @@ cmdName cmd =
     GC2GML -> "gc2gml"
     SYS    -> "systemparser"
     MIN    -> "minimise"
+    WB     -> "wb"
     HGSEM  -> "hgsem"
 --    PROD     -> "cfsmprod"
 
@@ -391,6 +396,7 @@ defaultFlags cmd = M.insert "-o" ""
                       GC2GML -> M.fromList [("-d",dirpath), ("-v",""), ("-u","1")] -- '-l' unfolding of loops
                       SYS    -> M.fromList [("-d",dirpath), ("-v","")]
                       MIN    -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
+                      WB     -> M.fromList [("-v","")]
                       HGSEM  -> M.fromList [("-d",dirpath), ("-v","")]
 --                      PROD     -> M.fromList [("-d",dirpath), ("-v","")]
                    )
@@ -470,6 +476,10 @@ getFlags cmd args =
       "-d":y:xs -> M.insert "-d" y   (getFlags cmd xs)
       "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
       "-D":y:xs -> M.insert "-D" y   (getFlags cmd xs)
+      _         -> error $ usage(cmd)
+    WB -> case args of
+      []        -> defaultFlags(cmd)
+      "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
       _         -> error $ usage(cmd)
     HGSEM -> case args of
       []            -> defaultFlags(cmd)

@@ -42,7 +42,8 @@ all:
 	$(MAKE) pom2gc_hs &&\
 	$(MAKE) gc2fsa_hs &&\
 	$(MAKE) gc2dot_hs &&\
-	$(MAKE) gc2gml_hs
+	$(MAKE) gc2gml_hs\
+	$(MAKE) wb_hs
 #	$(MAKE) gcsem_hs &&\
 
 gmc_hs: gmc.hs SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuff.hs BranchingProperty.hs PetrifyBridge.hs
@@ -86,6 +87,9 @@ gc2dot_hs: gc2dot.hs Misc.hs PomsetSemantics.hs SyntacticGlobalChoreographies.hs
 	$(ccmd) $<
 
 gc2gml_hs: gc2gml.hs Misc.hs SyntacticGlobalChoreographies.hs GCParser.hs
+	$(ccmd) $<
+
+wb_hs: wb.hs Misc.hs SyntacticGlobalChoreographies.hs GCParser.hs WellFormedness
 	$(ccmd) $<
 
 debug:
