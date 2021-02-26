@@ -1,19 +1,22 @@
 # Welcome
 
-ChorGram is a tool chain to support choreographic development of message-oriented applications. The tool kit started originally to support the experimental work related to the theory introduced in **From Communicating Machines to Graphical Choreographies** (J. Lange, E. Tuosto, and N. Yoshida, POPL 2015). New features have been added since the initial prototype; in particular, the chain now supports the semantics of choregraphies defined in **An abstract semantics of the global view of choreographies** (R. Guanciale and E. Tuosto, ICE 2016) and its journal version **Semantics of global view of choreographies** (J. Log. Algebr. Meth. Program. 95: 17-40, 2018; available [here](https://authors.elsevier.com/c/1W8zs8MrKMC5ww)), as well as the monitor-based reversibility introduced in **Reversible Choreographies via Monitoring in Erlang** (A. Francalanza, C. A. Mezzina, and E. Tuosto, DAIS 2018). A tutorial is also in [chapter 6](https://www.riverpublishers.com/book_details.php?book_id=439) of [Behavioural Types: from Theory to Tools](https://www.riverpublishers.com/book_details.php?book_id=439), a book published by River Publishers.
+ChorGram is a tool chain to support choreographic development of message-oriented applications. The tool kit started originally to support the experimental work related to the theory introduced in this [PoPL 2015 paper](https://doi.org/10.4204/EPTCS.203.7). New features have been added since the initial prototype; in particular, the chain now supports the semantics of choregraphies defined in this [ICE 2016 paper](https://doi.org/10.4204/EPTCS.223.5) and its [journal version](https://authors.elsevier.com/c/1W8zs8MrKMC5ww). A tutorial is also in [chapter 6](https://www.riverpublishers.com/book_details.php?book_id=439) of [Behavioural Types: from Theory to Tools](https://www.riverpublishers.com/book_details.php?book_id=439), a book published by River Publishers.
+Recently [Roberto](http://www.csc.kth.se/~robertog/) and [Emilio](https://cs.gssi.it/emilio.tuosto) started to integrate into ChorGram the pomset-based analysis of choregraphies based on  [Roberto](http://www.csc.kth.se/~robertog/)'s [COORDINATION 2019 paper](https://doi.org/10.1007/978-3-030-22397-7_14) and our [JLAMP 2018 paper](https://doi.org/10.1016/j.jlamp.2017.11.002). The integration consists of the files in the subdirectory './cc/', but soon we will provide a more coherent integration of all the stuff above. This integration will also include our recent tool for choreographic model-based testing development by [Alex Coto](https://www.gssi.it/people/students/students-computer-science/item/4803-coto-alex),  [Roberto](http://www.csc.kth.se/~robertog/) and [Emilio](https://cs.gssi.it/emilio.tuosto) whose results where presented at in this [ICE 2020 paper](https://doi.org/10.1007/978-3-030-61362-4_2) and this [ISoLA 2020 paper](https://doi.org/10.1007/978-3-030-61362-4_2).
 
-Recently Roberto and Emilio started to integrate into ChorGram the pomset-based analysis of choregraphies based **DiRPOMS: Automatic Checker of Distributed Realizability of POMSets** (R. Guanciale,COORDINATION 2019) and **(E. Tuosto and R. Guanciale, 2018)**. The integration consists of the files in the subdirectory './cc/'.
+You might be also interested in our tutorial at [COORDINATION 2020](https://doi.org/10.1007/978-3-030-50029-0_2).
+
+[Emilio](https://cs.gssi.it/emilio.tuosto) also started to develop the automatic generation of Erlang executables and monitor-based reversibility introduced in this [DAIS 2018 paper](https://doi.org/10.1007/978-3-319-93767-0_6), but he feels to ashemed to make it public; he is trying to improve that part, but contact him if interested.
 
 # Forewords
-ChorGram is a polished and extended version of [gmc-synthesis](https://bitbucket.org/julien-lange/gmc-synthesis) and of [gmc-synthesis-v0.2](https://bitbucket.org/emlio_tuosto/gmc-synthesis-v0.2); those old versions are deprecated. This branch has been started in order to
+ChorGram is a polished and extended version of [gmc-synthesis](https://bitbucket.org/julien-lange/gmc-synthesis) and of [gmc-synthesis-v0.2](https://bitbucket.org/emlio_tuosto/gmc-synthesis-v0.2); those old versions are deprecated. Since the intial prototype we have
 
-- experiment new features
-- improve the feedback to the user when generalised multiparty compatibility is violated, 
-- add new features to
-  - manipuate/analyse the TS (eg highlighting of configurations with some properties; click [here](http://www.doc.ic.ac.uk/~jlange/demo.tar.gz) for examples of graphical outputs.)
-  - improve usability
+- experimented new features
+- improved the usability (e.g., better feedback to the user when generalised multiparty compatibility is violated),
+- added new features to
+  - manipuate/analyse the TS (eg highlighting of configurations with some properties; click [here](http://www.doc.ic.ac.uk/~jlange/demo.tar.gz) for examples of graphical outputs)
+  - added pomset based algorithms
 
-Although many features are stable, a few are still work in progress (and new variants are often attempted on stable features too).
+Although many features are almost stable, a few are still work in progress (and new variants are often attempted on stable features too).
 
 The main commands provided by the implementation are
 
