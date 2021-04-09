@@ -48,15 +48,15 @@
 # 
 #################################################################
 
-FROM mcr.microsoft.com/vscode/devcontainers/base:0-ubuntu-18.04
+FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN dpkg --add-architecture i386 \ 
-   && apt-get update \
+RUN apt-get update \
    && apt-get -y install --no-install-recommends \
-      libc6:i386 \
       git \
+      openssh-client \
+      wget \
       make \
       locales \
       haskell-platform \
@@ -76,7 +76,7 @@ RUN dpkg --add-architecture i386 \
       libncursesw5-dev \
       libreadline-dev \
       libsqlite3-dev \
-      libssl1.0-dev \
+      libssl-dev \
       liblzma-dev \
       llvm \
       make \
@@ -126,8 +126,8 @@ RUN poetry config virtualenvs.create false
 # RUN opam init --comp 1.2.2
 # RUN echo "eval `opam config env`" >> ~/.bashrc
 
-ADD . /chorgram
-WORKDIR /chorgram
+ADD . /workspace/chorgram
+WORKDIR /workspace/chorgram
 
 RUN poetry install
 
