@@ -11,7 +11,7 @@
 	"shutdownAction": "stopCompose",
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
-		"terminal.integrated.shell.linux": "/usr/bin/zsh"
+		"terminal.integrated.shell.linux": "/usr/bin/bash"
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
