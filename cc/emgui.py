@@ -39,7 +39,7 @@ class Workspace():
     
     def gen_choreography_png(self):
         self.gen_choreography_graphml()
-        os.system("../chor2dot -d %s/ -fmt sloppygml %s/choreography.graphml" % (
+        os.system("../gc2dot -d %s/ --fmt sloppygml %s/choreography.graphml" % (
             self.get_root_folder(), 
             self.get_root_folder()
         ))
@@ -148,7 +148,7 @@ class Workspace():
         g2 = nx.readwrite.graphml.read_graphml(join(self.get_cc2_folder(),  "synthesis", "%d"%pm_idx, "%d.graphml"%pm_idx))
         res = run_diff(g1, g2, self.get_cc2_counter_choreography_folder(pm_idx), costs)
         for i in res:
-            os.system("../chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml" % (
+            os.system("../gc2dot -d %s/ --fmt gmldiff %s/diff_%d.graphml" % (
                 self.get_cc2_counter_choreography_folder(pm_idx), 
                 self.get_cc2_counter_choreography_folder(pm_idx),
                 i
@@ -257,7 +257,7 @@ class Workspace():
         g3 = nx.readwrite.graphml.read_graphml(join(self.get_cc3_folder(),  "synthesis", "%d"%pm_idx, "%d.graphml"%pm_idx))
         res = run_diff(g1, g3, self.get_cc3_counter_choreography_folder(pm_idx), costs)
         for i in res:
-            os.system("../chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml" % (
+            os.system("../gc2dot -d %s/ --fmt gmldiff %s/diff_%d.graphml" % (
                 self.get_cc3_counter_choreography_folder(pm_idx), 
                 self.get_cc3_counter_choreography_folder(pm_idx),
                 i

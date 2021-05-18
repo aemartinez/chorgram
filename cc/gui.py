@@ -52,7 +52,7 @@ class Workspace:
             os.makedirs(self.get_root_folder())
         self.gen_choreography_graphml()
         os.system(
-            "chor2dot -d %s/ -fmt sloppygml %s/choreography.graphml"
+            "gc2dot -d %s/ --fmt sloppygml %s/choreography.graphml"
             % (self.get_root_folder(), self.get_root_folder())
         )
         os.system(
@@ -192,7 +192,7 @@ class Workspace:
         res = run_diff(g1, g2, self.get_cc2_counter_choreography_folder(pm_idx), costs)
         for i in res:
             os.system(
-                "chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml"
+                "gc2dot -d %s/ --fmt gmldiff %s/diff_%d.graphml"
                 % (
                     self.get_cc2_counter_choreography_folder(pm_idx),
                     self.get_cc2_counter_choreography_folder(pm_idx),
@@ -333,7 +333,7 @@ class Workspace:
         res = run_diff(g1, g3, self.get_cc3_counter_choreography_folder(pm_idx), costs)
         for i in res:
             os.system(
-                "chor2dot -d %s/ -fmt gmldiff %s/diff_%d.graphml"
+                "gc2dot -d %s/ --fmt gmldiff %s/diff_%d.graphml"
                 % (
                     self.get_cc3_counter_choreography_folder(pm_idx),
                     self.get_cc3_counter_choreography_folder(pm_idx),
