@@ -10,6 +10,8 @@ gc2gml
 gc2pom
 gmc
 BuildGlobal
+wb
+project
 
 # Happy temp files
 *.info
