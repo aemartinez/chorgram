@@ -23,7 +23,7 @@ cfgfile = "aux" + os.sep + "chorgram.config"
 # We assume that 'cfgfile' points to
 # an existing configuration file
 if not os.path.exists(cfgfile):
-    print("Cannot find config file ('{cfgfile}')")
+    print(f"Cannot find config file ('{cfgfile}')")
     os.abort()
 with open(cfgfile) as f:
     # load the configuration
