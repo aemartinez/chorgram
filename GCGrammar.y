@@ -20,7 +20,7 @@
 --       |  repeat { G unless guard }
 --       |  repeat P { G unless guard }
 --       |  { G }
---       |  ( G )
+--       |  ( G )                        -- this is deprecated. For backward compatibility only
 --
 --    Brc   ::= G | G unless guard | B + B
 --
@@ -42,7 +42,7 @@
 --   sel P { Gn unless g1 + ... + Gn unless gn } = G1 + ... + Gn      for all guards g1, ..., gn 
 --   repeat P {G unless g}                       = * G @ P            for all guards g
 --
--- The binary operators |, +, and ; are given in ascending order of
+-- The binary operators _ | _, _ + _, and _ ; _ are given in ascending order of
 -- precedence.
 --
 -- Note: strings are made of the following characters
@@ -55,7 +55,7 @@
 -- and must start with a letter when specifying the identity of a
 -- participant.
 --
--- Reserved characters not usable in strings are:
+-- Reserved characters not allowed in strings are:
 --
 --   @ . , ; : ( ) [ ] { } | + * ! ? - % §
 --
@@ -68,12 +68,10 @@
 -- Basic syntactic checks are made during the parsing (e.g, (i) that
 -- sender and receiver of interactions have to be different and (2)
 -- that the participant controlling a loop is active in the
--- loop). More are planned together with some more informative error
--- messages.
+-- loop). More checks are planned together with improved error
+-- handling.
 --
--- TODO: improve parseError
--- TODO: add line numbers
---
+
 {
 module GCParser where
 import SyntacticGlobalChoreographies
@@ -88,6 +86,7 @@ import CFSM
 %name gcgrammar
 %tokentype { Token }
 %error { parseError }
+%wrapper { posn }
 
 %token
   str	        { TokenStr $$   }
@@ -164,7 +163,7 @@ Br : S                                  { ($1, M.empty) }
 S :: { (GC, Set Ptp) }
 S : '(o)'                               { (Emp, S.empty) }
   | Blk                                 { $1 }
-  | B ';' B                           { (Seq ((checkToken TokenSeq $1)
+  | B ';' B                             { (Seq ((checkToken TokenSeq $1)
                                                  ++ (checkToken TokenSeq $3)),
                                             S.union (snd $1) (snd $3))
                                         }
@@ -207,7 +206,7 @@ Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 =
                                                  (False, _)    -> myErr ("Bad name " ++ $2)
                                                  (True, False) -> myErr ("Participant " ++ $2 ++ " is not among the loop's participants: " ++ (show $ toList $ snd $4))
                                              }
-  | '(' G ')'                           { $2 }    -- this is for backward compatibility
+  | '(' G ')'                           { $2 }    -- this is for backward compatibility and it is deprecated
   | '{' G '}'                           { $2 }
 
 
@@ -246,9 +245,9 @@ data Token =
   | TokenCom
   | TokenMAr
   | TokenUnl
-  | TokenErr String
   | TokenCurlyo
   | TokenCurlyc
+  | TokenErr String
         deriving (Show)
 
 
@@ -290,39 +289,45 @@ lexer s = case s of
         where s' = span isAlpha s
 
 mytail :: [t] -> [t]
-mytail l = if L.null l
-           then l
-           else tail l
+mytail l =
+  if L.null l
+  then l
+  else tail l
 
 parseError :: [Token] -> a
-parseError err = case err of
-                    TokenErr s:_ -> myErr $ show s
-                    _            -> myErr (show err)
+parseError err =
+  case err of
+    TokenErr s:_ -> myErr $ show s
+    _            -> myErr (show err)
 
 
 ptpsBranches :: [((GC, Set Ptp), ReversionGuard)] -> Set Ptp
-ptpsBranches = \l -> L.foldr S.union S.empty (L.map (\x -> snd $ fst x) l)
+ptpsBranches =
+  \l -> L.foldr S.union S.empty (L.map (\x -> snd $ fst x) l)
 
 
 checkGuard :: (GC, Set Ptp) -> ReversionGuard -> ((GC, Set Ptp), ReversionGuard)
-checkGuard g m = let tmp = [ x | x <- M.keys m, not (S.member x (snd g)) ] in
-                 if L.null tmp
-                 then (g, m)
-                 else myErr ("Unknown participant(s): " ++ (show tmp))
+checkGuard g m =
+  let tmp = [ x | x <- M.keys m, not (S.member x (snd g)) ]
+  in
+    if L.null tmp
+    then (g, m)
+    else myErr ("Unknown participant(s): " ++ (show tmp))
 
 -- checkToken 'flattens', parallel, branching, and sequential composition
 checkToken :: Token -> (GC, Set Ptp) -> [GC]
-checkToken t (g,_) = case t of
-                      TokenPar -> case g of
-                                   Par l -> l
-                                   _ -> [g]
-                      TokenBra -> case g of
-                                   Bra l -> S.toList l
-                                   _ -> [g]
-                      TokenSeq -> case g of
-                                   Seq l -> l
-                                   _ -> [g]
-                      _        -> [g]
+checkToken t (g,_) =
+    case t of
+    TokenPar -> case g of
+      Par l -> l
+      _ -> [g]
+    TokenBra -> case g of
+      Bra l -> S.toList l
+      _ -> [g]
+    TokenSeq -> case g of
+      Seq l -> l
+      _ -> [g]
+    _        -> [g]
 
 -- ggsptp computes the set of participants of a syntactic global graph
 ggsptp :: Set Ptp -> GC -> Set Ptp

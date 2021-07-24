@@ -58,7 +58,7 @@ parser.add_argument(
     "-n", "--gc",
     dest = "gc",
     default = 1,
-    help = "number of g-choreographies to generate; use '-1' for generating infititely many g-choreographies {default = 1}")
+    help = "number of g-choreographies to generate; use '-1' for generating infinitely many g-choreographies {default = 1}")
 args = parser.parse_args()
 
 size = int(args.size) if int(args.size) > -1 else random.randint(1,RND_SIZE)

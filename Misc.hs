@@ -38,6 +38,17 @@ data Flag    = Deadlock | Action | Config | Path | Prop
 
 -- Some useful functions
      
+dropCount :: Eq a => Int -> (a -> Bool) -> (a -> Bool) -> [a] -> (Int, [a])
+dropCount acc cond until ls =
+-- drops the shortest prefix of 'ls' whose elements do not satisfy
+-- 'unil' while counting the elements that satisfy 'cond'
+  case ls of
+    [] -> (0, [])
+    e:ls' ->
+      if until e
+      then (acc + (if (cond e) then 1 else 0), ls')
+      else dropCount (acc + (if (cond e) then 1 else 0)) cond until ls'
+
 intersect :: Ord a => Set a -> Set a -> Bool
 intersect x y = not(S.null (S.intersection x y))
 
