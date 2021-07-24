@@ -73,7 +73,7 @@
 --
 
 {
-module GCParser where
+module NewGCParser where
 import SyntacticGlobalChoreographies
 import ErlanGC
 import Data.Set as S (empty, singleton, intersection, union, unions, difference, fromList, difference, toList, member, foldr, Set)
@@ -85,8 +85,9 @@ import CFSM
 
 %name gcgrammar
 %tokentype { Token }
+%monad { Ptype } { thenPtype } { returnPtype }
+%lexer { lexer } { TokenEof }
 %error { parseError }
-%wrapper { posn }
 
 %token
   str	        { TokenStr $$   }
@@ -109,6 +110,7 @@ import CFSM
   'branch'      { TokenSel      }
   'repeat'      { TokenRep      }
   'unless'      { TokenUnl      }
+  '--hsl--'     { TokenEof      }
 
 %right '|'
 %right '+'
@@ -119,45 +121,45 @@ import CFSM
 %%
 
 G :: { (GC, Set Ptp) }
-G : B                                   { $1 }
-  | B '|' G  	     	        	{ (Par ((checkToken TokenPar $1)
-                                                ++ (checkToken TokenPar $3)),
-                                            S.union (snd $1) (snd $3))
-                                        }
+  G : B      { $1 }
+  | B '|' G  { (Par ((checkToken TokenPar $1)
+                     ++ (checkToken TokenPar $3)),
+                 S.union (snd $1) (snd $3))
+             }
 
 
 B :: { (GC, Set Ptp) }
-B : S                                   { $1 }
-  | choiceop '{' Br '+' Bs '}'        	{ (Bra (S.fromList $
-                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
-                                                   []
-                                                   (L.map fst ([$3] ++ $5))
-                                                 )
-                                               ),
-                                            ptpsBranches ([$3] ++ $5))
-                                        }
-  | choiceop str '{' Br '+' Bs '}'	{ (Bra (S.fromList $
-                                                 (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
-                                                   []
-                                                   (L.map fst ([$4] ++ $6))
-                                                 )
-                                               ),
-                                            ptpsBranches ([$4] ++ $6))
-                                        }
+B : S                               { $1 }
+  | choiceop '{' Br '+' Bs '}'      { (Bra (S.fromList $
+                                            (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
+                                             []
+                                             (L.map fst ([$3] ++ $5))
+                                            )
+                                           ),
+                                        ptpsBranches ([$3] ++ $5))
+                                    }
+  | choiceop str '{' Br '+' Bs '}'  { (Bra (S.fromList $
+                                            (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
+                                             []
+                                             (L.map fst ([$4] ++ $6))
+                                            )
+                                           ),
+                                        ptpsBranches ([$4] ++ $6))
+                                    }
 
 
-choiceop : 'sel'        {}
-         | 'branch'     {}
+choiceop : 'sel'     {}
+         | 'branch'  {}
 
 
 Bs :: { [((GC, Set Ptp), M.Map String String)] }
-Bs : Br                                 { [ $1 ] }
-   | Br '+' Bs                          { [$1] ++ $3 }
+Bs : Br         { [$1] }
+   | Br '+' Bs  { [$1] ++ $3 }
 
 
 Br :: { ((GC, Set Ptp), M.Map String String) }
-Br : S                                  { ($1, M.empty) }
-   | S 'unless' guard                   { checkGuard $1 $3 }
+Br : S                 { ($1, M.empty) }
+   | S 'unless' guard  { checkGuard $1 $3 }
 
 
 S :: { (GC, Set Ptp) }
@@ -171,22 +173,21 @@ S : '(o)'                               { (Emp, S.empty) }
 
 
 Blk :: { (GC, Set Ptp) }
-Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), not($1 == $3)) of
-        				    (True, True, True)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])
-	        			    (True, False, True)  -> myErr ("Bad name " ++ $3)
-		        		    (True, True, False)  -> myErr ("A sender " ++ $3 ++ " cannot be also the receiver in an interaction")
-			        	    (_, False, False)    -> myErr ("Whaaat??? Sender " ++ $1 ++ " and receiver " ++ $3 ++ " are equal AND different!!!")
-				            (_, True, True)      -> myErr ("Whaaat??? Sender " ++ $1 ++ " and receiver " ++ $3 ++ " are equal AND different!!!")
-        				    (False, False, True) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
-	        			    (False, _, False)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
+Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), ($1 == $3)) of
+        				    (True, True, False)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])
+        				    (False, False, _) -> myErr ("Bad names " ++ $1 ++ " and " ++ $3)
+	        			    (False, True, True)    -> myErr ("Bad name " ++ $1 ++ " and sender and receiver must be different")
+	        			    (False, True, False)    -> myErr ("Bad name " ++ $1)
+	        			    (True, False, False)  -> myErr ("Bad name " ++ $3)
+		        		    (_, _, True)  -> myErr ("Sender " ++ $1 ++ " cannot also be receiver in the same interaction")
                                         }
-  | str '=>' ptps ':' str               { case ((isPtp $1), not(L.elem $1 $3)) of
-                                            (True,  True)  -> case $3 of
-                                                                []   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
-                                                                s:[] -> ((Act ($1 , s) $5), S.fromList([$1,s]))
-                                                                _    -> (Par (L.map (\s -> (Act ($1 , s) $5)) $3),S.fromList($1:$3))
-                                            (True,  False) -> myErr ($1 ++ " must be in " ++ (show $3))
-                                            (False, _)     -> myErr ("Bad name " ++ $1)
+  | str '=>' ptps ':' str               { if (L.elem $1 $3)
+                                          then myErr ($1 ++ " must NOT be one of the receivers " ++ (L.foldl (\x y -> if x == "" then y else x ++ ", " ++ y) "" $3))
+                                          else case (isPtp $1, $3) of
+                                                 (False, _)   -> myErr ("Bad name " ++ $1)
+                                                 (True, [])   -> myErr ($1 ++ " cannot be empty") -- ($1 ++ " => " ++ "[]")
+                                                 (True, s:[]) -> ((Act ($1 , s) $5), S.fromList([$1,s]))
+                                                 _            -> (Par (L.map (\s -> (Act ($1 , s) $5)) $3),S.fromList($1:$3))
                                         }
   | '*' G '@' str                       {
       			        	  case ((isPtp $4), (S.member $4 (snd $2))) of
@@ -224,11 +225,9 @@ ptps : str                      { if (isPtp $1) then [$1] else myErr ("Bad name 
                                   else myErr ("Bad name " ++ $1)
                                 }
 
-
 {
 data Token =
   TokenStr String
-  | TokenPtps [Ptp]
   | TokenEmp
   | TokenArr
   | TokenPar
@@ -245,61 +244,110 @@ data Token =
   | TokenCom
   | TokenMAr
   | TokenUnl
+  | TokenEof
   | TokenCurlyo
   | TokenCurlyc
-  | TokenErr String
         deriving (Show)
 
-
-lexer s = case s of
-    []                             -> []
-    '(':'o':')':r                  -> TokenEmp : lexer r
-    '[':r                          -> lexer $ mytail (L.dropWhile (\c->c/=']') r)
-    '.':'.':r                      -> lexer $ mytail (L.dropWhile (\c->c/='\n') r)
-    ' ':r                          -> lexer r
-    '\n':r                         -> lexer r
-    '\t':r                         -> lexer r
-    '-':'>':r                      -> TokenArr : (lexer r)
-    '=':'>':r                      -> TokenMAr : (lexer r)
-    '|':r                          -> TokenPar : lexer r
-    '+':r                          -> TokenBra : lexer r
-    's':'e':'l':' ':r              -> TokenSel : (lexer r)
-    's':'e':'l':'\n':r             -> TokenSel : (lexer r)
-    's':'e':'l':'\t':r             -> TokenSel : (lexer r)
-    'b':'r':'a':'n':'c':'h':' ':r  -> TokenSel : (lexer r)
-    'b':'r':'a':'n':'c':'h':'\n':r -> TokenSel : (lexer r)
-    'b':'r':'a':'n':'c':'h':'\t':r -> TokenSel : (lexer r)
-    '*':r                          -> TokenSta : lexer r
-    'r':'e':'p':'e':'a':'t':' ':r  -> TokenRep : (lexer r)
-    'r':'e':'p':'e':'a':'t':'\n':r -> TokenRep : (lexer r)
-    'r':'e':'p':'e':'a':'t':'\t':r -> TokenRep : (lexer r)
-    'u':'n':'l':'e':'s':'s':' ':r  -> TokenUnl : (lexer r)
-    'u':'n':'l':'e':'s':'s':'\t':r -> TokenUnl : (lexer r)
-    'u':'n':'l':'e':'s':'s':'\r':r -> TokenUnl : (lexer r)
-    '%':r                          -> TokenGrd : lexer r
-    '@':r                          -> TokenUnt : lexer r
-    ':':r                          -> TokenSec : lexer r
-    ';':r                          -> TokenSeq : lexer r
-    ',':r                          -> TokenCom : lexer r
-    '(':r                          -> TokenBro : lexer r
-    ')':r                          -> TokenBrc : lexer r
-    '{':r                          -> TokenCurlyo : lexer r
-    '}':r                          -> TokenCurlyc : lexer r
-    _                              -> TokenStr (fst s') : (lexer $ snd s')
+lexer :: (Token -> Ptype a) -> Ptype a
+lexer cont s l c =
+  case s of
+    []                             -> (cont TokenEof) "" l c
+    '(':'o':')':r                  -> cont TokenEmp r l (c+3)
+    '.':'.':r                      -> (lexer cont) (dropWhile (\c->c/='\n') r) (l+1) 0
+    ' ':r                          -> (lexer cont) r l (c+1)
+    '\n':r                         -> (lexer cont) r (l+1) 0
+    '\t':r                         -> (lexer cont) r l (c+1)
+    '-':'>':r                      -> cont TokenArr r l (c+2)
+    '=':'>':r                      -> cont TokenMAr r l (c+2)
+    '|':r                          -> cont TokenPar r l (c+1)
+    '+':r                          -> cont TokenBra r l (c+1)
+    's':'e':'l':' ':r              -> cont TokenSel r l (c+4)
+    's':'e':'l':'\n':r             -> cont TokenSel r (l+1) 0
+    's':'e':'l':'\t':r             -> cont TokenSel r l (c+4)
+    'b':'r':'a':'n':'c':'h':' ':r  -> cont TokenSel r l (c+7)
+    'b':'r':'a':'n':'c':'h':'\n':r -> cont TokenSel r (l+1) 0
+    'b':'r':'a':'n':'c':'h':'\t':r -> cont TokenSel r l (c+7)
+    '*':r                          -> cont TokenSta r l (c+1)
+    'r':'e':'p':'e':'a':'t':' ':r  -> cont TokenRep r l (c+8)
+    'r':'e':'p':'e':'a':'t':'\n':r -> cont TokenRep r (l+1) 0
+    'r':'e':'p':'e':'a':'t':'\t':r -> cont TokenRep r l (c+8)
+    'u':'n':'l':'e':'s':'s':' ':r  -> cont TokenUnl r l (c+7)
+    'u':'n':'l':'e':'s':'s':'\t':r -> cont TokenUnl r (l+1) 0
+    'u':'n':'l':'e':'s':'s':'\r':r -> cont TokenUnl r l (c+7)
+    '%':r                          -> cont TokenGrd r l (c+1)
+    '@':r                          -> cont TokenUnt r l (c+1)
+    ':':r                          -> cont TokenSec r l (c+1)
+    ';':r                          -> cont TokenSeq r l (c+1)
+    ',':r                          -> cont TokenCom r l (c+1)
+    '(':r                          -> cont TokenBro r l (c+1)
+    ')':r                          -> cont TokenBrc r l (c+1)
+    '{':r                          -> cont TokenCurlyo r l (c+1)
+    '}':r                          -> cont TokenCurlyc r l (c+1)
+    '-':'-':'h':'s':'l':'-':'-':_  -> cont TokenEof [] l c
+    '[':r ->
+      let
+        tmp = L.takeWhile (\c -> c /= ']') r
+        r' = L.dropWhile (\c -> c /= ']') r
+        l' = l + L.length (L.filter (\c -> c == '\n') tmp)
+        c' = c + if l'==0 then (length tmp) else 0
+      in
+        if r' == ""
+        then Er (synErr l c "multiline comment not closed")
+        else lexer cont (tail r') l' c'
+    _                              -> (cont (TokenStr (fst s'))) (snd s') l (c + (length s'))
         where s' = span isAlpha s
 
-mytail :: [t] -> [t]
-mytail l =
-  if L.null l
-  then l
-  else tail l
+data ParseResult a =
+  Ok a
+  | Er String
+  deriving (Show)
 
-parseError :: [Token] -> a
-parseError err =
-  case err of
-    TokenErr s:_ -> myErr $ show s
-    _            -> myErr (show err)
+type Ptype a = String -> Int -> Int -> ParseResult a
 
+parseError token =
+  \ _ l c ->
+    case token of
+      TokenStr s  -> Er (synErr l c "string format violation")
+      TokenEmp    -> Er (synErr l c "Unexpected (o)")
+      TokenArr    -> Er (synErr l c "Unexpected \'->\'")
+      TokenPar    -> Er (synErr l c "Unexpected gate \'|\'")
+      TokenBra    -> Er (synErr l c "Unexpected branch gate")
+      TokenSel    -> Er (synErr l c "Unexpected branch gate")
+      TokenGrd    -> Er (synErr l c "Unexpected guard")
+      TokenSeq    -> Er (synErr l c "Unexpected \';\'")
+      TokenRep    -> Er (synErr l c "Unexpected loop")
+      TokenSta    -> Er (synErr l c "Unexpected loop")
+      TokenUnt    -> Er (synErr l c "Unexpected \'@\'")
+      TokenSec    -> Er (synErr l c "Unexpected \':\'")
+      TokenBro    -> Er (synErr l c "Unexpected \'(\'")
+      TokenBrc    -> Er (synErr l c "Unexpected \')\'")
+      TokenCom    -> Er (synErr l c "Unexpected \',\'")
+      TokenMAr    -> Er (synErr l c "Unexpected =>")
+      TokenUnl    -> Er (synErr l c "Unexpected \'unless\' clause")
+      TokenCurlyo -> Er (synErr l c "Unexpected \'{\'")
+      TokenCurlyc -> Er (synErr l c "Unexpected \'}\'")
+      TokenEof    -> Er (synErr l c "Parse error; perhaps an unexpected trailing symbol")
+
+thenPtype :: Ptype a -> (a -> Ptype b) -> Ptype b
+m `thenPtype` k = \s l c ->
+  case m s l c of
+    Ok v -> k v s l c
+    Er e -> Er e
+
+returnPtype :: a -> Ptype a
+returnPtype a = \s _ _ -> Ok a
+
+failPtype :: String -> Ptype a
+failPtype err = \_ _ _ -> Er err
+
+-- GC specific functions
+
+synErr :: Int -> Int -> String -> String
+synErr l c err = "Syntax error at <" ++ (show l) ++ "," ++ (show $ c+1) ++ ">: " ++ err
+
+myErr :: String -> a
+myErr err = error ("gcparser: ERROR - " ++ err)
 
 ptpsBranches :: [((GC, Set Ptp), ReversionGuard)] -> Set Ptp
 ptpsBranches =
@@ -339,6 +387,5 @@ ggsptp ps g = case g of
                Seq gs      -> S.union ps (S.unions (L.map (ggsptp S.empty) gs))
                Rep g' p    -> S.union ps (ggsptp (S.singleton p) g')
 
-myErr :: String -> a
-myErr err = error ("gcparser: ERROR - " ++ err)
+    
 }
