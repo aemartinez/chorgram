@@ -23,9 +23,11 @@ main = do progargs <- getArgs
             else do
               let ( sourcefile, flags ) =
                     getCmd GC2FSA progargs
-              ggtxt <- readFile sourcefile
-              let ( gg, names ) =
-                    (gcgrammar . GCParser.lexer) ggtxt
+              gctxt <- readFile sourcefile
+              let ( gc, names ) =
+                    case gcgrammar gctxt 0 0 of
+                      Ok x -> x
+                      Er err -> error err
               let ptps =
                     Data.Set.toList names
               -- TODO: fix this String -> [CFSM] -> [[String]] -> System inefficiency
@@ -34,7 +36,7 @@ main = do progargs <- getArgs
               let loops =
                     (read (flags!"-u"))::Int
               let cfsms =
-                    L.map (minimise . fst) (L.map (\p -> projx False gg ptp_map p "q0" "qe" 1) ptps)
+                    L.map (minimise . fst) (L.map (\p -> projx False gc ptp_map p "q0" "qe" 1) ptps)
               let fsa = L.map (\(p, m) -> (CFSM.cfsm2String p m) ++ "\n\n") (L.zip ptps cfsms)
               if ("" == flags!"-o")
                 then putStrLn $ L.concat fsa

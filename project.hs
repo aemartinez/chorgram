@@ -8,7 +8,7 @@
 
 import Misc
 import DotStuff (getDotConf)
-import GCParser (gcgrammar, lexer)
+import GCParser
 import CFSM (cfsm2String, emptyCFSM, dottifyCfsm, printCfsm)
 import FSA (minimise,determinise)
 import SyntacticGlobalChoreographies (proj)
@@ -29,7 +29,9 @@ main = do progargs <- getArgs
                     getCmd PROJ (L.take (L.length progargs - 1) progargs)
               gctxt <- readFile sourcefile
               let ( gc, names ) =
-                    (gcgrammar . lexer) gctxt
+                    case gcgrammar gctxt 0 0 of
+                      Ok x -> x
+                      Er err -> error err
               let ptps =
                     Data.Set.toList names
               let ptps_map =

@@ -21,22 +21,24 @@ main = do progargs <- getArgs
             then putStrLn $ usage GC2DOT
             else do
               let ( sourcefile, flags ) = getCmd GC2DOT progargs
-              ggtxt <- readFile sourcefile
+              gctxt <- readFile sourcefile
               let ( _, _, baseName, _ ) =
                     setFileNames sourcefile flags
               let dir = flags!"-d"
               createDirectoryIfMissing True dir
               case flags!"--fmt" of
                 "gc" -> do
-                  let ( gg, _ ) =
-                        (gcgrammar . GCParser.lexer) ggtxt
-                  writeToFile (dir ++ baseName ++ ".dot") ("# Input @ " ++ sourcefile ++ "\n\n" ++ show gg)
-                  writeToFile (dir ++ baseName ++ ".dot") (gc2dot gg baseName (flines!gcsizenode))
+                  let ( gc, _ ) =
+                        case gcgrammar gctxt 0 0 of
+                          Ok x -> x
+                          Er err -> error err
+                  writeToFile (dir ++ baseName ++ ".dot") ("# Input @ " ++ sourcefile ++ "\n\n" ++ show gc)
+                  writeToFile (dir ++ baseName ++ ".dot") (gc2dot gc baseName (flines!gcsizenode))
                 "gml" -> do
                   xml <- readFile sourcefile
                   case pomset2gg $ xgml2pomset xml of
                     Nothing -> writeToFile (dir ++ baseName ++ ".dot") "Nothing"
-                    Just gg' -> writeToFile (dir ++ baseName ++ ".dot") (gc2dot gg' baseName sizeNode)
+                    Just gc' -> writeToFile (dir ++ baseName ++ ".dot") (gc2dot gc' baseName sizeNode)
                 "gmldiff" -> do
                   xml <- readFile sourcefile
                   writeToFile (dir ++ baseName ++ ".dot") (xgmldiff2dot baseName xml flines)

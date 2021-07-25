@@ -1,5 +1,5 @@
 import Misc
-import GCParser (gcgrammar, lexer)
+import GCParser
 import WellFormedness
 import System.Environment
 import Data.Set as S
@@ -16,7 +16,9 @@ main = do
               getCmd WB progargs
         gctxt <- readFile sourcefile
         let ( gc, _ ) =
-              (gcgrammar . lexer) gctxt
+              case gcgrammar gctxt 0 0 of
+                Ok x -> x
+                Er err -> error err
         let (chk, aw) = 
               (wb gc, dependency (S.empty, S.empty) gc)
         let verbose = not(flags!"-v" == "")

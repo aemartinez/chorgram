@@ -18,15 +18,17 @@ main = do progargs <- getArgs
             then putStrLn $ usage GC2POM
             else do
               let ( sourcefile, flags ) = getCmd GC2POM progargs
-              ggtxt <- readFile sourcefile
+              gctxt <- readFile sourcefile
               let ( dir, _, baseName, _ ) =
                     setFileNames sourcefile flags
               createDirectoryIfMissing True dir
-              let ( gg, _ ) =
-                    (gcgrammar . GCParser.lexer) ggtxt
+              let ( gc, _ ) =
+                    case gcgrammar gctxt 0 0 of
+                      Ok x -> x
+                      Er err -> error err
               let iter = (read (flags!"-u"))::Int
               let ( pomsets, _ ) =
-                    pomsetsOf gg iter 0
+                    pomsetsOf gc iter 0
               let aux b ps i =
                     let (f, ext) =
                           case flags!"--fmt" of

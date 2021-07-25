@@ -29,6 +29,7 @@ data Command = GMC
   | SYS
   | MIN
   | WB
+  | TEST
   | HGSEM -- deprecated
 -- | PROD
    deriving (Ord, Eq)
@@ -326,6 +327,10 @@ info =
   ),
   (HGSEM, ["computes the hypergraph semantics of a g-choreography (deprecated)",
            "[-d dirpath] [-v] [--sloppy] filename",
+           "default: dirpath = " ++ dirpath]
+  ),
+  (TEST, ["main to test commands",
+           "[-v] filename",
            "default: dirpath = " ++ dirpath]
   )
   -- (PROD, ["[-d dirpath] [-l] filename",
