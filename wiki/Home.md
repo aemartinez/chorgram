@@ -23,6 +23,7 @@ The main commands provided by the implementation are
 - **gmc**: takes in input a CFSM system, checks it for generalised multiparty compatibility, and builds the corresponding global graph
 - **chorgram**.py: a python script that executes gmc, transforms the .dot files it generates in graphical formats, and displays some performance information
 - **sgg**: takes in input a description of a global graph (with an extended syntax), projects the graph in a set of (non-minimal) CFSMs
+- **project**: takes in input a description of a global graph (with an extended syntax) and projects the graph on all or some of its participants
 - **gg2fsa**: returns the .fsa format of the minimised CFSMs of a global graph (the '-v' option also generates a '.hs' file that is the haskell representation of the system)
 - **gg2pom**: takes in input a description of a global graph (with an extended syntax) and generates the pomsets (in graphml format) representing the semantics of the graph (cf. (R. Guanciale and E. Tuosto, ICE 2016) and its journal version **(E. Tuosto and R. Guanciale, 2018)**
 - **pom2gg**: takes in input a description of pomsets (in graphml format) and tries to compute a global graph for which the pomset in input is the semantics

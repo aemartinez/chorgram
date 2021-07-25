@@ -23,54 +23,56 @@ main = do progargs <- getArgs
           if L.null progargs
             then do putStrLn $ usage PROJ
             else do
+              let tmp =
+                    L.dropWhile (\x -> x /= "-p") progargs
               let ptp =
-                    L.last progargs
+                    if L.null tmp then [] else tail tmp
               let ( sourcefile, flags ) =
-                    getCmd PROJ (L.take (L.length progargs - 1) progargs)
+                    getCmd PROJ (L.take (L.length progargs - L.length tmp) progargs)
               gctxt <- readFile sourcefile
               let ( gc, names ) =
                     case gcgrammar gctxt 0 0 of
                       Ok x -> x
                       Er err -> error err
-              let ptps =
-                    Data.Set.toList names
+              let ptps = Data.Set.toList names
               let ptps_map =
                     M.fromList $ L.zip (range $ L.length ptps) ptps
-              if (flags!"-v" == "")
-                then do 
-                  let loops =
-                        (read (flags!"-u"))::Int
-                      handleND =
-                        case flags!"-D" of
-                          "min" -> (minimise . fst)
-                          "det" -> (determinise . fst)
-                          _ -> fst
-                      output =
-                        if ptp=="all"
-                        then
-                          let cs =
+              let loops =
+                    (read (flags!"-u"))::Int
+              let handleND =
+                    case flags!"-D" of
+                      "min" -> (minimise . fst)
+                      "det" -> (determinise . fst)
+                      _ -> fst
+              let output =
+                    if ptp==[] -- all projections are returned
+                    then
+                      let cs =
+                            case (flags!"--fmt") of
+                              "fsa" -> L.map (\p -> CFSM.cfsm2String p (handleND $ proj gc "q0" "qe" p loops ptps_map)) ptps
+                              "dot" -> L.map (\(p,s) -> "\nsubgraph " ++ p ++ "{\n label=\"" ++ p ++ "\"\n" ++ s ++ "\n}")
+                                (L.map (\p -> (p, CFSM.printCfsm (handleND $ proj gc "q0" "qe" p loops ptps_map) p flines)) ptps)
+                              _ -> error $ msgFormat PROJ ("unknown format " ++ (flags!"--fmt"))
+                          (pre,post) =
+                            case (flags!"--fmt") of
+                              "fsa" -> ("", "")
+                              "dot" -> ("digraph all{\n", "\n}")
+                              _ -> error $ msgFormat PROJ ("unknown format " ++ (flags!"--fmt"))
+                      in pre ++ (L.foldr (++) "" cs) ++ post
+                    else
+                      let aux p =
+                            case L.elemIndex p ptps of
+                              Nothing ->
+                                if (flags!"--fmt") == "fsa"
+                                then CFSM.cfsm2String p emptyCFSM
+                                else dottifyCfsm emptyCFSM p "" flines
+                              Just _ ->
                                 case (flags!"--fmt") of
-                                  "fsa" -> L.map (\p -> CFSM.cfsm2String p (handleND $ proj gc "q0" "qe" p loops ptps_map)) ptps
-                                  "dot" -> L.map (\(p,s) -> "\nsubgraph " ++ p ++ "{\n label=\"" ++ p ++ "\"\n" ++ s ++ "\n}")
-                                                 (L.map (\p -> (p, CFSM.printCfsm (handleND $ proj gc "q0" "qe" p loops ptps_map) p flines)) ptps)
+                                  "fsa" -> CFSM.cfsm2String p (handleND (proj gc "q0" "qe" p loops ptps_map))
+                                  "dot" -> dottifyCfsm (handleND (proj gc "q0" "qe" p loops ptps_map)) p "" flines
                                   _ -> error $ msgFormat PROJ ("unknown format " ++ (flags!"--fmt"))
-                              (pre,post) =
-                                case (flags!"--fmt") of
-                                  "fsa" -> ("", "")
-                                  "dot" -> ("digraph all{\n", "\n}")
-                                  _ -> error $ msgFormat PROJ ("unknown format " ++ (flags!"--fmt"))
-                          in pre ++ (L.foldr (++) "" cs) ++ post
-                        else
-                          case L.elemIndex ptp ptps of
-                            Nothing ->
-                              if (flags!"--fmt") == "fsa"
-                              then CFSM.cfsm2String ptp emptyCFSM
-                              else dottifyCfsm emptyCFSM ptp "" flines
-                            Just _ ->
-                              case (flags!"--fmt") of
-                                "fsa" -> CFSM.cfsm2String ptp (handleND (proj gc "q0" "qe" ptp loops ptps_map))
-                                "dot" -> dottifyCfsm (handleND (proj gc "q0" "qe" ptp loops ptps_map)) ptp "" flines
-                                _ -> error $ msgFormat PROJ ("unknown format " ++ (flags!"--fmt"))
-                  putStrLn output
-                else do mapM_ (\(k,v) -> putStrLn $ (show k) ++ " |--> " ++ (show v)) (M.toList ptps_map)
-
+                      in L.foldl (\x y -> x ++ "\n\n" ++ (aux y)) "" ptp
+              putStrLn output
+              if (flags!"-v" /= "")
+                then do mapM_ (\(k,v) -> putStrLn $ (show k) ++ " |--> " ++ (show v)) (M.toList ptps_map)
+                else do putStrLn ""

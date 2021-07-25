@@ -25,7 +25,8 @@ all:
 	$(MAKE) pom2gc_hs &&\
 	$(MAKE) gc2fsa_hs &&\
 	$(MAKE) gc2dot_hs &&\
-	$(MAKE) gc2gml_hs
+	$(MAKE) gc2gml_hs &&\
+	$(MAKE) cg_hs
 #	$(MAKE) gcsem_hs &&\
 
 #
@@ -82,7 +83,6 @@ gc2fsa_hs: gc2fsa.hs Misc.hs GCParser.hs CFSM.hs FSA.hs SyntacticGlobalChoreogra
 project_hs: project.hs Misc.hs GCParser.hs CFSM.hs FSA.hs SyntacticGlobalChoreographies.hs
 	$(ccmd) $<
 
-
 gc2dot_hs: gc2dot.hs Misc.hs PomsetSemantics.hs SyntacticGlobalChoreographies.hs DotStuff.hs GCParser.hs
 	$(ccmd) $<
 
@@ -91,6 +91,10 @@ gc2gml_hs: gc2gml.hs Misc.hs SyntacticGlobalChoreographies.hs GCParser.hs
 
 wb_hs: wb.hs Misc.hs GCParser.hs WellFormedness.hs
 	$(ccmd) $<
+
+cg_hs: chorgram.hs Misc.hs
+	$(ccmd) $<
+
 
 debug:
 	$(ccdebug) gmc_hs &&\

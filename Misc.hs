@@ -17,8 +17,10 @@ type Message             = String
 type Edge vertex label = (vertex, label, vertex)
 type Graph vertex label = (Set vertex, vertex, Set label, Set(Edge vertex label))
 
-data Command = GMC
+data Command =
+  GMC
   | BGG
+  | CG
   | GC
   | GC2DOT
   | GC2FSA
@@ -260,6 +262,17 @@ info :: Map Command [String]
 -- must be a quick description of the command
 info =
   M.fromList [
+  (CG, ["Command line interface to ChorGram",
+         "[-v]",
+         "The following commands are handled",
+         "\t gmc",
+         "\t bgg",
+         "\t gc2dot",
+         "\t gc2fsa",
+         "\t project",
+         "\t wb"
+       ]
+  ),
   (GMC, ["given a communicating system checks for its generalised",
          "[-c configfile] [-b bound] [-l] [-m multiplicity] [-sn] [-D detmode] [-d dirpath] [-ts] [-nf] [-cp cpattern] [-tp tpattern] [-v] filename",
          "default: configfile = ./aux/chorgram.config",
@@ -291,13 +304,15 @@ info =
             "default: iter = -1",
             "\t pref is used to prefix the filenames where results are stored"]
   ),
-  (PROJ, ["returns the projection of a g-choreography on a specific participant",
-          "[-D (min | det | no)] [--fmt (dot | fsa)] [-u iter] [-v] filename ptp",
+  (PROJ, ["returns projections of a g-choreography",
+          "[-D (min | det | no)] [--fmt (dot | fsa)] [-u iter] [-v] filename [-p <blank-separated list of participants>]",
             "default: -D no",
             "\t --fmt fsa",
             "\t -v diplays the mapping index |--> ptp",
-            "\t if ptp=\"all\", all participants are projected",
-            "\t iter = -1 (non unfolding semantics)"]
+            "\t iter = -1 (non unfolding semantics)",
+            "\t if -p option is not used, then all participants are projected; otherwise only those listed",
+            "\t\t(-p option must be at the end of the command)"
+         ]
   ),
   (GC2POM, ["computes the pomset semantics of a g-choreography and saves it into a file",
             "gc2pom [-d dirpath] [-u iter] [--fmt (hs | gml)] [-v] filename",
@@ -366,12 +381,13 @@ usage cmd =
 cmdName :: Command -> String
 cmdName cmd =
   case cmd of
+    CG     -> "chorgram"
     GMC    -> "gmc"
     BGG    -> "BuildGlobal"
     GC     -> "gc"
     GC2DOT -> "gc2dot"
     GC2FSA -> "gc2fsa"
-    PROJ   -> "proj"
+    PROJ   -> "project"
     GC2POM -> "gc2pom"
     POM2GC -> "pom2gc"
     GC2GML -> "gc2gml"
@@ -391,6 +407,7 @@ defaultFlags :: Command -> Map String String
 -- The default argument of each command
 defaultFlags cmd = M.insert "-o" ""
                    (case cmd of
+                      CG     -> M.fromList [("-v","")]
                       GMC    -> M.fromList [("-d",dirpath),
                                             ("-c", "./aux/chorgram.config"),
                                             ("-v",""),
@@ -426,6 +443,10 @@ getFlags :: Command -> [String] -> Map String String
 getFlags cmd args =
   let yes = "yes" in
   case cmd of
+    CG  ->  case args of
+      []        -> defaultFlags(cmd)
+      "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
+      _         -> error $ usage(cmd)
     GMC -> case args of
       []                 -> defaultFlags(cmd)
       "-c":y:xs          -> M.insert "-c"  y      (getFlags cmd xs)
