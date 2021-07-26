@@ -35,11 +35,11 @@ repLanguageConcurrent file (sys,ptps) ts =
           flines <- getDotConf
           let p = ptps!i
           let projected = projectTS ts p
-          -- file with the dot format
+          -- file with the dot format.
           _ <- forkIO $
             writeToFile (file ++ "_projection_" ++ (show i) ++ ".dot") (
               "digraph CFSM_proj_" ++ p ++ "{\n graph [color=white ratio=compress margin=0];\n" ++
-              (printCfsm projected p flines) ++
+              (printCFSM projected p flines) ++
               "\n}"
             )
           -- file with the mCRL2 format

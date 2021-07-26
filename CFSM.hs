@@ -233,7 +233,7 @@ diamondNonClosed cfsm@( _, _, _, trxs ) ( s1, a1 ) ( s2,a2 ) =
       (not $ S.member a1 pathsrc)
     )
   )
-  where 
+  where
     s1' = succ cfsm s1 a1
     s2' = succ cfsm s2 a2
     path s s' = S.map (\( _, y, _ ) -> y) (S.filter (\( x, _, z ) -> x == s && z == s') trxs)
@@ -391,8 +391,51 @@ printAction ( (s,r), dir, msg ) flines =
    LoopRcv -> show r ++ show msg
    _       -> rmChar '\"' $ s ++ (flines!ptpsep) ++ r ++ (showDir dir flines) ++ (printMessage msg)
 
-printCfsm :: CFSM -> Ptp -> Map String String -> String
-printCfsm ( states, q0, _, trxs ) sbj flines =
+
+prettyDotCFSM :: CFSM -> String -> Map String String -> Map Int String -> String
+prettyDotCFSM ( states, q0, _, trxs ) name flines pmap =
+  "subgraph " ++ name ++ " {\n\tlabel=\"" ++ name ++ "\"\n" ++ pstates ++ ptx ++ "\n}"
+  where pstates =
+          "\t" ++ printState (show $ S.findIndex q0 states) name ++
+          "\t[style=" ++ (flines!q0style) ++
+          ", color=" ++ (flines!q0col) ++ "]\n" ++
+          S.foldr (++) ""
+            (S.map (\x ->
+                      let i = show $ S.findIndex x states
+                      in "\t" ++ (printState i name) ++
+                         "\t[label = \"" ++
+                         (replaceStateSep (printState i name) (flines!statesep)) ++
+                         "\"];\n"
+                   )
+              states
+            )
+        ptx =
+          S.foldr (++) "" (
+            S.map (\( s, act, t ) -> 
+                  "\t" ++ (printState (show $ S.findIndex s states) name)
+                  ++ " -> " ++
+                  (printState (show $ S.findIndex t states) name)
+                  ++
+                  "\t[label = \"" ++ (prettyDotAction act flines pmap) ++ "\"];\n"
+            )
+            trxs
+          )
+
+prettyDotAction :: Action -> Map String String -> Map Int String -> String
+prettyDotAction ( (s,r), dir, msg ) flines pmap =
+  case dir of
+   LoopSnd -> show s ++ show msg
+   LoopRcv -> show r ++ show msg
+   _       ->
+     rmChar '\"' $
+     (pmap!(read s :: Int)) ++
+     (flines!ptpsep) ++
+     (pmap!(read r :: Int)) ++
+     (showDir dir flines) ++
+     (printMessage msg)
+
+printCFSM :: CFSM -> Ptp -> Map String String -> String
+printCFSM ( states, q0, _, trxs ) sbj flines =
   pstates ++ ptx
   where pstates = "\t" ++ printState q0 sbj ++ "\t[style=" ++ (flines!q0style) ++ ", color=" ++ (flines!q0col) ++ "]\n" ++ S.foldr (++) "" (S.map (\x -> "\t" ++ (printState x sbj) ++ "\t[label = \"" ++ (replaceStateSep x (flines!statesep)) ++ "\"];\n") states)
         ptx     = S.foldr (++) "" (
@@ -405,8 +448,8 @@ printCfsm ( states, q0, _, trxs ) sbj flines =
                 )
           trxs)
 
-dottifyCfsm :: CFSM -> Ptp -> String -> Map String String -> String
-dottifyCfsm m n l flines = "digraph " ++ n ++ "{\n" ++ (printCfsm m n flines) ++ l ++ "\n}"
+dottifyCFSM :: CFSM -> Ptp -> String -> Map String String -> String
+dottifyCFSM m n l flines = "digraph " ++ n ++ "{\n" ++ (printCFSM m n flines) ++ l ++ "\n}"
 
 dottifySystem :: Map String String -> System -> String
 dottifySystem flines (cfsms, ptps) =
@@ -414,22 +457,33 @@ dottifySystem flines (cfsms, ptps) =
   where helper i (x:xs) =
           let header  = "   subgraph cluster_" ++ (ptps!i) ++ "{\n   label = " ++ (ptps!i) ++ ";\n"
               footer  = "   }\n"
-              cfsm = printCfsm x (ptps!i) flines
+              cfsm = printCFSM x (ptps!i) flines
           in (header ++ cfsm ++ footer) ++ "\n" ++ (helper (i+1) xs)
         helper _ [] = ""
 
 cfsm2String :: String -> CFSM -> String
-cfsm2String sbj m = ".outputs " ++ sbj ++ "\n.state graph\n" ++ (rmChar '\"' tx) ++ finish
+cfsm2String sbj m =
+  ".outputs " ++ sbj ++
+  "\n.state graph\n" ++ (rmChar '\"' tx) ++
+  finish
      where tx = L.concat $ L.map (\t -> (rmChar '\"' $ prt t) ++ "\n") (S.toList $ edgesOf m)
-           finish = ".marking " ++ (rmChar '\"' $ show $ ginitialnode m) ++ "\n.end\n\n"
-           prt t = (show $ gsource t) ++ " " ++ (lab $ glabel t) ++ " " ++ (show $ gtarget t)
-           lab ( ( s, r ), dir, msg ) = case dir of
-                                         Send    -> show r ++ " ! " ++ show msg
-                                         Receive -> show s ++ " ? " ++ show msg
-                                         Tau     -> " tau " ++ show msg
-                                         Break   -> " break " ++ show msg
-                                         LoopSnd -> show r ++ " ! " ++ show msg
-                                         LoopRcv -> show s ++ " ? " ++ show msg
+           qs = statesOf m
+           finish =
+             ".marking " ++
+             (rmChar '\"' $ show $ S.findIndex (ginitialnode m) qs) ++
+             "\n.end\n\n"
+           prt t =
+             (show $ S.findIndex (gsource t) qs) ++ " " ++
+             (lab $ glabel t) ++ " " ++
+             (show $ S.findIndex (gtarget t) qs)
+           lab ( ( s, r ), dir, msg ) =
+             case dir of
+               Send    -> show r ++ " ! " ++ show msg
+               Receive -> show s ++ " ? " ++ show msg
+               Tau     -> " tau " ++ show msg
+               Break   -> " break " ++ show msg
+               LoopSnd -> show r ++ " ! " ++ show msg
+               LoopRcv -> show s ++ " ? " ++ show msg
 
 cfsm2fsm :: Map String String -> CFSM -> (String, Map State Int)
 cfsm2fsm flines (states, initn, _, trans) =

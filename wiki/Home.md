@@ -20,15 +20,18 @@ Although many features are almost stable, a few are still work in progress (and 
 
 The main commands provided by the implementation are
 
-- **gmc**: takes in input a CFSM system, checks it for generalised multiparty compatibility, and builds the corresponding global graph
-- **chorgram**.py: a python script that executes gmc, transforms the .dot files it generates in graphical formats, and displays some performance information
-- **sgg**: takes in input a description of a global graph (with an extended syntax), projects the graph in a set of (non-minimal) CFSMs
-- **project**: takes in input a description of a global graph (with an extended syntax) and projects the graph on all or some of its participants
-- **gg2fsa**: returns the .fsa format of the minimised CFSMs of a global graph (the '-v' option also generates a '.hs' file that is the haskell representation of the system)
-- **gg2pom**: takes in input a description of a global graph (with an extended syntax) and generates the pomsets (in graphml format) representing the semantics of the graph (cf. (R. Guanciale and E. Tuosto, ICE 2016) and its journal version **(E. Tuosto and R. Guanciale, 2018)**
-- **pom2gg**: takes in input a description of pomsets (in graphml format) and tries to compute a global graph for which the pomset in input is the semantics
-- **gg2gml**: transforms a description of a global graph (with an extended syntax) to the graphml format
-- **chor2dot**: takes in input a description of a choreography either in the syntax of ChorGram (.sgg files), or as a graphml file of a pomset, or a graphml file obtained by diffing choreographies as a result of 'diff.py', and generates a corresponding to dot file
+- **wb**: checks for (the simple version of) well-branchedness
+- **gmc**: takes in input a CFSM system, checks it for generalised multiparty compatibility, and builds the corresponding g-choreography
+- **chorgram.py**: a python script that executes gmc, transforms the .dot files it generates in graphical formats, and displays some performance information
+<!-- - **sgg**: takes in input a description of a g-choreography (with an extended syntax), projects the graph in a set of (non-minimal) CFSMs -->
+- **project**: projects g-choreographies on CFSMs
+- **minproj**: as project with minimisation
+- **detproj**: as project with determinisation
+- **gc2fsa**: returns the .fsa format of the minimised CFSMs of a g-choreography (the '-v' option also generates a '.hs' file that is the haskell representation of the system)
+- **gc2pom**: returns the pomset semantics (in graphml format) of a g-choreography (in .gc format) (cf. (R. Guanciale and E. Tuosto, ICE 2016) and its journal version **(E. Tuosto and R. Guanciale, 2018)**
+- **gc2gml**: transforms a description of a g-choreography (with an extended syntax) to the graphml format
+- **pom2gg**: takes in input a description of pomsets (in graphml format) and tries to compute a g-choreography for which the pomset in input is the semantics
+- **chor2dot**: transforms in dot format the description of a g-choreography (either in .gc format or as a graphml format of a pomset, or a graphml file obtained by diffing g-choreographies with 'diff.py')
 
 # Syntax of the input files
 
@@ -90,8 +93,8 @@ A system S is given a name, specifies the (comma-separated list of the) names Pt
 
 The only syntactic check made (right now) during the parsing are (i) that sender and receiver of interactions have to be different, (ii) that defining equations are unique, (iii) that communication actions name existing machines, and (iv) a machine cannot be defined as its own dual. Error messages give some information, but should be improved. Text enclosed in '[' and ']' is treated as comment.
 
-## Syntax of Global Graphs
-The syntax of global graph is defined by the grammar:
+## Syntax of Global Choreographies
+The syntax of g-choreographies (aka global graphs) is defined by the grammar:
 ```
 #!ABNF
 
@@ -135,7 +138,7 @@ Text enclosed by '[' and ']' and is treated as comment and, after '..', so is th
 Basic syntactic checks are made during the parsing (e.g, (i) that sender and receiver of interactions have to be different and (2) that the participant controlling a loop is active in the loop). More are planned together with some more informative error messages.
 
 
-A global graph representing the ping-pong protocol in this syntax could be
+A g-choreography representing the ping-pong protocol in this syntax could be
 ```
 #!python
 
@@ -344,7 +347,7 @@ on the screen and the following files are generated in the directory 'experiment
 21. tempefc
 
 ```
-The important files are 1, 4, 5, 10, 19, and 20 which respectively are the global graph in pdf format (1), the CFSM machines in dot (4) and pdf (5) format, the global graph in dot format (10), and the transition system in dot (19) and pdf format (20).
+The important files are 1, 4, 5, 10, 19, and 20 which respectively are the g-choreography in pdf format (1), the CFSM machines in dot (4) and pdf (5) format, the g-choreography in dot format (10), and the transition system in dot (19) and pdf format (20).
 
 Here is an (ugly) example of the 1-bounded transition system of the pingpong protocol generated with the command
 

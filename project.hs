@@ -1,15 +1,21 @@
 --
 -- Authors: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
--- This main returns the fsa or dot format of the projections of a
--- g-choreography both for the single CFSMs and the whole
--- communicating system
+-- This program returns the fsa or dot format of projections of a
+-- g-choreography. It is possible to select the participants onto
+-- which projections must be calculated. A typical usage is
 --
+--    project <filename> -p A B C
+--
+-- where <filename> is the path to a .gc file with a choreography
+-- having A, B, and C among its participants. If the -p option is
+-- omitted, all the projections are returned.
+-- 
 
 import Misc
 import DotStuff (getDotConf)
 import GCParser
-import CFSM (cfsm2String, emptyCFSM, dottifyCfsm, printCfsm)
+import CFSM (cfsm2String, emptyCFSM, dottifyCFSM, printCFSM, prettyDotCFSM)
 import FSA (minimise,determinise)
 import SyntacticGlobalChoreographies (proj)
 import System.Environment
@@ -51,7 +57,7 @@ main = do progargs <- getArgs
                             case (flags!"--fmt") of
                               "fsa" -> L.map (\p -> CFSM.cfsm2String p (handleND $ proj gc "q0" "qe" p loops ptps_map)) ptps
                               "dot" -> L.map (\(p,s) -> "\nsubgraph " ++ p ++ "{\n label=\"" ++ p ++ "\"\n" ++ s ++ "\n}")
-                                (L.map (\p -> (p, CFSM.printCfsm (handleND $ proj gc "q0" "qe" p loops ptps_map) p flines)) ptps)
+                                (L.map (\p -> (p, CFSM.prettyDotCFSM (handleND $ proj gc "q0" "qe" p loops ptps_map) p flines ptps_map)) ptps)
                               _ -> error $ msgFormat PROJ ("unknown format " ++ (flags!"--fmt"))
                           (pre,post) =
                             case (flags!"--fmt") of
@@ -65,11 +71,14 @@ main = do progargs <- getArgs
                               Nothing ->
                                 if (flags!"--fmt") == "fsa"
                                 then CFSM.cfsm2String p emptyCFSM
-                                else dottifyCfsm emptyCFSM p "" flines
+                                else dottifyCFSM emptyCFSM p "" flines
                               Just _ ->
                                 case (flags!"--fmt") of
                                   "fsa" -> CFSM.cfsm2String p (handleND (proj gc "q0" "qe" p loops ptps_map))
-                                  "dot" -> dottifyCfsm (handleND (proj gc "q0" "qe" p loops ptps_map)) p "" flines
+                                  "dot" ->
+                                    "digraph projection{\n" ++
+                                    CFSM.prettyDotCFSM (handleND (proj gc "q0" "qe" p loops ptps_map)) p flines ptps_map ++
+                                    "\n}"
                                   _ -> error $ msgFormat PROJ ("unknown format " ++ (flags!"--fmt"))
                       in L.foldl (\x y -> x ++ "\n\n" ++ (aux y)) "" ptp
               putStrLn output

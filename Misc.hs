@@ -273,7 +273,7 @@ info =
          "\t wb"
        ]
   ),
-  (GMC, ["given a communicating system checks for its generalised",
+  (GMC, ["given a communicating system checks for its generalised multiparty compatibility",
          "[-c configfile] [-b bound] [-l] [-m multiplicity] [-sn] [-D detmode] [-d dirpath] [-ts] [-nf] [-cp cpattern] [-tp tpattern] [-v] filename",
          "default: configfile = ./aux/chorgram.config",
          "\t bound = 0",
@@ -490,18 +490,19 @@ getFlags cmd args =
       "-u":y:xs     -> M.insert "-u" y (getFlags cmd xs)
       "-o":y:xs     -> M.insert "-o" y   (getFlags cmd xs)
       _             -> error $ usage(cmd)
-    PROJ -> case args of
-      []            -> defaultFlags(cmd)
-      "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
-      "--fmt":y:xs  -> M.insert "--fmt" y (getFlags cmd xs)
-      "-u":y:xs     -> M.insert "-u" y (getFlags cmd xs)
-      _             -> error $ usage(cmd)
     GC2GML -> case args of
       []            -> defaultFlags(cmd)
       "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
       "-l":y:xs     -> M.insert "-l" y   (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
       "-o":y:xs     -> M.insert "-o" y   (getFlags cmd xs)
+      _             -> error $ usage(cmd)
+    PROJ -> case args of
+      []            -> defaultFlags(cmd)
+      "-v":xs       -> M.insert "-v" yes (getFlags cmd xs)
+      "--fmt":y:xs  -> M.insert "--fmt" y (getFlags cmd xs)
+      "-D":y:xs     -> M.insert "-D" y (getFlags cmd xs)
+      "-u":y:xs     -> M.insert "-u" y (getFlags cmd xs)
       _             -> error $ usage(cmd)
     SYS -> case args of
       []        -> defaultFlags(cmd)
