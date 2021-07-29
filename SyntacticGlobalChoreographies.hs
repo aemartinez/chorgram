@@ -15,13 +15,16 @@ import CFSM
 import DotStuff
 import Data.String.Utils (replace)
 
+-- simple representation of labels for choices
+type Label = Int
+
 -- A syntactic global graph is a set of nodes, a source, a sink, and a
 -- set of edges We assume that cp's will be automatically generated
 -- (uniquely) during parsing
 data GC = Emp
         | Act Channel Message
         | Par [GC]
-        | Bra (Set GC)
+        | Bra (Map Label GC)
         | Seq [GC]
         | Rep GC Ptp
     deriving (Eq, Ord, Show)
@@ -35,7 +38,7 @@ gcptp ptps g =
     Emp          -> ptps
     Act (s,r) _  -> S.union ptps (S.fromList [s,r])
     Par gs       -> S.union ptps (S.unions $ L.map (gcptp S.empty) gs)
-    Bra gs       -> S.union ptps (S.unions $ S.toList (S.map (gcptp S.empty) gs))
+    Bra gs       -> S.union ptps (S.unions $ L.map (gcptp S.empty) (M.elems gs))
     Seq gs       -> S.union ptps (S.unions (L.map (gcptp S.empty) gs))
     Rep g' p     -> S.union ptps (gcptp (S.singleton p) g')
 
@@ -79,12 +82,12 @@ proj gc q0 qe p n pmap =
                   if p==s
                   then ((show $ inverse!p, show $ inverse!r), Send, m)
                   else ((show $ inverse!s, show $ inverse!p), Receive, m)
-    Par ggs ->
+    Par gcs ->
       (replaceState (initialOf m) q0 m, qe)
       where m   = replaceState qe' qe (cfsmProd $ L.map fst mps)
             qe' = L.foldr stateProd "" (L.map snd mps)
-            mps = L.map (\g -> proj g q0 qe p n pmap) ggs
-    Bra ggs ->
+            mps = L.map (\g -> proj g q0 qe p n pmap) gcs
+    Bra gcs ->
       (replaceStates (\q_ -> q_ € [qe ++ (show i) | i <- [1 .. (length mps)]]) qe cfsm, qe)
       where (states, acts, trxs) =
               L.foldl
@@ -95,10 +98,10 @@ proj gc q0 qe p n pmap =
                 )
                 (S.singleton qe, S.singleton $ pTau Tau, S.empty)
                 (L.map fst mps)
-            ggs' = L.zip (S.toList ggs) [1 .. S.size ggs]
-            mps  = L.map (\(g,i) -> proj g (q0 ++ (show i)) (qe ++ (show i)) p n pmap) ggs'
+            -- gcs' = L.zip (S.toList gcs) [1 .. S.size gcs]
+            mps  = L.map (\(i,g) -> proj g (q0 ++ (show i)) (qe ++ (show i)) p n pmap) (M.toList gcs)
             cfsm = replaceStates (\q_ -> q_ € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs)
-    Seq ggs ->
+    Seq gcs ->
       ( replaceState qe' qe (states, q0, acts, trxs) , qe )
       where (_, qe', states, acts, trxs) =
                 L.foldl
@@ -113,7 +116,7 @@ proj gc q0 qe p n pmap =
                      )
                   )
                   (0, q0, S.empty, S.empty, S.empty)
-                  ggs
+                  gcs
     Rep g p' ->
       if (S.member p ptpsloop) then (fst m, qe) else (dm qe Tau)
       where
@@ -173,7 +176,7 @@ projx loopFlag gg pmap p q0 qe n =
         where c = if (p == s)
                   then ((show $ inverse!p, show $ inverse!r), Send, m)
                   else ((show $ inverse!s, show $ inverse!p), Receive, m)
-      Par ggs -> (replaceState (initialOf m) q0 (S.insert qe (statesOf m),
+      Par gcs -> (replaceState (initialOf m) q0 (S.insert qe (statesOf m),
                                                  initialOf m,
                                                  S.insert (taul Tau) (actionsOf m),
                                                  (transitionsOf m)
@@ -182,8 +185,8 @@ projx loopFlag gg pmap p q0 qe n =
                  )
         where m   = replaceState qe' qe (cfsmProd $ L.map fst mps)
               qe' = L.foldr stateProd "" (L.map snd mps)
-              mps = L.map (\g -> projx loopFlag g pmap p q0 qe n) ggs
-      Bra ggs     -> (replaceStates (\q -> q € [qe ++ (show i) | i <- [1 .. (length mps)]]) qe (replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs)), qe)
+              mps = L.map (\g -> projx loopFlag g pmap p q0 qe n) gcs
+      Bra gcs     -> (replaceStates (\q -> q € [qe ++ (show i) | i <- [1 .. (length mps)]]) qe (replaceStates (\q -> q € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs)), qe)
         where (states, acts, trxs) = L.foldl
                 (\(x,y,z) m -> (S.union x (statesOf m),
                                 S.union y (actionsOf m),
@@ -191,9 +194,9 @@ projx loopFlag gg pmap p q0 qe n =
                 )
                 (S.singleton qe, S.singleton $ taul Tau, S.empty)
                 (L.map fst mps)
-              ggs' = L.zip (S.toList ggs) [1 .. S.size ggs]
-              mps  = L.map (\(g,i) -> projx loopFlag g pmap p (q0 ++ (show i)) (qe ++ (show i)) n) ggs'
-      Seq ggs -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
+              -- gcs' = L.zip (S.toList gcs) [1 .. S.size gcs]
+              mps  = L.map (\(i,g) -> projx loopFlag g pmap p (q0 ++ (show i)) (qe ++ (show i)) n) (M.toList gcs)
+      Seq gcs -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
         where (_, qe', states, acts, trxs) =
                 L.foldl
                   (\(i, qi, x, y, z) g ->
@@ -206,7 +209,7 @@ projx loopFlag gg pmap p q0 qe n =
                      )
                   )
                   (0, q0, S.empty, S.empty, S.empty)
-                  ggs
+                  gcs
       Rep g p' -> if (S.member p bodyptps) then (ggrep, qe') else (dm qe' Tau)
         where bodyptps    = gcptp S.empty g
               ggrep       = (S.unions [statesOf body, statesOf loop, statesOf exit],
@@ -253,18 +256,19 @@ gc2dot gg name nodeSize =
                           in case gg_ of
                                Emp      -> (vs, as)
                                Act _ _  -> ((L.init vs) ++ [(i, dotLabelOf gg_ )] ++ [sink], attach i i)
-                               Par ggs  -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
+                               Par gcs  -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
                                    where (vs', as') = unionsPD forkV joinV notgate i (rename (\v -> not (notgate v)) i graphs)
-                                         graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) ggs)
-                               Bra ggs  -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
+                                         graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) gcs)
+                               Bra gcs  -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
                                    where (vs', as') = unionsPD branchV mergeV notgate i (rename (\v -> not (notgate v)) i graphs)
                                          (evs, eas) = dummyGC i
-                                         graphs     = S.toList (S.map (helper evs eas) ggs)
-                               Seq ggs -> graphy ggs vs as
-                                   where graphy ggs_ vs_ as_ = case ggs_ of
+                                         -- graphs     = S.toList (S.map (helper evs eas) gcs)
+                                         graphs     = M.elems (M.map (helper evs eas) gcs)
+                               Seq gcs -> graphy gcs vs as
+                                   where graphy gcs_ vs_ as_ = case gcs_ of
                                                                 []       -> (vs_,as_)
-                                                                Emp:ggs' -> graphy ggs' vs_ as_
-                                                                gg':ggs' -> graphy ggs' vs'' as''
+                                                                Emp:gcs' -> graphy gcs' vs_ as_
+                                                                gg':gcs' -> graphy gcs' vs'' as''
                                                                     where (vs0,as0)   = helper [(idx,""),(-idx,"")] [(idx,-idx)] gg'
                                                                           (vs',as')   = renameVertex notgate (vs0,as0) (1 + maxIdx vs0)
                                                                           (vs'',as'') = catPD (\(_,l) -> l /= "") (vs_,as_) (vs',as')
@@ -376,7 +380,7 @@ gc2graphml gg =
       ogate    = "  <key attr.name=\"open\" attr.type=\"string\" for=\"node\" id=\"open\" />\n"
       cgate    = "  <key attr.name=\"close\" attr.type=\"string\" for=\"node\" id=\"close\" />\n"
       sender   = "  <key attr.name=\"sender\" attr.type=\"string\" for=\"node\" id=\"sender\" />\n"
-      receiver = "  <key attr.name=\"receiver\" attr.type=\"string\" for=\"node\" id=\"receiver\" />\n"
+      receiver = "  <key attr.name=\"receive`<r\" attr.type=\"string\" for=\"node\" id=\"receiver\" />\n"
       payload  = "  <key attr.name=\"payload\" attr.type=\"string\" for=\"node\" id=\"payload\" />\n"
 -- TODO: check that cc works as before commenting the next 3 lines
 --      source   = ""--  <key attr.name=\"source\" attr.type=\"string\" for=\"node\" id=\"source\" />\n"
@@ -398,24 +402,25 @@ gc2graphml gg =
         in case gg_ of
           Emp -> (vs, as)
           Act _ _  -> ((L.init vs) ++ [(i, gmlNode (gmlLabelOf gg_) i)] ++ [sink], attach i i)
-          Par ggs -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
+          Par gcs -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
             where (vs', as') =
                     gather (gmlOpenGate i Fork)
                     (gmlCloseGate i Join)
                     notgate
                     i
                     (rename (not.notgate) i graphs)
-                  graphs = (L.map (helper [(i, (gmlOpenGate i Fork)), ((-i), (gmlCloseGate i Join))] [(i, (-i))]) ggs)
-          Bra ggs -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
+                  graphs = (L.map (helper [(i, (gmlOpenGate i Fork)), ((-i), (gmlCloseGate i Join))] [(i, (-i))]) gcs)
+          Bra gcs -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
             where (vs', as') =
                     gather (gmlOpenGate i Branch) (gmlCloseGate i Merge) notgate i (rename (not.notgate) i graphs)
-                  graphs = S.toList (S.map (helper [(i, (gmlOpenGate i Branch)), ((-i), (gmlCloseGate i Merge))] [(i, (-i))]) ggs)
-          Seq ggs -> graphy ggs vs as
-            where graphy ggs_ vs_ as_ =
-                    case ggs_ of
+                  --graphs = S.toList (S.map (helper [(i, (gmlOpenGate i Branch)), ((-i), (gmlCloseGate i Merge))] [(i, (-i))]) gcs)
+                  graphs = M.elems (M.map (helper [(i, (gmlOpenGate i Branch)), ((-i), (gmlCloseGate i Merge))] [(i, (-i))]) gcs)
+          Seq gcs -> graphy gcs vs as
+            where graphy gcs_ vs_ as_ =
+                    case gcs_ of
                       []       -> (vs_,as_)
-                      Emp:ggs' -> graphy ggs' vs_ as_
-                      gg':ggs' -> graphy ggs' vs'' as''
+                      Emp:gcs' -> graphy gcs' vs_ as_
+                      gg':gcs' -> graphy gcs' vs'' as''
                         where (vs0,as0) =
                                 helper [(idx,""),(-idx,"")] [(idx,-idx)] gg'
                               (vs',as') = renameVertex notgate (vs0,as0) (1 + maxIdx vs0)

@@ -19,12 +19,12 @@ main = do
               case gcgrammar gctxt 0 0 of
                 Ok x -> x
                 Er err -> error err
-        let (chk, aw) = 
-              (wb gc, dependency (S.empty, S.empty) gc)
+        -- let (chk, aw) = 
+        --       (wb gc, dependency (S.empty, S.empty) gc)
+        let chk = 
+              wb' gc
         let verbose = not(flags!"-v" == "")
-        if chk == Nothing
-          then putStrLn $
-                 "wb"
-          else putStrLn $
-                 "\tnot well-branched\t\taw:\t" ++ (show aw)
+        case chk of
+          Nothing -> putStrLn $ "wb: OK"
+          Just x -> putStrLn ("wb: violation\n\t" ++ x)
 

@@ -78,7 +78,7 @@ import SyntacticGlobalChoreographies
 import ErlanGC
 import Data.Set as S (empty, singleton, intersection, union, unions, difference, fromList, difference, toList, member, foldr, Set)
 import Data.List as L
-import qualified Data.Map as M (keys, empty, insert, union, Map)
+import qualified Data.Map as M (keys, empty, insert, union, elems, map, fromList, Map)
 import Misc
 import CFSM
 }
@@ -130,20 +130,22 @@ G :: { (GC, Set Ptp) }
 
 B :: { (GC, Set Ptp) }
 B : S                               { $1 }
-  | choiceop '{' Br '+' Bs '}'      { (Bra (S.fromList $
-                                            (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
-                                             []
-                                             (L.map fst ([$3] ++ $5))
-                                            )
-                                           ),
+  | choiceop '{' Br '+' Bs '}'      { (let
+                                          branches = L.map fst ([$3] ++ $5)
+                                          aux g l = l ++ (checkToken TokenBra g)
+                                          tmp = L.foldr aux [] branches
+                                          gcs = M.fromList $ L.zip [0 .. length tmp] tmp
+                                       in
+                                          Bra gcs,
                                         ptpsBranches ([$3] ++ $5))
                                     }
-  | choiceop str '{' Br '+' Bs '}'  { (Bra (S.fromList $
-                                            (L.foldr (\g -> \l -> l ++ (checkToken TokenBra g))
-                                             []
-                                             (L.map fst ([$4] ++ $6))
-                                            )
-                                           ),
+  | choiceop str '{' Br '+' Bs '}'  { (let
+                                          branches = L.map fst ([$4] ++ $6)
+                                          aux g l = l ++ (checkToken TokenBra g)
+                                          tmp = L.foldr aux [] branches
+                                          gcs = M.fromList $ L.zip [0 .. length tmp] tmp
+                                       in
+                                          Bra gcs,
                                         ptpsBranches ([$4] ++ $6))
                                     }
 
@@ -370,22 +372,22 @@ checkToken t (g,_) =
       Par l -> l
       _ -> [g]
     TokenBra -> case g of
-      Bra l -> S.toList l
+      Bra l -> M.elems l
       _ -> [g]
     TokenSeq -> case g of
       Seq l -> l
       _ -> [g]
     _        -> [g]
 
--- ggsptp computes the set of participants of a syntactic global graph
-ggsptp :: Set Ptp -> GC -> Set Ptp
-ggsptp ps g = case g of
+-- gcsptp computes the set of participants of a syntactic global graph
+gcsptp :: Set Ptp -> GC -> Set Ptp
+gcsptp ps g = case g of
                Emp         -> ps
                Act (s,r) _ -> S.union ps (S.fromList [s,r])
-               Par gs      -> S.union ps (S.unions (L.map (ggsptp S.empty) gs))
-               Bra gs      -> S.union ps (S.unions (L.map (ggsptp S.empty) (S.toList gs)))
-               Seq gs      -> S.union ps (S.unions (L.map (ggsptp S.empty) gs))
-               Rep g' p    -> S.union ps (ggsptp (S.singleton p) g')
+               Par gs      -> S.union ps (S.unions (L.map (gcsptp S.empty) gs))
+               Bra gs      -> S.union ps (S.unions $ M.elems $ M.map (gcsptp S.empty) gs)
+               Seq gs      -> S.union ps (S.unions (L.map (gcsptp S.empty) gs))
+               Rep g' p    -> S.union ps (gcsptp (S.singleton p) g')
 
     
 }

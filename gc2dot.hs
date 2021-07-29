@@ -25,6 +25,7 @@ main = do progargs <- getArgs
               let ( _, _, baseName, _ ) =
                     setFileNames sourcefile flags
               let dir = flags!"-d"
+              let outfile = dir ++ baseName ++ ".dot"
               createDirectoryIfMissing True dir
               case flags!"--fmt" of
                 "gc" -> do
@@ -32,17 +33,23 @@ main = do progargs <- getArgs
                         case gcgrammar gctxt 0 0 of
                           Ok x -> x
                           Er err -> error err
-                  writeToFile (dir ++ baseName ++ ".dot") ("# Input @ " ++ sourcefile ++ "\n\n" ++ show gc)
-                  writeToFile (dir ++ baseName ++ ".dot") (gc2dot gc baseName (flines!gcsizenode))
+                  writeToFile outfile ("# Input @ " ++ sourcefile ++ "\n\n" ++ show gc)
+                  writeToFile outfile (gc2dot gc baseName (flines!gcsizenode))
+                  myPrint flags GC2DOT ("result saved in " ++ outfile)
                 "gml" -> do
                   xml <- readFile sourcefile
                   case pomset2gg $ xgml2pomset xml of
-                    Nothing -> writeToFile (dir ++ baseName ++ ".dot") "Nothing"
-                    Just gc' -> writeToFile (dir ++ baseName ++ ".dot") (gc2dot gc' baseName sizeNode)
+                    Nothing ->
+                      writeToFile outfile "Nothing"
+                    Just gc' -> do
+                      writeToFile outfile (gc2dot gc' baseName sizeNode)
+                  myPrint flags GC2DOT ("result saved in " ++ outfile)
                 "gmldiff" -> do
                   xml <- readFile sourcefile
-                  writeToFile (dir ++ baseName ++ ".dot") (xgmldiff2dot baseName xml flines)
+                  writeToFile outfile (xgmldiff2dot baseName xml flines)
+                  myPrint flags GC2DOT ("result saved in " ++ outfile)
                 "sloppygml" -> do
                   xml <- readFile sourcefile
-                  writeToFile (dir ++ baseName ++ ".dot") (xgml2dot baseName xml flines)
+                  writeToFile outfile (xgml2dot baseName xml flines)
+                  myPrint flags GC2DOT ("result saved in " ++ outfile)
                 _ -> error ("ERROR: unknown format " ++ show (flags!"--fmt"))

@@ -33,6 +33,14 @@ The main commands provided by the implementation are
 - **pom2gg**: takes in input a description of pomsets (in graphml format) and tries to compute a g-choreography for which the pomset in input is the semantics
 - **chor2dot**: transforms in dot format the description of a g-choreography (either in .gc format or as a graphml format of a pomset, or a graphml file obtained by diffing g-choreographies with 'diff.py')
 
+To run these commands execute 
+
+```
+#!bash
+chorgram <cmd> <options>
+
+```
+
 # Syntax of the input files
 
 Strings are made of the following characters

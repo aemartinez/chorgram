@@ -57,7 +57,7 @@ intersect x y = not(S.null (S.intersection x y))
 
 pairwiseDisjoint :: (Ord k, Ord a) => Map k (Set a) -> Maybe (k, k)
 pairwiseDisjoint f =
--- returns the pair of keys (k1,k2) such that intersect [f k1, f k2]
+-- returns the pair of keys (k1,k2) such that intersect (f!k1) (f!k2)
   case M.keys f of
     [] -> Nothing
     [_] -> Nothing
@@ -262,16 +262,7 @@ info :: Map Command [String]
 -- must be a quick description of the command
 info =
   M.fromList [
-  (CG, ["Command line interface to ChorGram",
-         "[-v]",
-         "The following commands are handled",
-         "\t gmc",
-         "\t bgg",
-         "\t gc2dot",
-         "\t gc2fsa",
-         "\t project",
-         "\t wb"
-       ]
+  (CG, ["Command line interface to ChorGram; run \'chorgram help\' for more info"]
   ),
   (GMC, ["given a communicating system checks for its generalised multiparty compatibility",
          "[-c configfile] [-b bound] [-l] [-m multiplicity] [-sn] [-D detmode] [-d dirpath] [-ts] [-nf] [-cp cpattern] [-tp tpattern] [-v] filename",
@@ -286,18 +277,22 @@ info =
   ),
   (BGG, ["Transforms a petri net into a global graph",
         "[-d dirpath] [-v] filename",
-        "default: dirpath = " ++ dirpath]
+        "default: dirpath = " ++ dirpath
+        ]
   ),
   (GC, ["semantics of g-choreographies",
         "[-d dirpath] [-l] [--sloppy] filename [-rg]",
         "default: dirpath = " ++ dirpath,
         "\t --sloppy: suppresses the check for well-formedness; set by default",
-        "\t -l: adds a legend to dot; not set by default"]
+        "\t -l: adds a legend to dot; not set by default"
+       ]
   ),
   (GC2DOT, ["returns the dot format of a g-choreography",
-            "[-d dirpath] [--fmt (gml | gc | gmldiff | sloppygml)] filename",
+            "[-v] [-d dirpath] [--fmt (gml | gc | gmldiff | sloppygml)] filename",
+            "\t -v diplays the path to the resulting file; not set by default",
             "default: dirpath = " ++ dirpath,
-            "\t --fmt = gc"]
+            "\t --fmt = gc"
+           ]
   ),
   (GC2FSA, ["returns the communicating system and the projections of g-choreography in the fsa format",
             "[-o pref] [-u iter] [-v] filename",
@@ -318,11 +313,13 @@ info =
             "gc2pom [-d dirpath] [-u iter] [--fmt (hs | gml)] [-v] filename",
             "default: dirpath = " ++ dirpath,
             "\t --fmt hs   generates the haskell representation, otherwise the graphml format",
-            "\t iter = 1   this is the unfolding depth of loops"]
+            "\t iter = 1   this is the unfolding depth of loops"
+           ]
   ),
   (POM2GC, ["computes the g-choreography of a pomset (if any)",
             "[-d dirpath] filename",
-            "default: dirpath = " ++ dirpath]
+            "default: dirpath = " ++ dirpath
+           ]
   ),
   (GC2GML, ["converts a g-choreography into the gml format unfoldling loops according to the -u option",
             "[-u iter] [-o output-file] filename",
@@ -330,26 +327,32 @@ info =
            ]
   ),
   (SYS, ["prints the haskell data structure corresponding to a communicating system",
-         "filename"]
+         "filename"
+        ]
   ),
   (MIN, ["determinises or minimises CFSMs",
          "[-D (min | det | no)] [-d dirpath] [-v] filename",
          "default: dirpath = " ++ dirpath,
-         "\t -D min"]
+         "\t -D min"
+        ]
   ),
   (WB, ["checks for well-branchedness",
-         "[-v] filename"]
+         "[-v] filename"
+       ]
   ),
   (HGSEM, ["computes the hypergraph semantics of a g-choreography (deprecated)",
            "[-d dirpath] [-v] [--sloppy] filename",
-           "default: dirpath = " ++ dirpath]
+           "default: dirpath = " ++ dirpath
+          ]
   ),
   (TEST, ["main to test commands",
            "[-v] filename",
-           "default: dirpath = " ++ dirpath]
+           "default: dirpath = " ++ dirpath
+         ]
   )
   -- (PROD, ["[-d dirpath] [-l] filename",
-  --         "default: dirpath = " ++ dirpath]
+  --         "default: dirpath = " ++ dirpath
+  --        ]
   -- )
   ]
 
@@ -421,7 +424,7 @@ defaultFlags cmd = M.insert "-o" ""
                                            ]
                       BGG    -> M.fromList [("-d",dirpath), ("-v","")]
                       GC     -> M.fromList [("-d",dirpath), ("-v",""), ("-l",""), ("--sloppy","yes")]
-                      GC2DOT -> M.fromList [("-d",dirpath), ("--fmt","gc")]
+                      GC2DOT -> M.fromList [("-d",dirpath), ("--fmt","gc"), ("-v", "")]
                       GC2FSA -> M.fromList [("-o",""), ("-u", "-1"), ("-v","")]
                       PROJ   -> M.fromList [("-D","no"), ("-u", "-1"), ("--fmt", "fsa"), ("-v","")]
                       GC2POM -> M.fromList [("-d",dirpath), ("-v",""), ("--fmt", "hs"), ("-u","1")]
@@ -482,7 +485,8 @@ getFlags cmd args =
     GC2DOT -> case args of
       []            -> defaultFlags(cmd)
       "--fmt":y:xs  -> M.insert "--fmt" y (getFlags cmd xs)
-      "-d":y:xs     -> M.insert "-d" y   (getFlags cmd xs)
+      "-d":y:xs     -> M.insert "-d" y    (getFlags cmd xs)
+      "-v":xs       -> M.insert "-v" yes  (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GC2FSA -> case args of
       []            -> defaultFlags(cmd)
