@@ -22,7 +22,7 @@ main = do
         -- let (chk, aw) = 
         --       (wb gc, dependency (S.empty, S.empty) gc)
         let chk = 
-              wb' gc
+              wb gc
         let verbose = not(flags!"-v" == "")
         case chk of
           Nothing -> putStrLn $ "wb: OK"
