@@ -178,34 +178,39 @@ minR as = [ (n,m) | (n,m) <- as, L.all (\(_,t) -> n/=t) as ]
 maxR :: (Eq a) => [(a,a)] -> [(a,a)]
 maxR as = [ (n,m) | (n,m) <- as, L.all (\(t,_) -> m/=t) as ]
 
-equivalenceRelation :: (Eq a) => [(a,a)] -> [(a,a)]
+equivalenceRelation :: (Eq a, Ord a) => Set (a,a) -> Set (a,a)
 -- Assume that (x,x) in ys for all x
-equivalenceRelation ys = transitiveClosure (L.nub $ addPairs ys)
+equivalenceRelation ys = transitiveClosure (S.fromList $ addPairs $ S.toList ys)
     where addPairs ((x,y):xs) =  if x/=y
                                  then (x,y):((y,x):(addPairs xs))
                                  else (y,x):(addPairs xs)
           addPairs [] = []
         
           
-transitiveClosure :: (Eq a) =>  [(a, a)] -> [(a, a)]
--- http://stackoverflow.com/questions/19212558/transitive-closure-from-a-list-using-haskell
+transitiveClosure :: (Eq a, Ord a) =>  Set (a, a) -> Set (a, a)
+-- adapted from http://stackoverflow.com/questions/19212558/transitive-closure-from-a-list-using-haskell
 transitiveClosure closure
     | closure == closureUntilNow = closure
     | otherwise                  = transitiveClosure closureUntilNow
-    where closureUntilNow = L.nub $ closure ++ [(a, c) | (a, b) <- closure, (b', c) <- closure, b == b']
+    where closureUntilNow =
+            S.union closure (S.fromList
+                              [(a, c) | (a, b) <- S.toList closure,
+                               (b', c) <- S.toList closure, b == b'])
 
-transitiveClosureParam :: (Eq a) => (a -> a -> Bool) -> [(a, a)] -> [(a, a)]
+transitiveClosureParam :: (Eq a, Ord a) => (a -> a -> Bool) -> Set (a, a) -> Set (a, a)
 transitiveClosureParam f closure 
   | closure == closureUntilNow = closure
   | otherwise                  = transitiveClosureParam f closureUntilNow
   where closureUntilNow = 
-          L.nub $ closure ++ [(a, c) | (a, b) <- closure, (b', c) <- closure, ((f b b') || (f b' b))]
+          S.union closure (S.fromList
+                           [(a, c) | (a, b) <- S.toList closure,
+                            (b', c) <- S.toList closure, ((f b b') || (f b' b))])
 
-reflexoTransitiveClosure :: (Eq a) =>  [a] -> [(a, a)] -> [(a, a)]
+reflexoTransitiveClosure :: (Eq a, Ord a) =>  Set a -> Set (a, a) -> Set (a, a)
 reflexoTransitiveClosure els closure =
 -- PRE: closure must be a binary relation over the elements in els
 -- POST: returns the reflexo-transitive closure of the relation in the 2nd argument
-  L.nub $ (transitiveClosure closure) ++ [(a, a) | a <- els]
+   S.union (transitiveClosure closure) (S.fromList [(a, a) | a <- S.toList els])
 
 pairsof :: [a] -> [(a,a)]
 pairsof xs = zip (everyOtherEl xs) (everyOtherEl (tail xs))

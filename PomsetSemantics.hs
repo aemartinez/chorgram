@@ -41,8 +41,8 @@ eventsOf (events, _, _) = events
 orderOf :: Pomset -> Set (Event, Event)
 orderOf (_, rel, _) = rel
 
-labOf :: Pomset -> Lab
-labOf (_, _, lab) = lab
+labelOf :: Pomset -> Lab
+labelOf (_, _, lab) = lab
 
 sprod :: Ord t => Ord t' => Set t -> Set t' -> Set (t,t')
 sprod xs ys = S.fromList [(x,y) | x <- S.toList xs, y <- S.toList ys]
@@ -52,7 +52,10 @@ pomsetsOf gg iter e =
   -- PRE: gg is well-formed; e is the 'counter' of the events
   -- POST: returns the set of pomsets [[gg]] with n-unfolds of each loop for n = |iter|
   --       (eventually) well-formedness is checked iff iter >= 0
-  let unfold g n = if n==0 then Emp else Seq (L.replicate (abs n) g)
+  let unfold g n =
+        if n==0
+        then Emp
+        else Seq (L.replicate (abs n) g)
       -- TODO: uniform unfoldind for the moment.
       --       Eventually to generate random numbers between 0 and iter.
   in
@@ -64,45 +67,69 @@ pomsetsOf gg iter e =
            interactionPom = (S.fromList [e, e+1], (S.singleton (e, e+1)), lab)
         in (S.singleton interactionPom, e+2)
 --      LAct c m -> pomsetsOf (Act c m) iter e
-      Par ggs -> (combine (tail pomsets) (head pomsets), e'')
+      Par ggs ->
+        (combine (tail pomsets) (head pomsets), e'')
         where (pomsets, e'') = L.foldl aux ([], e) ggs
-              aux = \(gs, e') g ->
-                let (p, e_) = pomsetsOf g iter e'
-                in (p : gs, e_)
+              aux (gs, e') g =
+                let
+                  (p, e_) = pomsetsOf g iter e'
+                in
+                  (p : gs, e_)
               combine pps ps =
                 case pps of
                   [] -> ps
                   ps':pps' ->
-                    let f = \(p, p') a -> S.insert (pUnion p p') a
-                    in combine pps' (S.foldr f S.empty (sprod ps ps'))
+                    let
+                      f (p, p') a =
+                        S.insert (pUnion p p') a
+                    in
+                      combine pps' (S.foldr f S.empty (sprod ps ps'))
               pUnion = \(events, rel, lab) (events', rel', lab') ->
                 (S.union events events', S.union rel rel', M.union lab lab')
-      Bra ggs -> L.foldl aux (emptySem e) ggs
-        where aux = \(gs, e') g -> let (p, e'') = pomsetsOf g iter e' in (S.union p gs, e'')
+      Bra ggs ->
+        L.foldl aux (emptySem e) ggs
+        where aux (gs, e') g =
+                let
+                  (p, e'') = pomsetsOf g iter e'
+                in
+                  (S.union p gs, e'')
       Seq ggs ->
         case ggs of
           [] -> emptySem e
           [g'] -> pomsetsOf g' iter e
-          g':ggs' -> (S.map pseq (sprod p' p''), e'')
+          g':ggs' -> (S.map seqLeq (sprod p' p''), e'')
             where (p', e') = pomsetsOf g' iter e
                   (p'', e'') = pomsetsOf (Seq ggs') iter e'
-                  pseq (pom@(events, rel, lab), pom'@(events', rel', lab')) =
-                    (S.union events events',
-                     S.union (seqrel pom pom') (S.union rel rel'),
-                     M.union lab lab')
-                  seqrel (events, _, lab) (events', _, lab') =
-                    S.filter (\(e1,e2) -> case (M.lookup e1 lab, M.lookup e2 lab') of
-                                            (Just x, Just y) -> subjectOf x == subjectOf y
-                                            _                -> False
-                             ) (sprod events events')
+                  -- pseq (pom@(events, rel, lab), pom'@(events', rel', lab')) =
+                  --   (S.union events events',
+                  --    S.union (seqrel pom pom') (S.union rel rel'),
+                  --    M.union lab lab')
+                  -- seqrel (events, _, lab) (events', _, lab') =
+                  --   S.filter (\(e1,e2) -> case (M.lookup e1 lab, M.lookup e2 lab') of
+                  --                           (Just x, Just y) -> subjectOf x == subjectOf y
+                  --                           _                -> False
+                  --            ) (sprod events events')
       Rep gg' _ -> pomsetsOf (unfold gg' iter) iter e
+
+seqLeq :: (Pomset, Pomset) -> Pomset
+seqLeq ((events, rel, lab), (events', rel', lab')) =
+  let r =
+        S.filter (\(e1,e2) ->
+                    case (M.lookup e1 lab, M.lookup e2 lab') of
+                      (Just x, Just y) -> subjectOf x == subjectOf y
+                      _                -> False
+                 ) (sprod events events')
+  in
+    (S.union events events',
+     transitiveClosure $ S.union r (S.union rel rel'),
+     M.union lab lab')
 
 getClosure :: Set Event -> Pomset -> Set Event
 getClosure evs p@(events, rel, _)=
   let p' = subpom evs p
       cont = S.difference events evs
       p'' = subpom cont p
-      rel' = [(x,y) | (x,y) <- reflexoTransitiveClosure (S.toList events) (S.toList rel), x /= y]
+      rel' = [(x,y) | (x,y) <- S.toList $ reflexoTransitiveClosure events rel, x /= y]
       new = S.filter (\e -> not (S.null $ getNonPred e p' rel')) (minOfPomset p'')
   in if S.null new then
        evs
@@ -165,7 +192,7 @@ components (events, rel, _) = S.foldr aux S.empty events
               if L.elem e visited then
                  connected visited tovisit' acc
               else
-                let r = reflexoTransitiveClosure (S.toList events) (S.toList rel)
+                let r = S.toList $ reflexoTransitiveClosure events rel
                     todo = L.map fst [(x,y) | (x,y) <- r, y == e] ++
                            L.map snd [(x,y) | (x,y) <- r, x == e]
                 in connected (e:visited) (tovisit' ++ todo) (S.union acc (S.fromList todo))
@@ -216,6 +243,24 @@ pomset2gg p@(_, _, lab) =
               Just [gg] -> Just gg
               Just ggs -> Just (Par ggs)
 
+
+-- Pomset to dot
+
+pomset2dot :: Pomset -> String -> DotString -> Map String String -> DotString
+pomset2dot r name nodeSize flines =
+  -- transforms r in dot format giving it name 'name'
+  -- and setting the size of nodes to 'nodeSize'
+  let
+    mkLabel i =
+      "\t " ++ (show i) ++ "\t [width=" ++ nodeSize ++
+      ", height=" ++ nodeSize ++
+      ", label = \"" ++ (printAction ((labelOf r)!i) flines) ++
+      "\"]\n"
+    nodes = L.map mkLabel (S.toList $ eventsOf r)
+    mkEdge (i,j) = "\n\t" ++ (show i) ++ " -> " ++ (show j)
+    edges = S.toList $ S.map mkEdge (orderOf r)
+  in
+    "digraph " ++ name ++ " {\n" ++ (L.foldr (++) "\n" (nodes ++ edges)) ++ "}\n" 
 
 -- GML stuff
 

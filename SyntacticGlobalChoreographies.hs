@@ -29,18 +29,21 @@ data GC = Emp
         | Rep GC Ptp
     deriving (Eq, Ord, Show)
 
-gcptp :: Set Ptp -> GC -> Set Ptp
-gcptp ptps g =
+ptpOf :: GC -> Set Ptp
+ptpOf gc =
 --
--- gcptp computes the set of participants of a global graph
+-- returns the set of participants of gc
 --
-  case g of
-    Emp          -> ptps
-    Act (s,r) _  -> S.union ptps (S.fromList [s,r])
-    Par gs       -> S.union ptps (S.unions $ L.map (gcptp S.empty) gs)
-    Bra gs       -> S.union ptps (S.unions $ L.map (gcptp S.empty) (M.elems gs))
-    Seq gs       -> S.union ptps (S.unions (L.map (gcptp S.empty) gs))
-    Rep g' p     -> S.union ptps (gcptp (S.singleton p) g')
+  gcptp S.empty gc
+  where
+    gcptp ptps g =
+      case g of
+        Emp          -> ptps
+        Act (s,r) _  -> S.union ptps (S.fromList [s,r])
+        Par gs       -> S.union ptps (S.unions $ L.map (gcptp S.empty) gs)
+        Bra gs       -> S.union ptps (S.unions $ L.map (gcptp S.empty) (M.elems gs))
+        Seq gs       -> S.union ptps (S.unions (L.map (gcptp S.empty) gs))
+        Rep g' p     -> S.union ptps (gcptp (S.singleton p) g')
 
 loopBack :: State -> State
 loopBack q = "__l__" ++ q
@@ -120,7 +123,7 @@ proj gc q0 qe p n pmap =
     Rep g p' ->
       if (S.member p ptpsloop) then (fst m, qe) else (dm qe Tau)
       where
-        ptpsloop = gcptp S.empty g
+        ptpsloop = ptpOf g
         suf = if n<0 then show (-n) else show n
         m =
           if n >= 0
@@ -211,7 +214,7 @@ projx loopFlag gg pmap p q0 qe n =
                   (0, q0, S.empty, S.empty, S.empty)
                   gcs
       Rep g p' -> if (S.member p bodyptps) then (ggrep, qe') else (dm qe' Tau)
-        where bodyptps    = gcptp S.empty g
+        where bodyptps    = ptpOf g
               ggrep       = (S.unions [statesOf body, statesOf loop, statesOf exit],
                              initialOf body,
                              S.unions [actionsOf body, actionsOf loop, actionsOf exit],

@@ -23,8 +23,9 @@
 module WellFormedness where
 
 import Misc
-import CFSM (Ptp)
+import CFSM (Ptp, isSend, senderOf, receiverOf, isSend, isReceive)
 import SyntacticGlobalChoreographies
+import PomsetSemantics
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
@@ -32,16 +33,16 @@ import Data.Map.Strict as M
 data Role = Active | Passive
   deriving (Ord, Eq)
 
-getInteractions :: GC -> Set GC
-getInteractions gc =
+interactionsOf :: GC -> Set GC
+interactionsOf gc =
 -- returns the set of interactions occurring in gc
   case gc of
     Emp -> S.empty
     Act (s,r) m -> S.singleton (Act (s,r) m)
-    Par gs -> S.unions (S.fromList $ L.map getInteractions gs)
-    Bra gs -> S.unions $ M.elems $ (M.map getInteractions gs)
-    Seq gs -> S.unions (S.fromList $ L.map getInteractions gs)
-    Rep gc' _ -> getInteractions gc'
+    Par gs -> S.unions (S.fromList $ L.map interactionsOf gs)
+    Bra gs -> S.unions $ M.elems $ (M.map interactionsOf gs)
+    Seq gs -> S.unions (S.fromList $ L.map interactionsOf gs)
+    Rep gc' _ -> interactionsOf gc'
 
 -- Basic functions to check the nature of a g-choreography
 isAct :: GC -> Bool
@@ -83,29 +84,41 @@ firstOnly :: GC -> GC
 firstOnly gc =
 -- returns a g-choreography with the same "top-level"
 -- structure of gc with the "first" interations
--- eg if gc = A -> B: m | (Emp ; C -> D: n) then
+-- eg if gc = A -> B: m | ((o) ; C -> D: n) then
 -- firstOnly gc = A -> B: m | C -> D: n 
   case gc of
     Emp -> gc
     Act (_, _) _ -> gc
-    Par gs -> Par (L.map firstOnly gs)
-    Bra gs -> Bra (M.map firstOnly gs)
-    Seq gs ->
-      case gs of
-        [] -> Emp
-        [g] ->
-          let h = firstOnly $ simplifyGC g
-          in
-            case h of
-              Emp -> Emp
-              _ -> h
-        g:gs' -> 
-          let h = firstOnly $ simplifyGC g
-          in
-            case h of
-              Emp -> firstOnly (Seq gs')
-              _ -> h
+    Par gc -> Par (L.map firstOnly gc)
+    Bra gc -> Bra (M.map firstOnly gc)
+    Seq gc ->
+      let
+        gc' = L.filter (\x -> not. isEmp $ simplifyGC x) gc
+      in
+        case gc' of
+          [] -> Emp
+          _ -> firstOnly $ head gc'
     Rep gc' q -> Rep (firstOnly $ simplifyGC gc') q
+
+lastOnly :: GC -> GC
+lastOnly gc =
+-- returns a g-choreography with the same "bottom-level"
+-- structure of gc with the "last" interations
+-- eg if gc = (o) | (G ; C -> D: n ; (o)) then
+-- lastOnly gc = (o) | C -> D: n 
+  case gc of
+    Emp -> gc
+    Act (_, _) _ -> gc
+    Par gc -> Par (L.map lastOnly gc)
+    Bra gc -> Bra (M.map lastOnly gc)
+    Seq gc ->
+      let
+        gc' = L.filter (\x -> not. isEmp $ simplifyGC x) gc
+      in
+        case gc' of
+          [] -> Emp
+          _ -> lastOnly $ L.last gc'
+    Rep gc' q -> Rep (lastOnly gc') q
 
 simplifyGC :: GC -> GC
 simplifyGC gc =
@@ -159,16 +172,16 @@ simplifyGC gc =
           Emp -> Emp
           _ -> Rep body p
 
-check :: Role -> Ptp -> Map Label GC -> Bool
+naiveWB :: Role -> Ptp -> Map Label GC -> Bool
 -- PRE:  M.size branching > 1    AND   all g-choreography in 'branching' are simplified
 -- POST: checks if p is active or passive in 'branching'
 -- TODO: return lists of problematic branches when the condition is violated
-check Active p branching =
+naiveWB Active p branching =
   let
     pBra = M.map (simplifyGC . firstOnly . (filterPtp p)) branching
     gcs = M.elems pBra
     emptyness = L.all (not . isEmp) gcs
-    ints = M.map getInteractions pBra
+    ints = M.map interactionsOf pBra
     outputOnly = L.all (\a -> L.all (\x -> isAct x && p == (sender x)) a) ints
     disjointness =
       case pairwiseDisjoint ints of
@@ -176,18 +189,18 @@ check Active p branching =
         _ -> False
   in emptyness && outputOnly && disjointness
 
-check Passive p branching =
+naiveWB Passive p branching =
   let
     pBra = M.map (simplifyGC . firstOnly . (filterPtp p)) branching
     gcs = M.elems pBra
     emptyness = (L.all isEmp gcs) || (L.all (not . isEmp) gcs)
-    ints = M.map getInteractions pBra
-    io = L.all (\a -> S.foldl (\b x -> b && isAct x && (p == (receiver x))) True a) ints
-    nonAmbiguous =
+    ints = M.map interactionsOf pBra
+    inputOnly = L.all (\a -> S.foldl (\b x -> b && isAct x && (p == (receiver x))) True a) ints
+    disjointness =
       case pairwiseDisjoint ints of
         Nothing -> True
         _ -> False
-  in emptyness && io && nonAmbiguous
+  in emptyness && inputOnly && disjointness
 
 -- chkBranching :: Role -> Ptp -> [GC] -> Maybe String
 -- chkBranching r p branching =
@@ -229,7 +242,7 @@ dependency :: (Set Ptp, Set Ptp) -> GC -> (Set Ptp, Set Ptp)
 dependency (min_int, oth) gc =
 -- computes the set of senders of minimal interactions and those
 -- participants whose actions causally depend on actions of the ones
--- in min
+-- in min_int
   case gc of
     Emp -> (min_int, oth)
     Act (s, r) _ ->
@@ -253,14 +266,76 @@ dependency (min_int, oth) gc =
 -- ws acc tbc gc =
 -- -- checks for well-sequencedness and returns a g-choreography that
 -- -- cannot be put in sequence with its subsequent g-choreography (if any)
---   let (f, gc') = cutFirst gc
---       tbc' = S.union tbc (S.filter (\a -> not $ S.member (sender a) (S.map receiver acc)) f)
---       acc' = S.union acc (f S.\\ tbc')
+--   let
+--     (f, gc') =
+--       cutFirst $ simplifyGC gc
+--     rcv =
+--       S.map receiver acc
+--     tbc' =
+--       S.union tbc (S.filter (\a -> not $ S.member (sender a) rcv) f)
+--     acc' =
+--       S.union acc (f S.\\ tbc')
 --   in
 --     if simplifyGC gc' == Emp
 --     then S.union acc' tbc'
 --     else ws acc' tbc' gc'
 
+ws :: GC -> Bool
+ws gc =
+  -- checks for well-sequencedness and returns a g-choreography that
+  -- cannot be put in sequence with its subsequent g-choreography (if
+  -- any).
+  case gc of
+    Emp -> True
+    Act _ _ -> True
+    Par gcs -> L.all ws gcs
+    Bra gcs -> L.all ws gcs
+    Seq gcs ->
+      case gcs of
+        [] -> True
+        [gc'] -> ws gc'
+        gc':gc'':gcs' ->
+          (ws gc') && (wsAux gc' gc'') && (ws (Seq (tail gcs)))
+    Rep gc' _ -> ws gc'
+
+wsAux :: GC -> GC -> Bool
+wsAux gc gc' = -- error $ show $ L.all outCond ps'
+  -- NOTE: the implementation differs from the formal definition
+  -- because the check that minimal imputs of gc' depend on some
+  -- output of gc is done syntactically instead of using pomsets.
+  (isEmp $ simplifyGC gc) ||
+  (isEmp $ simplifyGC gc') ||
+  (inCond && L.all outCond ps')
+  where
+    (sem, e') = pomsetsOf gc 1 0
+    (sem', _) = pomsetsOf gc' 1 (e'+1)
+    (ps, ps') = (S.toList $ sem, S.toList $ sem')
+    ptpgc = ptpOf gc
+    outCond r' =
+      let
+        l' = (labelOf r')
+        outs' = S.filter (\e -> isSend (l'!e) && S.member (senderOf (l'!e)) ptpgc) (eventsOf r')
+        chk r =
+          let
+            l = (labelOf r)
+            outs = S.filter (\e -> isSend (l!e)) (eventsOf r)
+          in
+            S.null (
+              (S.fromList [(e,e') | e <- S.toList outs, e' <- S.toList outs'])
+              S.\\
+              (orderOf $ seqLeq (r, r'))
+            )
+      in
+        L.all chk sem
+    inCond =
+      let
+        ptps = ptpOf gc
+        min = interactionsOf $ firstOnly gc'
+        aux (Act (s,r) _ ) =
+          (S.member r ptps) || (S.member s ptps)
+      in
+        L.all aux (S.toList min)
+        
 wf :: GC -> Maybe (GC, GC)
 wf gc =
 -- checks for well-forkedness and returns the set
@@ -269,7 +344,7 @@ wf gc =
     Emp -> Nothing
     Act (_,_) _ -> Nothing
     Par gs ->
-      let f = M.fromList $ (L.zip (range $ L.length gs) (L.map getInteractions gs))
+      let f = M.fromList $ (L.zip (range $ L.length gs) (L.map interactionsOf gs))
       in
         case pairwiseDisjoint f of
           Nothing -> Nothing
@@ -304,10 +379,10 @@ wb gc =
         Nothing -> Nothing
         _ -> Just (L.foldr (\l l' -> l ++ "\n" ++ l') "" [x | (Just x) <- (L.filter (\x -> x /= Nothing) (L.map wb gs))])
     Bra gcs ->
-      let ptps = gcptp S.empty gc
+      let ptps = ptpOf gc
           gcs' = M.map simplifyGC gcs
-          getActive = S.filter (\p -> check Active p gcs') ptps
-          getPassive = S.filter (\p -> check Passive p gcs') ptps
+          getActive = S.filter (\p -> naiveWB Active p gcs') ptps
+          getPassive = S.filter (\p -> naiveWB Passive p gcs') ptps
       in
         let mkList = \x y -> x ++ " " ++ y
         in

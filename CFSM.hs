@@ -58,6 +58,15 @@ isCommunication a = (isSend a) || (isReceive a)
 isTau :: Action -> Bool
 isTau (_, d, _) = (d == Tau)
 
+senderOf :: Action -> Ptp
+senderOf ((s,_), _, _) = s
+
+receiverOf :: Action -> Ptp
+receiverOf ((_,r), _, _) = r
+
+messageOf :: Action -> Ptp
+messageOf (_, _, m) = m
+
 emptyCFSM :: CFSM
 emptyCFSM = ( S.empty, "", S.empty, S.empty )
 
@@ -185,8 +194,8 @@ renamePtp old new ( states, q0, acts, trxs ) = ( states, q0, acts', trxs' )
 -- Diamond Computations
 --
 blackdiamondRel :: CFSM -> Diamond
-blackdiamondRel cfsm@( _, _, _, trxs ) = S.fromList $ Misc.equivalenceRelation q0
-  where q0 = S.toList $ S.filter (\( x, y ) -> (keepElemt x y)) prod
+blackdiamondRel cfsm@( _, _, _, trxs ) = Misc.equivalenceRelation q0
+  where q0 = S.filter (\( x, y ) -> (keepElemt x y)) prod
         setpairs = S.map (\( x, y, _ ) -> ( x, y )) trxs
         prod = Misc.cartProd setpairs setpairs
         whitediamond = whitediamondRel cfsm
@@ -206,8 +215,8 @@ diamond cfsm t t' = S.member ( t, t' ) (blackdiamondRel cfsm)
 
 
 whitediamondRel :: CFSM -> Diamond
-whitediamondRel cfsm@( _, _, _, trxs ) = S.fromList $ Misc.equivalenceRelation q0
-  where q0 = S.toList $ S.filter (\( x, y ) -> (diamondNonClosed cfsm x y)) prod
+whitediamondRel cfsm@( _, _, _, trxs ) = Misc.equivalenceRelation q0
+  where q0 = S.filter (\( x, y ) -> (diamondNonClosed cfsm x y)) prod
         setpairs = S.map (\( x, y, _ ) -> ( x, y )) trxs
         prod = Misc.cartProd setpairs setpairs
         --
