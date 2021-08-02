@@ -20,9 +20,6 @@ Although many features are almost stable, a few are still work in progress (and 
 
 The main commands provided by the implementation are
 
-- **wb**: checks for (the simple version of) well-branchedness
-- **wf**: checks for well-forkedness
-- **ws**: checks for well-sequencedness
 - **gmc**: takes in input a CFSM system, checks it for generalised multiparty compatibility, and builds the corresponding g-choreography
 - **chorgram.py**: a python script that executes gmc, transforms the .dot files it generates in graphical formats, and displays some performance information
 <!-- - **sgg**: takes in input a description of a g-choreography (with an extended syntax), projects the graph in a set of (non-minimal) CFSMs -->
@@ -31,6 +28,9 @@ The main commands provided by the implementation are
 - **detproj**: as project with determinisation
 - **gc2fsa**: returns the .fsa format of the minimised CFSMs of a g-choreography (the '-v' option also generates a '.hs' file that is the haskell representation of the system)
 - **gc2pom**: returns the pomset semantics (in graphml format) of a g-choreography (in .gc format) (cf. (R. Guanciale and E. Tuosto, ICE 2016) and its journal version **(E. Tuosto and R. Guanciale, 2018)**
+- **wb**: checks for (the simple version of) well-branchedness
+- **wf**: checks for well-forkedness
+- **ws**: checks for well-sequencedness
 - **gc2gml**: transforms a description of a g-choreography (with an extended syntax) to the graphml format
 - **pom2gg**: takes in input a description of pomsets (in graphml format) and tries to compute a g-choreography for which the pomset in input is the semantics
 - **chor2dot**: transforms in dot format the description of a g-choreography (either in .gc format or as a graphml format of a pomset, or a graphml file obtained by diffing g-choreographies with 'diff.py')
