@@ -240,61 +240,75 @@ node2dot n =
 -- DOT representation of GC nodes
   (if n < 0 then "_" else "") ++ (show $ abs n)
       
-gc2dot :: GC -> String -> DotString -> DotString
-gc2dot gg name nodeSize =
+gc2dot :: GC -> String -> Map String String -> DotString
+gc2dot gg name flines =
 --
 -- gc2dot transforms a GC in dot format giving it name 'name'
 -- and setting the size of nodes to 'nodeSize'
 -- TODO: improve on fresh node generation
 --
-  let maxIdx vs = aux vs 0
-        where aux [] v = v + 1
-              aux ((v', _):vs') v = aux vs' (max v v')
-      dummyGC n = ([(n, branchV), (-n, mergeV)], [(n, -n)])
-      helper vs as gg_  = let (sink, i)       = (L.last vs, 1 + (maxIdx vs))
-                              attach idx idx' = [(s, t)   | (s, t) <- as, t /= fst sink] ++
-                                                [(s, idx) | (s, t) <- as, t == fst sink] ++
-                                                [(idx', fst sink)]
-                              notgate         = \v -> v /= i && v /= (-i)
-                          in case gg_ of
-                               Emp      -> (vs, as)
-                               Act _ _  -> ((L.init vs) ++ [(i, dotLabelOf gg_ )] ++ [sink], attach i i)
-                               Par gcs  -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
-                                   where (vs', as') = unionsPD forkV joinV notgate i (rename (\v -> not (notgate v)) i graphs)
-                                         graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) gcs)
-                               Bra gcs  -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
-                                   where (vs', as') = unionsPD branchV mergeV notgate i (rename (\v -> not (notgate v)) i graphs)
-                                         (evs, eas) = dummyGC i
-                                         -- graphs     = S.toList (S.map (helper evs eas) gcs)
-                                         graphs     = M.elems (M.map (helper evs eas) gcs)
-                               Seq gcs -> graphy gcs vs as
-                                   where graphy gcs_ vs_ as_ = case gcs_ of
-                                                                []       -> (vs_,as_)
-                                                                Emp:gcs' -> graphy gcs' vs_ as_
-                                                                gg':gcs' -> graphy gcs' vs'' as''
-                                                                    where (vs0,as0)   = helper [(idx,""),(-idx,"")] [(idx,-idx)] gg'
-                                                                          (vs',as')   = renameVertex notgate (vs0,as0) (1 + maxIdx vs0)
-                                                                          (vs'',as'') = catPD (\(_,l) -> l /= "") (vs_,as_) (vs',as')
-                                                                          idx         = 1 + maxIdx vs_
-                               Rep gg' _ -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ ((-i,i):as'))
-                                   where
-                                     (evs, eas) = dummyGC i
-                                     (vs', as') = helper evs eas gg'
-        where rename excluded offset pds
-                = case pds of
-                    (vs1, as1):pds' -> ([(newNode excluded v offset,l) | (v,l) <- vs1],
-                                        [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as1]) :
-                                       (rename excluded (1 + offset + maxIdx vs1) pds')
-                    []             -> []
-              unionsPD gl gl' included idx pds
-                = ([(idx,gl)] ++ [(v,l) | (v,l) <- L.concat  $ L.map fst pds, (included v)] ++ [((-idx),gl')],
-                    L.concatMap snd pds)
-      dotnodes vs  = L.concatMap (\(s, l) -> "\tnode" ++ (node2dot s) ++ l) vs
-      dotedges as  = L.concatMap (\(s, t) -> "\tnode" ++ (node2dot s) ++ " -> node" ++ (node2dot t) ++ "\n") as
-      (evs_, eas_) = ([(1, sourceV), (-1, sinkV)], [(1, -1)])
-      (vertexes, edges) = helper evs_ eas_ gg
-      (header,  footer) = ("digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n", "\n}\n")
-  in header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
+  let
+    nodeSize = flines!gcsizenode
+    maxIdx vs = aux vs 0
+      where aux [] v = v + 1
+            aux ((v', _):vs') v = aux vs' (max v v')
+    dummyGC n = ([(n, branchV), (-n, mergeV)], [(n, -n)])
+    helper vs as gg_  =
+      let
+        (sink, i) = (L.last vs, 1 + (maxIdx vs))
+        attach idx idx' =
+          [(s, t)   | (s, t) <- as, t /= fst sink] ++
+          [(s, idx) | (s, t) <- as, t == fst sink] ++
+          [(idx', fst sink)]
+        notgate = \v -> v /= i && v /= (-i)
+      in
+        case gg_ of
+          Emp      -> (vs, as)
+          Act _ _  -> ((L.init vs) ++ [(i, dotLabelOf gg_ )] ++ [sink], attach i i)
+          Par gcs  ->
+            ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
+            where
+              (vs', as') = unionsPD forkV joinV notgate i (rename (\v -> not (notgate v)) i graphs)
+              graphs     = (L.map (helper [(i,forkV),(-i,joinV)] [(i,-i)]) gcs)
+          Bra gcs  -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ as')
+            where
+              (vs', as') = unionsPD branchV mergeV notgate i (rename (\v -> not (notgate v)) i graphs)
+              (evs, eas) = dummyGC i
+              -- graphs     = S.toList (S.map (helper evs eas) gcs)
+              graphs     = M.elems (M.map (helper evs eas) gcs)
+          Seq gcs -> graphy gcs vs as
+            where
+              graphy gcs_ vs_ as_ =
+                case gcs_ of
+                  []       -> (vs_,as_)
+                  Emp:gcs' -> graphy gcs' vs_ as_
+                  gg':gcs' -> graphy gcs' vs'' as''
+                    where
+                      (vs0,as0)   = helper [(idx,""),(-idx,"")] [(idx,-idx)] gg'
+                      (vs',as')   = renameVertex notgate (vs0,as0) (1 + maxIdx vs0)
+                      (vs'',as'') = catPD (\(_,l) -> l /= "") (vs_,as_) (vs',as')
+                      idx         = 1 + maxIdx vs_
+          Rep gg' _ -> ((L.init vs) ++ vs' ++ [sink], (attach i (-i)) ++ ((-i,i):as'))
+            where
+              (evs, eas) = dummyGC i
+              (vs', as') = helper evs eas gg'
+        where
+          rename excluded offset pds =
+            case pds of
+              (vs1, as1):pds' -> ([(newNode excluded v offset,l) | (v,l) <- vs1],
+                                  [(newNode excluded s offset, newNode excluded t offset) | (s,t) <- as1]) :
+                                 (rename excluded (1 + offset + maxIdx vs1) pds')
+              []             -> []
+          unionsPD gl gl' included idx pds =
+            ([(idx,gl)] ++ [(v,l) | (v,l) <- L.concat  $ L.map fst pds, (included v)] ++ [((-idx),gl')],
+             L.concatMap snd pds)
+    dotnodes vs  = L.concatMap (\(s, l) -> "\tnode" ++ (node2dot s) ++ l) vs
+    dotedges as  = L.concatMap (\(s, t) -> "\tnode" ++ (node2dot s) ++ " -> node" ++ (node2dot t) ++ "\n") as
+    (evs_, eas_) = ([(1, sourceV), (-1, sinkV)], [(1, -1)])
+    (vertexes, edges) = helper evs_ eas_ gg
+    (header,  footer) = ("digraph " ++ name ++ " {\n   node [width=" ++ nodeSize ++ ", height=" ++ nodeSize ++ "]\n\n", "\n}\n")
+  in
+    header ++ (dotnodes vertexes) ++ (dotedges edges) ++ footer
 
 dotLabelOf :: GC -> DotString
 dotLabelOf gg = case gg of

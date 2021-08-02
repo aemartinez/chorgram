@@ -16,6 +16,7 @@ gitmsg = "checkpoint"
 all:
 	$(MAKE) gmc_hs &&\
 	$(MAKE) wb_hs &&\
+	$(MAKE) ws_hs &&\
 	$(MAKE) BuildGlobal_hs &&\
 	$(MAKE) PomsetSemantics_hs &&\
 	$(MAKE) sysparser_hs &&\
@@ -90,6 +91,9 @@ gc2gml_hs: gc2gml.hs Misc.hs SyntacticGlobalChoreographies.hs GCParser.hs
 	$(ccmd) $<
 
 wb_hs: wb.hs Misc.hs GCParser.hs WellFormedness.hs
+	$(ccmd) $<
+
+ws_hs: ws.hs Misc.hs GCParser.hs WellFormedness.hs Misc.hs DotStuff.hs
 	$(ccmd) $<
 
 cg_hs: chorgram.hs Misc.hs

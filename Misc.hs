@@ -31,6 +31,8 @@ data Command =
   | SYS
   | MIN
   | WB
+  | WS
+  | WF
   | TEST
   | HGSEM -- deprecated
 -- | PROD
@@ -345,6 +347,14 @@ info =
          "[-v] filename"
        ]
   ),
+  (WS, ["checks for well-sequencedness",
+         "[-v] filename"
+       ]
+  ),
+  (WF, ["checks for well-forkedness",
+         "[-v] filename"
+       ]
+  ),
   (HGSEM, ["computes the hypergraph semantics of a g-choreography (deprecated)",
            "[-d dirpath] [-v] [--sloppy] filename",
            "default: dirpath = " ++ dirpath
@@ -402,6 +412,8 @@ cmdName cmd =
     SYS    -> "systemparser"
     MIN    -> "minimise"
     WB     -> "wb"
+    WS     -> "ws"
+    WF     -> "wf"
     HGSEM  -> "hgsem"
 --    PROD     -> "cfsmprod"
 
@@ -438,6 +450,8 @@ defaultFlags cmd = M.insert "-o" ""
                       SYS    -> M.fromList [("-d",dirpath), ("-v","")]
                       MIN    -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
                       WB     -> M.fromList [("-v","")]
+                      WS     -> M.fromList [("-v","")]
+                      WF     -> M.fromList [("-v","")]
                       HGSEM  -> M.fromList [("-d",dirpath), ("-v","")]
 --                      PROD     -> M.fromList [("-d",dirpath), ("-v","")]
                    )
@@ -525,6 +539,14 @@ getFlags cmd args =
       "-D":y:xs -> M.insert "-D" y   (getFlags cmd xs)
       _         -> error $ usage(cmd)
     WB -> case args of
+      []        -> defaultFlags(cmd)
+      "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
+      _         -> error $ usage(cmd)
+    WS -> case args of
+      []        -> defaultFlags(cmd)
+      "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
+      _         -> error $ usage(cmd)
+    WF -> case args of
       []        -> defaultFlags(cmd)
       "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
       _         -> error $ usage(cmd)

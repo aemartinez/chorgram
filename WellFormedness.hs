@@ -1,29 +1,23 @@
 --
 -- Author: Emilio Tuosto <emilio.tuosto@gssi.it>
 --
--- This module implements the well-formedness checking At the moment
--- it is very basic since (almost) the simplest form of
--- well-branchedness is checked and well-sequencedness is not checked.
+-- This module implements the well-formedness checking.  Most of the
+-- implementation is adapted from and complements PomCho's closure
+-- conditions. Some checking consists of syntactic analysis, while
+-- other conditions require to analyse the pomset semantics of
+-- g-choreographies.
 --
--- At the moment there are some limitations, but in some sense this
--- implementation complements PomCho's closure conditions because the
--- checking is just syntactic. Here are the limitations we have so
--- far (TODO):
+-- TODO: 'wb' just returns a boolean; eventually it should give more
+--       information on violations
 --
---  - well-sequencedness not implemented (actually it is just the
---    constant function \x -> True)
---  - the function wb to check for well-branchedness just returns a
---    boolean; it would be good that in case the properties do not
---    hold it returned more informative feedback to highlight the
---    problem
---  - try to generalise the checking of well-branchedness as per the
---    paper of JLAMP 2019; this is non trivial
+-- TODO: try to generalise the checking of well-branchedness as per
+--       the paper of JLAMP 2019; this is non trivial
 --
 
 module WellFormedness where
 
 import Misc
-import CFSM (Ptp, isSend, senderOf, receiverOf, isSend, isReceive)
+import CFSM (Ptp, isSend, senderOf, receiverOf, messageOf)
 import SyntacticGlobalChoreographies
 import PomsetSemantics
 import Data.Set as S
@@ -262,79 +256,115 @@ dependency (min_int, oth) gc =
       then dependency (min_int, oth) gc'
       else dependency (S.insert p min_int, oth) gc'
 
--- ws :: Set GC -> Set GC -> GC -> Set GC
--- ws acc tbc gc =
--- -- checks for well-sequencedness and returns a g-choreography that
--- -- cannot be put in sequence with its subsequent g-choreography (if any)
---   let
---     (f, gc') =
---       cutFirst $ simplifyGC gc
---     rcv =
---       S.map receiver acc
---     tbc' =
---       S.union tbc (S.filter (\a -> not $ S.member (sender a) rcv) f)
---     acc' =
---       S.union acc (f S.\\ tbc')
---   in
---     if simplifyGC gc' == Emp
---     then S.union acc' tbc'
---     else ws acc' tbc' gc'
-
-ws :: GC -> Bool
+ws :: GC -> Maybe String
 ws gc =
   -- checks for well-sequencedness and returns a g-choreography that
   -- cannot be put in sequence with its subsequent g-choreography (if
   -- any).
   case gc of
-    Emp -> True
-    Act _ _ -> True
-    Par gcs -> L.all ws gcs
-    Bra gcs -> L.all ws gcs
+    Emp -> Nothing
+    Act _ _ -> Nothing
+    Par gcs ->
+      let
+        tmp = L.foldr aux "" (L.map ws gcs)
+      in
+        if tmp == ""
+        then Nothing
+        else Just tmp        
+    Bra gcs ->
+      let
+        tmp = L.foldr aux "" (L.map ws (M.elems gcs))
+      in
+        if tmp == ""
+        then Nothing
+        else Just tmp        
     Seq gcs ->
       case gcs of
-        [] -> True
-        [gc'] -> ws gc'
-        gc':gc'':gcs' ->
-          (ws gc') && (wsAux gc' gc'') && (ws (Seq (tail gcs)))
+        [] -> Nothing
+        gc:gcs' ->
+          case ws gc of
+            Nothing ->
+              if gcs' == []
+              then Nothing
+              else
+                case wsAux gc (head gcs') of
+                  Nothing -> ws (Seq gcs')
+                  _ -> wsAux gc (head gcs')
+            _ -> ws gc
+--          (ws gc') && (wsAux gc' gc'') && (ws (Seq (tail gcs)))
     Rep gc' _ -> ws gc'
+  where
+    aux x acc =
+      case x of
+        Nothing -> ""
+        Just s -> acc ++ "\n" ++ s
 
-wsAux :: GC -> GC -> Bool
-wsAux gc gc' = -- error $ show $ L.all outCond ps'
+
+wsAux :: GC -> GC -> Maybe String
+wsAux gc gc' =
   -- NOTE: the implementation differs from the formal definition
   -- because the check that minimal imputs of gc' depend on some
   -- output of gc is done syntactically instead of using pomsets.
-  (isEmp $ simplifyGC gc) ||
-  (isEmp $ simplifyGC gc') ||
-  (inCond && L.all outCond ps')
-  where
-    (sem, e') = pomsetsOf gc 1 0
-    (sem', _) = pomsetsOf gc' 1 (e'+1)
-    (ps, ps') = (S.toList $ sem, S.toList $ sem')
-    ptpgc = ptpOf gc
-    outCond r' =
+  --
+  -- (isEmp $ simplifyGC gc) ||
+  -- (isEmp $ simplifyGC gc') ||
+  -- (inCond && L.all outCond ps')
+  if (isEmp $ simplifyGC gc) || (isEmp $ simplifyGC gc')
+  then Nothing
+  else
+    let
+      (sem, e') = pomsetsOf gc 1 0
+      (sem', _) = pomsetsOf gc' 1 (e'+1)
+      (ps, ps') = (S.toList $ sem, S.toList $ sem')
+      ptpgc = ptpOf gc
+      inCond =
+        let
+          ptps = ptpOf gc
+          min = interactionsOf $ firstOnly gc'
+          aux (Act (s,r) _ ) =
+            (S.member r ptps) || (S.member s ptps)
+        in
+          S.filter (not . aux) min
+      outCond r' =
+        let
+          l' = labelOf r'
+          outs' = S.filter (\e -> isSend (l'!e) && S.member (senderOf (l'!e)) ptpgc) (eventsOf r')
+          chk r =
+            let
+              l = (labelOf r)
+              outs = S.filter (\e -> isSend (l!e)) (eventsOf r)
+              pairs =
+                (S.fromList [(e,e') | e <- S.toList outs, e' <- S.toList outs']
+                )
+                S.\\
+                (orderOf $ seqLeq (r, r'))
+            in
+              S.map (\(e1,e2) -> ((labelOf r)!e1,(labelOf r')!e2)) pairs
+        in
+          S.filter (not . S.null) (S.map chk sem)
+    in
       let
-        l' = (labelOf r')
-        outs' = S.filter (\e -> isSend (l'!e) && S.member (senderOf (l'!e)) ptpgc) (eventsOf r')
-        chk r =
-          let
-            l = (labelOf r)
-            outs = S.filter (\e -> isSend (l!e)) (eventsOf r)
-          in
-            S.null (
-              (S.fromList [(e,e') | e <- S.toList outs, e' <- S.toList outs'])
-              S.\\
-              (orderOf $ seqLeq (r, r'))
-            )
+        prtAction a@((s,r), d, m) =
+          if isSend a
+          then s ++ " sends " ++ m ++ " to " ++ r
+          else error ("Unexpected action " ++ (show a))
+        prtPair = \(a1,a2) -> "\n\t\t" ++ (prtAction a1) ++
+          " (" ++ (senderOf a1) ++ " " ++ (receiverOf a1) ++ " ! " ++ (messageOf a1) ++ ") and in parallel " ++
+          (prtAction a2) ++
+          " (" ++ (senderOf a2) ++ " " ++ (receiverOf a2) ++ " ! " ++ (messageOf a2) ++ ")"
+        aux =
+          S.foldr (\a b -> (show a) ++ "\n\t----\n\t" ++ b) ""
+        tmpOut =
+          (S.unions $ S.unions $ L.map outCond ps')
+        aux' =
+          L.foldr (\a b -> (prtPair a) ++ b) ""
       in
-        L.all chk sem
-    inCond =
-      let
-        ptps = ptpOf gc
-        min = interactionsOf $ firstOnly gc'
-        aux (Act (s,r) _ ) =
-          (S.member r ptps) || (S.member s ptps)
-      in
-        L.all aux (S.toList min)
+        case (S.null inCond, S.null tmpOut) of
+          (True, True) -> Nothing
+          (False, True) -> Just (" on input:\n\t" ++ (aux inCond))
+          (True, False) -> Just (" on output:\n\t" ++ (aux' tmpOut))
+          (False, False) -> Just ((" on input:\n\t" ++ (aux inCond))
+                                  ++ (" on output:\n\t" ++ (aux' tmpOut)))
         
 wf :: GC -> Maybe (GC, GC)
 wf gc =

@@ -34,7 +34,7 @@ main = do progargs <- getArgs
                           Ok x -> x
                           Er err -> error err
                   writeToFile outfile ("# Input @ " ++ sourcefile ++ "\n\n" ++ show gc)
-                  writeToFile outfile (gc2dot gc baseName (flines!gcsizenode))
+                  writeToFile outfile (gc2dot gc baseName flines)
                   myPrint flags GC2DOT ("result saved in " ++ outfile)
                 "gml" -> do
                   xml <- readFile sourcefile
@@ -42,7 +42,7 @@ main = do progargs <- getArgs
                     Nothing ->
                       writeToFile outfile "Nothing"
                     Just gc' -> do
-                      writeToFile outfile (gc2dot gc' baseName sizeNode)
+                      writeToFile outfile (gc2dot gc' baseName flines)
                   myPrint flags GC2DOT ("result saved in " ++ outfile)
                 "gmldiff" -> do
                   xml <- readFile sourcefile

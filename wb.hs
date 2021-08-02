@@ -26,5 +26,5 @@ main = do
         let verbose = not(flags!"-v" == "")
         case chk of
           Nothing -> putStrLn $ "wb: OK"
-          Just x -> putStrLn ("wb: violation\n\t" ++ x)
+          Just err -> putStrLn ("wb: violation\n\t" ++ err)
 

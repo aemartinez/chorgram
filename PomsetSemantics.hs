@@ -246,21 +246,24 @@ pomset2gg p@(_, _, lab) =
 
 -- Pomset to dot
 
-pomset2dot :: Pomset -> String -> DotString -> Map String String -> DotString
-pomset2dot r name nodeSize flines =
+pomset2dot :: Pomset -> String -> Map String String -> DotString
+pomset2dot r name flines =
   -- transforms r in dot format giving it name 'name'
   -- and setting the size of nodes to 'nodeSize'
   let
     mkLabel i =
-      "\t " ++ (show i) ++ "\t [width=" ++ nodeSize ++
-      ", height=" ++ nodeSize ++
-      ", label = \"" ++ (printAction ((labelOf r)!i) flines) ++
+      (show i) ++ 
+      "\t[label = \"" ++
+      (printAction ((labelOf r)!i) flines) ++
       "\"]\n"
     nodes = L.map mkLabel (S.toList $ eventsOf r)
     mkEdge (i,j) = "\n\t" ++ (show i) ++ " -> " ++ (show j)
     edges = S.toList $ S.map mkEdge (orderOf r)
   in
-    "digraph " ++ name ++ " {\n" ++ (L.foldr (++) "\n" (nodes ++ edges)) ++ "}\n" 
+    "digraph " ++ name ++ " {\n" ++
+    -- "\t[width=" ++ (flines!"nodesize") ++ ", height=" ++ (flines!"nodesize") ++ "]\n" ++
+    (L.foldr (\x y -> "\t" ++ x ++ y) "\n" (nodes ++ edges)) ++
+    "}\n" 
 
 -- GML stuff
 
