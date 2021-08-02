@@ -7,9 +7,6 @@
 -- other conditions require to analyse the pomset semantics of
 -- g-choreographies.
 --
--- TODO: 'wb' just returns a boolean; eventually it should give more
---       information on violations
---
 -- TODO: try to generalise the checking of well-branchedness as per
 --       the paper of JLAMP 2019; this is non trivial
 --
@@ -17,7 +14,7 @@
 module WellFormedness where
 
 import Misc
-import CFSM (Ptp, isSend, senderOf, receiverOf, messageOf)
+import CFSM (Ptp, isSend, isReceive, senderOf, receiverOf, messageOf)
 import SyntacticGlobalChoreographies
 import PomsetSemantics
 import Data.Set as S
@@ -38,20 +35,7 @@ interactionsOf gc =
     Seq gs -> S.unions (S.fromList $ L.map interactionsOf gs)
     Rep gc' _ -> interactionsOf gc'
 
--- Basic functions to check the nature of a g-choreography
-isAct :: GC -> Bool
-isAct (Act _ _) = True
-isAct _ = False
-
-isBra :: GC -> Bool
-isBra (Bra _) = True
-isBra _ = False
-
-isEmp :: GC -> Bool
-isEmp Emp = True
-isEmp _ = False
-
--- Extracting information from an action
+-- Extracting information from an interaction
 sender :: GC -> Ptp
 sender (Act (s, _) _) = s
 sender gc = error $ "\'sender\' applied to " ++ (show gc)
@@ -62,7 +46,7 @@ receiver gc = error $ "\'receiver\' applied to " ++ (show gc)
 
 filterPtp :: Ptp -> GC -> GC
 filterPtp p gc =
--- projects gc on p...without splitting interactions
+  -- projects gc on p...without splitting interactions
   case gc of
     Emp -> Emp
     Act (s,r) _ ->
@@ -76,10 +60,10 @@ filterPtp p gc =
 
 firstOnly :: GC -> GC
 firstOnly gc =
--- returns a g-choreography with the same "top-level"
--- structure of gc with the "first" interations
--- eg if gc = A -> B: m | ((o) ; C -> D: n) then
--- firstOnly gc = A -> B: m | C -> D: n 
+  -- returns a g-choreography with the same "top-level" structure of
+  -- gc containing "first" interations only.
+  -- For example, on A -> B: m | ((o) ; C -> D: n) the result is
+  -- A -> B: m | C -> D: n
   case gc of
     Emp -> gc
     Act (_, _) _ -> gc
@@ -114,63 +98,11 @@ lastOnly gc =
           _ -> lastOnly $ L.last gc'
     Rep gc' q -> Rep (lastOnly gc') q
 
-simplifyGC :: GC -> GC
-simplifyGC gc =
---
--- simplifies gc by flattening nested | and + according to the
--- following structural congruence rules are :
--- 
--- 	(o) + gc = gc
--- 	( GC, _|_, (o) ) abelian monoid
--- 	( GC, _;_, (o) ) monoid
---
-  case gc of
-    Emp -> Emp
-    Act (_, _) _ -> gc
-    Seq gcs ->
-      let
-        gcs' = [g | g <- (L.map simplifyGC gcs), g /= Emp]
-      in
-        case gcs' of
-          [] -> Emp
-          [gc'] -> gc'
-          _ -> Seq gcs'
-    Par gcs ->
-      let
-        gcs' = [g | g <- (L.map simplifyGC gcs), g /= Emp]
-      in
-        case gcs' of
-          [] -> Emp
-          [gc'] -> gc'
-          _ -> Par gcs'
-    Bra gcs ->
-      let
-        shift k m =
-          M.fromList [(i+k,v) | (i,v) <- M.toList m]
-        (bra, oth) =
-          L.partition isBra (M.elems $ M.map simplifyGC gcs)
-        ms =
-          [m | Bra m <- bra]
-        aux =
-          M.fromList $ L.zip ([1 .. (L.length oth)]) oth
-        gcs' =
-          L.foldl (\x y -> M.union x (shift (M.size x) y)) aux ms
-      in
-        if (S.size $ S.fromList $ M.elems gcs') == 1 
-        then L.head $ M.elems gcs'
-        else Bra gcs'
-    Rep gc' p ->
-      let body = simplifyGC gc'
-      in
-        case body of
-          Emp -> Emp
-          _ -> Rep body p
-
 naiveWB :: Role -> Ptp -> Map Label GC -> Bool
--- PRE:  M.size branching > 1    AND   all g-choreography in 'branching' are simplified
--- POST: checks if p is active or passive in 'branching'
--- TODO: return lists of problematic branches when the condition is violated
 naiveWB Active p branching =
+  -- PRE:  M.size branching > 1    AND   all g-choreography in 'branching' are simplified
+  -- POST: checks if p is active or passive in 'branching'
+  -- TODO: return lists of problematic branches when the condition is violated
   let
     pBra = M.map (simplifyGC . firstOnly . (filterPtp p)) branching
     gcs = M.elems pBra
@@ -195,23 +127,6 @@ naiveWB Passive p branching =
         Nothing -> True
         _ -> False
   in emptyness && inputOnly && disjointness
-
--- chkBranching :: Role -> Ptp -> [GC] -> Maybe String
--- chkBranching r p branching =
---   aux Nothing (L.map (firstOnly . filterPtp p) branching)
---   where
---     aux r ls =
---       case r of
---         Just _ -> r
---         _ ->
---           case ls of
---             [] -> Nothing
---             [_] -> Nothing
---             x:y:ls' ->
---               if x == y
---               then Just ("Ambiguity: " ++ (show x) ++ "appears as first action of " ++ p ++ " on more than one branch")
---               else aux (aux r (x:ls')) (y:ls')
-
 
 cutFirst :: GC -> (Set GC, GC)
 cutFirst gc =
@@ -333,8 +248,11 @@ wsAux gc gc' =
             let
               l = (labelOf r)
               outs = S.filter (\e -> isSend (l!e)) (eventsOf r)
+              mkAction ((s,r), _, m) = Act (s,r) m
               pairs =
-                (S.fromList [(e,e') | e <- S.toList outs, e' <- S.toList outs']
+                (S.fromList [(e,e') | e <- S.toList outs, e' <- S.toList outs',
+                            S.member (mkAction (l'!e')) (interactionsOf gc)
+                            ]
                 )
                 S.\\
                 (orderOf $ seqLeq (r, r'))
@@ -346,14 +264,18 @@ wsAux gc gc' =
       let
         prtAction a@((s,r), d, m) =
           if isSend a
-          then s ++ " sends " ++ m ++ " to " ++ r
-          else error ("Unexpected action " ++ (show a))
-        prtPair = \(a1,a2) -> "\n\t\t" ++ (prtAction a1) ++
-          " (" ++ (senderOf a1) ++ " " ++ (receiverOf a1) ++ " ! " ++ (messageOf a1) ++ ") and in parallel " ++
-          (prtAction a2) ++
-          " (" ++ (senderOf a2) ++ " " ++ (receiverOf a2) ++ " ! " ++ (messageOf a2) ++ ")"
+          then s ++ " -> " ++ r ++ ": " ++ m
+          else
+            error ("Unexpected action " ++ (show a))
+        prtGC g =
+          case g of
+            Act (s,r) m ->
+              s ++ " -> " ++ r ++ ": " ++ m
+            _ -> "Interaction expected" 
+        prtPair = \(a1,a2) -> (prtAction a1) ++
+          " in parallel with " ++ (prtAction a2)
         aux =
-          S.foldr (\a b -> (show a) ++ "\n\t----\n\t" ++ b) ""
+          S.foldr (\a b -> (prtGC a) ++ "\n" ++ b) ""
         tmpOut =
           (S.unions $ S.unions $ L.map outCond ps')
         aux' =
@@ -361,10 +283,10 @@ wsAux gc gc' =
       in
         case (S.null inCond, S.null tmpOut) of
           (True, True) -> Nothing
-          (False, True) -> Just (" on input:\n\t" ++ (aux inCond))
-          (True, False) -> Just (" on output:\n\t" ++ (aux' tmpOut))
-          (False, False) -> Just ((" on input:\n\t" ++ (aux inCond))
-                                  ++ (" on output:\n\t" ++ (aux' tmpOut)))
+          (False, True) -> Just (" on the input in " ++ (aux inCond))
+          (True, False) -> Just (" on the output in " ++ (aux' tmpOut))
+          (False, False) -> Just ((" on the input in " ++ (aux inCond))
+                                  ++ (" on the output in " ++ (aux' tmpOut)))
         
 wf :: GC -> Maybe (GC, GC)
 wf gc =
@@ -394,8 +316,6 @@ wf gc =
           then wf (Seq l)
           else wf g
     Rep gc' _ -> wf gc'
-
-
 
 wb :: GC -> Maybe String
 wb gc =

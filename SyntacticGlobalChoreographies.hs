@@ -29,6 +29,21 @@ data GC = Emp
         | Rep GC Ptp
     deriving (Eq, Ord, Show)
 
+-- Basic functions to check the nature of a g-choreography
+isAct :: GC -> Bool
+isAct (Act _ _) = True
+isAct _ = False
+
+isBra :: GC -> Bool
+isBra (Bra _) = True
+isBra _ = False
+
+isEmp :: GC -> Bool
+isEmp Emp = True
+isEmp _ = False
+
+-- Other auxiliary operations
+
 ptpOf :: GC -> Set Ptp
 ptpOf gc =
 --
@@ -50,6 +65,58 @@ loopBack q = "__l__" ++ q
 
 loopExit :: State -> State
 loopExit q = "__e__" ++ q
+
+simplifyGC :: GC -> GC
+simplifyGC gc =
+--
+-- simplifies gc by flattening nested | and + according to the
+-- following structural congruence rules are :
+-- 
+-- 	(o) + gc = gc
+-- 	( GC, _|_, (o) ) abelian monoid
+-- 	( GC, _;_, (o) ) monoid
+--
+  case gc of
+    Emp -> Emp
+    Act (_, _) _ -> gc
+    Seq gcs ->
+      let
+        gcs' = [g | g <- (L.map simplifyGC gcs), g /= Emp]
+      in
+        case gcs' of
+          [] -> Emp
+          [gc'] -> gc'
+          _ -> Seq gcs'
+    Par gcs ->
+      let
+        gcs' = [g | g <- (L.map simplifyGC gcs), g /= Emp]
+      in
+        case gcs' of
+          [] -> Emp
+          [gc'] -> gc'
+          _ -> Par gcs'
+    Bra gcs ->
+      let
+        shift k m =
+          M.fromList [(i+k,v) | (i,v) <- M.toList m]
+        (bra, oth) =
+          L.partition isBra (M.elems $ M.map simplifyGC gcs)
+        ms =
+          [m | Bra m <- bra]
+        aux =
+          M.fromList $ L.zip ([1 .. (L.length oth)]) oth
+        gcs' =
+          L.foldl (\x y -> M.union x (shift (M.size x) y)) aux ms
+      in
+        if (S.size $ S.fromList $ M.elems gcs') == 1 
+        then L.head $ M.elems gcs'
+        else Bra gcs'
+    Rep gc' p ->
+      let body = simplifyGC gc'
+      in
+        case body of
+          Emp -> Emp
+          _ -> Rep body p
 
 proj :: GC -> State -> State -> Ptp -> Int -> P -> (CFSM, State)
 proj gc q0 qe p n pmap =
