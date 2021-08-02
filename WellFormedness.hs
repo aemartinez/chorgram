@@ -360,11 +360,16 @@ wb gc =
                     case S.toList (getActive S.\\ uniform) of
                       [] -> Nothing
                       [_] -> Nothing
-                      _ -> Just ("There are several active participants: " ++ (S.foldr mkList "" (uniform S.\\ getActive)))
-            _ -> Just ("There are several active participants: " ++ (S.foldr mkList "" getActive))
+                      _ -> Just ("There are several active participants: " ++
+                                 (S.foldr mkList "" (uniform S.\\ getActive)))
+            _ -> Just ("There are several active participants: "
+                       ++ (S.foldr mkList "" getActive))
     Seq gs ->
-      case (L.find (\x -> x /= Nothing) (L.map wb gs)) of
-        Nothing -> Nothing
-        _ -> Just (L.foldr (\l l' -> l ++ "\n" ++ l') "" [x | (Just x) <- (L.filter (\x -> x /= Nothing) (L.map wb gs))])
+      let
+        errors = [x | (Just x) <- (L.filter (\x -> x /= Nothing) (L.map wb gs))]
+      in
+        case (L.find (\x -> x /= Nothing) (L.map wb gs)) of
+          Nothing -> Nothing
+          _ -> Just (L.foldr (\l l' -> l ++ "\n" ++ l') "" errors)
     Rep gc' _ -> wb gc'
 

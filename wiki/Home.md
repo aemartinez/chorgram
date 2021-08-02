@@ -21,6 +21,8 @@ Although many features are almost stable, a few are still work in progress (and 
 The main commands provided by the implementation are
 
 - **wb**: checks for (the simple version of) well-branchedness
+- **wf**: checks for well-forkedness
+- **ws**: checks for well-sequencedness
 - **gmc**: takes in input a CFSM system, checks it for generalised multiparty compatibility, and builds the corresponding g-choreography
 - **chorgram.py**: a python script that executes gmc, transforms the .dot files it generates in graphical formats, and displays some performance information
 <!-- - **sgg**: takes in input a description of a g-choreography (with an extended syntax), projects the graph in a set of (non-minimal) CFSMs -->
