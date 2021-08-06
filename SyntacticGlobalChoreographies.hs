@@ -120,62 +120,69 @@ simplifyGC gc =
 
 proj :: GC -> State -> State -> Ptp -> Int -> P -> (CFSM, State)
 proj gc q0 qe p n pmap =
---
--- PRE : actions are well formed (wffActions) ^ q0 /= qe
---       p is a participant of gc
---       the participants of gc are all and only those in M.elems pmap
---       n controls the projection of loops:
---         * n >= 0 is the number of unfoldings
---         * n <  0 use normal projections without unfoldings
--- POST: the non-minimised projection of gc wrt p and a unique interface state (it must always exist!)
---       q0 must be the initial state of the resulting cfsm and qe is the interface state, respectively
---
-  let g_loop =
-        \s ptps -> Seq (L.map (\r -> Act (s,r) (loopBack q0)) (S.toList $ S.delete s ptps))
-      g_exit =
-        \s ptps -> Seq (L.map (\r -> Act (s,r) (loopExit qe)) (S.toList $ S.delete s ptps))
-      onetr =
-        \q1 q2 l -> (((S.fromList [q1, q2]), q1, S.singleton l, (S.singleton (q1, l, q2))), q2)
-      inverse =
-        inv pmap
-      pTau =
-        \l -> ((show $ inverse!p, show $ inverse!p), l, "")
-      dm =
-        \q_ l -> onetr q0 q_ (pTau l)
-  in case gc of
-    Emp -> dm qe Tau
-    Act (s,r) m ->
-      case (p==s,p==r) of
-        (False, False) -> dm qe Tau
-        _ -> onetr q0 qe label
-          where label =
-                  if p==s
-                  then ((show $ inverse!p, show $ inverse!r), Send, m)
-                  else ((show $ inverse!s, show $ inverse!p), Receive, m)
-    Par gcs ->
-      (replaceState (initialOf m) q0 m, qe)
-      where m   = replaceState qe' qe (cfsmProd $ L.map fst mps)
-            qe' = L.foldr stateProd "" (L.map snd mps)
-            mps = L.map (\g -> proj g q0 qe p n pmap) gcs
-    Bra gcs ->
-      (replaceStates (\q_ -> q_ € [qe ++ (show i) | i <- [1 .. (length mps)]]) qe cfsm, qe)
-      where (states, acts, trxs) =
-              L.foldl
-                (\(x,y,z) m -> (S.union x (statesOf m),
-                                S.union y (actionsOf m),
-                                S.union z (transitionsOf m)
-                               )
-                )
-                (S.singleton qe, S.singleton $ pTau Tau, S.empty)
-                (L.map fst mps)
+  --
+  -- PRE : actions are well formed (wffActions) ^ q0 /= qe p is a
+  --       participant of gc the participants of gc are all and only
+  --       those in M.elems pmap n controls the projection of loops: * n
+  --       >= 0 is the number of unfoldings * n < 0 use normal
+  --       projections without unfoldings
+  -- POST: the non-minimised projection of gc wrt p and a unique
+  --       interface state (it must always exist!)  q0 must be the
+  --       initial state of the resulting cfsm and qe is the interface
+  --       state, respectively
+  --
+  let
+    g_loop =
+      \s ptps -> Seq (L.map (\r -> Act (s,r) (loopBack q0)) (S.toList $ S.delete s ptps))
+    g_exit =
+      \s ptps -> Seq (L.map (\r -> Act (s,r) (loopExit qe)) (S.toList $ S.delete s ptps))
+    onetr =
+      \q1 q2 l -> (((S.fromList [q1, q2]), q1, S.singleton l, (S.singleton (q1, l, q2))), q2)
+    inverse =
+      inv pmap
+    pTau =
+      \l -> ((show $ inverse!p, show $ inverse!p), l, "")
+    dm =
+      \q_ l -> onetr q0 q_ (pTau l)
+  in
+    case gc of
+      Emp -> dm qe Tau
+      Act (s,r) m ->
+        case (p==s,p==r) of
+          (False, False) -> dm qe Tau
+          _ -> onetr q0 qe label
+            where
+              label =
+                if p==s
+                then ((show $ inverse!p, show $ inverse!r), Send, m)
+                else ((show $ inverse!s, show $ inverse!p), Receive, m)
+      Par gcs ->
+        (replaceState (initialOf m) q0 m, qe)
+        where
+          m   = replaceState qe' qe (cfsmProd $ L.map fst mps)
+          qe' = L.foldr stateProd "" (L.map snd mps)
+          mps = L.map (\g -> proj g q0 qe p n pmap) gcs
+      Bra gcs ->
+        (replaceStates (\q_ -> q_ € [qe ++ (show i) | i <- [1 .. (length mps)]]) qe cfsm, qe)
+        where
+          (states, acts, trxs) =
+            L.foldl
+              (\(x,y,z) m -> (S.union x (statesOf m),
+                              S.union y (actionsOf m),
+                              S.union z (transitionsOf m)
+                             )
+              )
+            (S.singleton qe, S.singleton $ pTau Tau, S.empty)
+            (L.map fst mps)
             -- gcs' = L.zip (S.toList gcs) [1 .. S.size gcs]
-            mps  = L.map (\(i,g) -> proj g (q0 ++ (show i)) (qe ++ (show i)) p n pmap) (M.toList gcs)
-            cfsm = replaceStates (\q_ -> q_ € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs)
-    Seq gcs ->
-      ( replaceState qe' qe (states, q0, acts, trxs) , qe )
-      where (_, qe', states, acts, trxs) =
-                L.foldl
-                  (\(i, qi, x, y, z) g ->
+          mps  = L.map (\(i,g) -> proj g q0 qe p n pmap) (M.toList gcs)
+          cfsm = replaceStates (\q_ -> q_ € [q0 ++ (show i) | i <- [1 .. (length mps)]]) q0 (states, q0, acts, trxs)
+      Seq gcs ->
+        ( replaceState qe' qe (states, q0, acts, trxs) , qe )
+        where
+          (_, qe', states, acts, trxs) =
+            L.foldl
+              (\(i, qi, x, y, z) g ->
                     let (m, qf') = proj g qi (qe ++ (show i)) p n pmap
                     in
                      (i + 1,
@@ -185,43 +192,52 @@ proj gc q0 qe p n pmap =
                       S.union z (transitionsOf m)
                      )
                   )
-                  (0, q0, S.empty, S.empty, S.empty)
-                  gcs
-    Rep g p' ->
-      if (S.member p ptpsloop) then (fst m, qe) else (dm qe Tau)
-      where
-        ptpsloop = ptpOf g
-        suf = if n<0 then show (-n) else show n
-        m =
-          if n >= 0
-          then
-            case (p == p' , n == 0) of
-              (True, True) ->
-                proj (g_exit p ptpsloop) q0 qe p n pmap
-              (True, False) ->
-                let (cfsm_exit, _) = proj (g_exit p ptpsloop) q0 qe p (n-1) pmap
-                    (cfsm_loop, qel) = proj (g_loop p ptpsloop) q0 (qe ++ suf) p (n-1) pmap
-                    (cfsm_body, qeb) = proj g qel (qe ++ "body" ++ suf) p (n-1) pmap
-                    (cfsm_itr, qu) = proj (Rep g p) qeb (qe ++ "iter" ++ suf) p (n-1) pmap
-                    cfsm_bra = cfsmUnion q0 [cfsm_exit, cfsm_loop]
-                in (replaceState (qe ++ "iter" ++ suf) qe (cfsmUnion q0 [cfsm_bra, cfsm_body, cfsm_itr]), qu)
-              (_, _) ->
-                let (cfsm_loop, qel) = onetr q0 (qe ++ suf) ((show $ inverse!p', show $ inverse!p), Receive, (loopBack q0))
+              (0, q0, S.empty, S.empty, S.empty)
+              gcs
+      Rep g p' ->
+        if (S.member p ptpsloop)
+        then (fst m, qe)
+        else (dm qe Tau)
+        where
+          ptpsloop = ptpOf g
+          suf = if n<0 then show (-n) else show n
+          m =
+            if n >= 0
+            then
+              case (p == p' , n == 0) of
+                (True, True) ->
+                  proj (g_exit p ptpsloop) q0 qe p n pmap
+                (True, False) ->
+                  let (cfsm_exit, _) = proj (g_exit p ptpsloop) q0 qe p (n-1) pmap
+                      (cfsm_loop, qel) = proj (g_loop p ptpsloop) q0 (qe ++ suf) p (n-1) pmap
+                      (cfsm_body, qeb) = proj g qel (qe ++ "body" ++ suf) p (n-1) pmap
+                      (cfsm_itr, qu) = proj (Rep g p) qeb (qe ++ "iter" ++ suf) p (n-1) pmap
+                      cfsm_bra = cfsmUnion q0 [cfsm_exit, cfsm_loop]
+                  in
+                    (replaceState (qe ++ "iter" ++ suf) qe (cfsmUnion q0 [cfsm_bra, cfsm_body, cfsm_itr]), qu)
+                (_, _) ->
+                  let
+                    (cfsm_loop, qel) = onetr q0 (qe ++ suf) ((show $ inverse!p', show $ inverse!p), Receive, (loopBack q0))
                     (cfsm_exit, _) = onetr q0 qe ((show $ inverse!p', show $ inverse!p), Receive, (loopExit qe))
                     (cfsm_body, _) = proj g qel q0 p (n-1) pmap
-                in (cfsmUnion q0 [cfsm_loop, cfsm_exit, cfsm_body], qe)
-          else
-            if p == p'
-            then
-              let (cfsm_loop, qel) = proj (g_loop p ptpsloop) q0 (qe ++ suf) p n pmap
+                  in
+                    (cfsmUnion q0 [cfsm_loop, cfsm_exit, cfsm_body], qe)
+            else
+              if p == p'
+              then
+                let
+                  (cfsm_loop, qel) = proj (g_loop p ptpsloop) q0 (qe ++ suf) p n pmap
                   (cfsm_exit, _) = proj (g_exit p ptpsloop) q0 qe p n pmap
                   (cfsm_body, _) = proj g qel q0 p n pmap
-              in (cfsmUnion q0 [cfsm_loop, cfsm_exit, cfsm_body], qe)
-            else
-              let (cfsm_loop, qel) = onetr q0 (qe ++ suf) ((show $ inverse!p', show $ inverse!p), Receive, (loopBack q0))
+                in
+                  (cfsmUnion q0 [cfsm_loop, cfsm_exit, cfsm_body], qe)
+              else
+                let
+                  (cfsm_loop, qel) = onetr q0 (qe ++ suf) ((show $ inverse!p', show $ inverse!p), Receive, (loopBack q0))
                   (cfsm_exit, _) = onetr q0 qe ((show $ inverse!p', show $ inverse!p), Receive, (loopExit qe))
                   (cfsm_body, _) = proj g qel q0 p (n-1) pmap
-              in (cfsmUnion q0 [cfsm_loop, cfsm_exit, cfsm_body], qe)
+                in
+                  (cfsmUnion q0 [cfsm_loop, cfsm_exit, cfsm_body], qe)
 
 projx :: Bool -> GC -> P -> Ptp -> State -> State -> Int -> (CFSM, State)
 projx loopFlag gg pmap p q0 qe n =
@@ -265,7 +281,7 @@ projx loopFlag gg pmap p q0 qe n =
                 (S.singleton qe, S.singleton $ taul Tau, S.empty)
                 (L.map fst mps)
               -- gcs' = L.zip (S.toList gcs) [1 .. S.size gcs]
-              mps  = L.map (\(i,g) -> projx loopFlag g pmap p (q0 ++ (show i)) (qe ++ (show i)) n) (M.toList gcs)
+              mps  = L.map (\(i,g) -> projx loopFlag g pmap p q0 qe n) (M.toList gcs)
       Seq gcs -> ( replaceState qe' qe (states, q0, acts, trxs) , qe )
         where (_, qe', states, acts, trxs) =
                 L.foldl

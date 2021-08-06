@@ -422,7 +422,6 @@ msgFormat :: Command -> String -> String
 msgFormat cmd msg =
   (cmdName cmd) ++ ":\t" ++ msg
 
-
 defaultFlags :: Command -> Map String String
 -- The default argument of each command
 defaultFlags cmd = M.insert "-o" ""
@@ -577,6 +576,9 @@ getFlags cmd args =
 --
 
 
+fanOut :: Ord vertex => Ord label => Graph vertex label -> vertex -> Set (Edge vertex label)
+fanOut ( _, _, _, trxs ) q = S.filter (\(x,_,_) -> x == q) trxs
+
 pClosure :: Ord vertex => Ord label => Graph vertex label -> (label -> Bool) -> vertex -> Set vertex
 --  PRE:
 --  POST: returns the closure of vertexes reachable from v with
@@ -612,11 +614,25 @@ pRemoval g@(vs, v0, _, trxs) lpred = (vs, v0, S.map glabel trxs', trxs')
     trxs' = S.union other_trxs new_trxs
 
 
-reachableVertexes :: Ord vertex => Ord label => Graph vertex label -> vertex -> Set vertex
---  PRE:
---  POST: returns the set of vertexes of g reachable from a given vertex
-reachableVertexes g = pClosure g (\_ -> True)
+eqClassOf :: (Ord a) => a -> [Set a] -> Set a
+-- returns the first set in 'classes' containing 'state'
+eqClassOf state classes =
+  case classes of
+    []          -> S.empty
+    qs:classes' -> if (S.member state qs) then qs else (eqClassOf state classes')
 
+reachableVertexes :: Ord vertex => Ord label => Graph vertex label -> vertex -> Set vertex
+reachableVertexes g =
+  --  PRE:
+  --  POST: returns the set of vertexes of g reachable from a given vertex
+  pClosure g (\_ -> True)
+
+states2int :: Ord vertex => Ord label => Graph (Set vertex) label -> Graph Int label
+states2int (qs, q0, ls, trxs) =
+  let
+    dict = M.fromList [(q, S.findIndex q qs) | q <- S.toList qs]
+  in
+    (S.fromList $ M.elems dict, dict!q0, ls, S.map (\(q,l,q') -> (dict!q, l, dict!q')) trxs)
 
 -- Projections of Graph and Edge components
 
