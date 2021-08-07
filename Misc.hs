@@ -296,9 +296,10 @@ info =
   ),
   (GC2DOT, ["returns the dot format of a g-choreography",
             "[-v] [-d dirpath] [--fmt (gml | gc | gmldiff | sloppygml)] filename",
-            "\t -v diplays the path to the resulting file; not set by default",
+            "\t-v diplays the path to the resulting file; not set by default",
             "default: dirpath = " ++ dirpath,
-            "\t --fmt = gc"
+            "\t--fmt = gc",
+            "\t-o filename stores the result in dirpath/filename.dot"
            ]
   ),
   (GC2FSA, ["returns the communicating system and the projections of g-choreography in the fsa format",
@@ -440,7 +441,7 @@ defaultFlags cmd = M.insert "-o" ""
                                            ]
                       BGG    -> M.fromList [("-d",dirpath), ("-v","")]
                       GC     -> M.fromList [("-d",dirpath), ("-v",""), ("-l",""), ("--sloppy","yes")]
-                      GC2DOT -> M.fromList [("-d",dirpath), ("--fmt","gc"), ("-v", "")]
+                      GC2DOT -> M.fromList [("-d",dirpath), ("--fmt","gc"), ("-v", ""), ("-o","")]
                       GC2FSA -> M.fromList [("-o",""), ("-u", "-1"), ("-v","")]
                       PROJ   -> M.fromList [("-D","no"), ("-u", "-1"), ("--fmt", "fsa"), ("-v","")]
                       GC2POM -> M.fromList [("-d",dirpath), ("-v",""), ("--fmt", "hs"), ("-u","1")]
@@ -505,6 +506,7 @@ getFlags cmd args =
       "--fmt":y:xs  -> M.insert "--fmt" y (getFlags cmd xs)
       "-d":y:xs     -> M.insert "-d" y    (getFlags cmd xs)
       "-v":xs       -> M.insert "-v" yes  (getFlags cmd xs)
+      "-o":y:xs     -> M.insert "-o" y    (getFlags cmd xs)
       _             -> error $ usage(cmd)
     GC2FSA -> case args of
       []            -> defaultFlags(cmd)

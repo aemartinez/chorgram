@@ -17,7 +17,7 @@ from collections import defaultdict
 from utils import debugMsg, mkdir
 
 # A couple of constants
-cmdname = "chorgram"
+cmdname = "cfsm2gc"
 cfgfile = "aux" + os.sep + "chorgram.config"
 
 # We assume that 'cfgfile' points to

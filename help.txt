@@ -4,8 +4,8 @@ wb: checks for (the simple version of) well-branchedness
 gmc: from communicating system to gc, checking generalised multiparty
      compatibility
 
-chorgram.py: runs gmc transforming the .dot files it generates in
-	     graphical formats and displaying some information
+chorgram: runs gmc transforming the .dot files it generates in
+	  graphical formats and displaying some information
 
 project: projects g-choreographies on CFSMs
 
@@ -21,7 +21,7 @@ gc2pom: returns the pomset semantics (in graphml format) of a
 	E. Tuosto, ICE 2016] and journal version [E. Tuosto and
 	R. Guanciale, 2018])
 
-gc2gml: transforms a g-choreography in .gc format to the graphml
+gc2gml: transforms a g-choreography in '.gc' format to the graphml
 	format
 
 pom2gg: takes in input a pomsets (in graphml format) and tries to

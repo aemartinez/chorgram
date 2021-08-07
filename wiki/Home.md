@@ -18,8 +18,24 @@ ChorGram is a polished and extended version of [gmc-synthesis](https://bitbucket
 
 Although many features are almost stable, a few are still work in progress (and new variants are often attempted on stable features too).
 
-!!!REVISE!!!
-The main commands provided by the implementation are
+# Ongoing stuff
+
+- improving the CLI (see below)
+- [choreographic-driven testing](https://link.springer.com/chapter/10.1007%2F978-3-030-61362-4_2)
+- [choreography automata](https://link.springer.com/chapter/10.1007/978-3-030-50029-0_6)
+- integrating [PomCho](https://www.sciencedirect.com/science/article/abs/pii/S016764232030143X) and more stuff on semantics
+
+# ChorGram's command-line interface
+
+The operations of ChorGram can be invoked from the command line by using the command 'chorgram' followed by the operation and its options and parameters (if any):
+
+```
+#!bash
+chorgram <operation> <options> <parameters>
+
+```
+
+The current list of operations is as follows:
 
 - **gmc**: takes in input a CFSM system, checks it for generalised multiparty compatibility, and builds the corresponding g-choreography
 - **cfsm2gg**: a python script that executes gmc, transforms the .dot files it generates in graphical formats, and displays some performance information
@@ -34,15 +50,36 @@ The main commands provided by the implementation are
 - **ws**: checks for well-sequencedness
 - **gc2gml**: transforms a description of a g-choreography (with an extended syntax) to the graphml format
 - **pom2gg**: takes in input a description of pomsets (in graphml format) and tries to compute a g-choreography for which the pomset in input is the semantics
-- **chor2dot**: transforms in dot format the description of a g-choreography (either in .gc format or as a graphml format of a pomset, or a graphml file obtained by diffing g-choreographies with 'diff.py')
+- **gc2dot**: transforms in dot format the description of a g-choreography (either in .gc format or as a graphml format of a pomset, or a graphml file obtained by diffing g-choreographies with 'diff.py')
 
-To run these commands execute 
+To get help on the operation just type 'chorgram' followed by the name of the operation; for instance,
 
 ```
 #!bash
-chorgram <cmd> <options>
+chorgram cfsm2gg
 
 ```
+
+prints on the screen
+
+```
+#!bash
+chorgram cfsm2gg
+
+```
+
+the help message of the operation 'cfsm2gg' while executing
+
+```
+#!bash
+chorgram cfsm2gg
+
+```
+returns the help message of 'chorgram'.
+
+# ChorGram's graphical user interface
+
+We are working on it.
 
 # Syntax of the input files
 
