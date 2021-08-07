@@ -173,7 +173,6 @@ S : '(o)'                               { (Emp, S.empty) }
                                         }
 
 
-
 Blk :: { (GC, Set Ptp) }
 Blk : str '->' str ':' str              { case ((isPtp $1), (isPtp $3), ($1 == $3)) of
         				    (True, True, False)   -> ((Act ($1 , $3) $5), S.fromList [$1,$3])

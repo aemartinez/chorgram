@@ -31,12 +31,12 @@ state2timbuk s = rmChar '\"' $ aux (show s)
 action2timbuk :: Action -> String
 action2timbuk ( chan, dir, msg ) = rmChar '\"' $
   case dir of
-    Send    -> (channel2timbuk chan) ++ "SEND" ++ (tokenifymsg msg)
-    Receive -> (channel2timbuk chan) ++ "RECEIVE" ++ (tokenifymsg msg)
-    Tau     -> error "Non minimised machine"
-    LoopSnd -> (channel2timbuk chan) ++ "SEND" ++ (tokenifymsg msg)
-    LoopRcv -> (channel2timbuk chan) ++ "RECEIVE" ++ (tokenifymsg msg)
-    Break   -> (channel2timbuk chan) ++ "BREAK" ++ (tokenifymsg msg)
+    Send      -> (channel2timbuk chan) ++ "SEND" ++ (tokenifymsg msg)
+    Receive   -> (channel2timbuk chan) ++ "RECEIVE" ++ (tokenifymsg msg)
+    Tau       -> error "Non minimised machine"
+    LoopSnd   -> (channel2timbuk chan) ++ "SEND" ++ (tokenifymsg msg)
+    LoopRcv   -> (channel2timbuk chan) ++ "RECEIVE" ++ (tokenifymsg msg)
+    BreakLoop -> (channel2timbuk chan) ++ "BREAK" ++ (tokenifymsg msg)
 
 trans2timbuk :: LTrans -> String
 trans2timbuk ( q, action, q' ) =

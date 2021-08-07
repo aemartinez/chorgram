@@ -223,7 +223,7 @@ enabled k fifo (sys, _) (n, b)
                                         (d == Receive && (length $ b!ch) > 0 && policy ch msg) ||
                                         (d == LoopSnd && (length $ b!ch) < k && bs) ||
                                         (d == LoopRcv && (length $ b!ch) > 0 && policy ch msg) ||
-                                        (d == Tau) || (d == Break)
+                                        (d == Tau) || (d == BreakLoop)
                                      ) (mstep m)
                            )
                     ) rng
@@ -246,11 +246,11 @@ apply :: Bool -> P -> Configuration -> LTrans -> (KEvent, Configuration)
 --  POST: conf' is the update of conf after applying the transtion
 --        according to the policy established by fifo
 apply fifo ptps c@(n, b) t@(_, (ch@(s,r), d, msg), q)
-    | d == Send    = (toKEvent c ptps t, (Misc.update (findId s (M.assocs ptps)) q n, M.insert ch ((b!ch)++[msg]) b))
-    | d == Receive = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, M.insert ch newBuffer b))
-    | d == Tau     = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, b))
-    | d == Break   = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, b))
-    | otherwise    = error ((showDir d (M.empty)) ++ " not allowed")
+    | d == Send      = (toKEvent c ptps t, (Misc.update (findId s (M.assocs ptps)) q n, M.insert ch ((b!ch)++[msg]) b))
+    | d == Receive   = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, M.insert ch newBuffer b))
+    | d == Tau       = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, b))
+    | d == BreakLoop = (toKEvent c ptps t, (Misc.update (findId r (M.assocs ptps)) q n, b))
+    | otherwise      = error ((showDir d (M.empty)) ++ " not allowed")
     where newBuffer =
             if fifo
             then tail $ b!ch
@@ -411,12 +411,12 @@ flagAction :: TSb -> String -> KTrans -> Bool
 flagAction _ pattern =
     \(_, (_, _, s, r, d, msg), _) ->
         let d' = case d of
-                   Send    -> "!"
-                   Receive -> "?"
-                   Tau     -> ":"
-                   LoopSnd -> "!"
-                   LoopRcv -> "?"
-                   Break   -> "%"
+                   Send      -> "!"
+                   Receive   -> "?"
+                   Tau       -> ":"
+                   LoopSnd   -> "!"
+                   LoopRcv   -> "?"
+                   BreakLoop -> "%"
             w  = words pattern
         in if (L.length w < 4)
              then False

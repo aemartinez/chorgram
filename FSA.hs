@@ -3,6 +3,11 @@
 --
 -- Stuff about dealing CFSMs as FSA
 --
+-- TODO: the determinisation and minisation of CFSMs looses the
+--       information on the original states. Tracking states is
+--       probably necessary for future development.  Making the
+--       functions to return a map could fix this.
+--
 
 
 module FSA where
@@ -12,23 +17,6 @@ import CFSM
 import Data.Set as S
 import Data.List as L
 import Data.Map.Strict as M
-
--- predTrxRemoval :: CFSM -> (Action -> Bool) -> CFSM
--- -- removes the transitions whose action satisfies the predicate lpred
--- predTrxRemoval m@(states, q0, acts, trxs) lpred = (states, q0, acts, trxs')
---   where trxs'   = S.difference (L.foldl S.union otrxs (L.map inherit pairs)) (S.filter (\(_,l,_) -> lpred l) trxs)
---         otrxs   = S.filter (\(_, l, _) -> not(lpred l)) trxs
---         pairs   = [ (q,q') | q <- S.toList states, q' <- S.toList states, not(q==q'), S.member q' (pClosure m lpred q) ]
---         inherit = \(q1,q2) -> S.map (\(_, l, q') -> (q1, l, q')) (S.intersection otrxs (goutgoing m q2))
-  
-
-flatSet :: Set State -> State
--- turns a set of states into a state
-flatSet states = S.foldr ( \q q' -> (q ++ "__" ++ q') ) "" states 
-
-flat :: Graph (Set State) Action -> CFSM
-flat (states, q0, labels, trxs) =
-  (S.map flatSet states, flatSet q0, labels, S.map (\(q, l, q') -> (flatSet q, l, flatSet q')) trxs)
 
 cfsm2graph :: CFSM -> Graph Int Action
 cfsm2graph  (states, q0, ls, trxs) =

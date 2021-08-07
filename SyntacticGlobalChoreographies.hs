@@ -255,10 +255,14 @@ projx loopFlag gg pmap p q0 qe n =
       tautrx = \q1 q2 l ->  S.singleton (q1, taul l, q2)
       dm q l = ((S.fromList [q0, q], q0, S.singleton (taul l), tautrx q0 q l), q)
   in case gg of
-      Emp -> if loopFlag then (dm (qe ++ "Break") Break) else (dm qe Tau)
-      Act (s,r) m -> if (p /= s && p /= r)
-                     then dm qe Tau
-                     else (((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0, c, qe))), qe)
+      Emp ->
+        if loopFlag
+        then (dm (qe ++ "Break") BreakLoop)
+        else (dm qe Tau)
+      Act (s,r) m ->
+        if (p /= s && p /= r)
+        then dm qe Tau
+        else (((S.fromList [q0, qe]), q0, S.singleton c, (S.singleton (q0, c, qe))), qe)
         where c = if (p == s)
                   then ((show $ inverse!p, show $ inverse!r), Send, m)
                   else ((show $ inverse!s, show $ inverse!p), Receive, m)
@@ -305,7 +309,7 @@ projx loopFlag gg pmap p q0 qe n =
                             )
               suf         = show n
               (body', q)  = projx True g pmap p q0 (qe ++ suf) (n + 2)
-              breakPoints = S.map (\(_, _, q_) -> q_) (S.filter (\(_, (_, l, _), _) -> l == Break) (transitionsOf body'))
+              breakPoints = S.map (\(_, _, q_) -> q_) (S.filter (\(_, (_, l, _), _) -> l == BreakLoop) (transitionsOf body'))
               body        = replaceStates (\q_ -> q_ € S.toList breakPoints) (qe ++ suf) body'
               (loop', ql) = projx False (helper (lpref ++ suf)) pmap p q (q0 ++ suf) (n + 2)
               loop        = replaceState ql q0 loop'

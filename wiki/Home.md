@@ -18,10 +18,11 @@ ChorGram is a polished and extended version of [gmc-synthesis](https://bitbucket
 
 Although many features are almost stable, a few are still work in progress (and new variants are often attempted on stable features too).
 
+!!!REVISE!!!
 The main commands provided by the implementation are
 
 - **gmc**: takes in input a CFSM system, checks it for generalised multiparty compatibility, and builds the corresponding g-choreography
-- **chorgram.py**: a python script that executes gmc, transforms the .dot files it generates in graphical formats, and displays some performance information
+- **cfsm2gg**: a python script that executes gmc, transforms the .dot files it generates in graphical formats, and displays some performance information
 <!-- - **sgg**: takes in input a description of a g-choreography (with an extended syntax), projects the graph in a set of (non-minimal) CFSMs -->
 - **project**: projects g-choreographies on CFSMs
 - **minproj**: as project with minimisation
@@ -115,11 +116,11 @@ The syntax of g-choreographies (aka global graphs) is defined by the grammar:
        |  G ';' G                              * sequential
        |  chop '{' Brc '}'                     * (possibly reversible) choice without explicit selector
        |  chop Ptp '{' Brc '}'                 * (possibly reversible) choice with explicit selector 
-       |  '*' G '@' P                          * irreversible loop
        |  'repeat' '{' G 'unless' guard '}'    * (possibly reversible) loop without explicit selector
        |  'repeat' P '{' G 'unless' guard '}'  * (possibly reversible) loop with explicit selector
        |  '{' G '}'
-       |  '(' G ')'                            * deprecated
+       |  '(' G ')'                            * DEPRECATED
+       |  '*' G '@' P                          * DEPRECATED: irreversible loop
 
 	chop ::= 'sel' | 'branch' | 'choice'
 
@@ -132,20 +133,16 @@ The syntax of g-choreographies (aka global graphs) is defined by the grammar:
 
 which shuffles the syntaxes presented in various papers and extends them with some syntactic sugar.
 
-The empty graph '(o)' has a special role: it is the empty graph outside loops, while in loops it marks a point where the selector may exit the iteration. Guards are used only for the reversible semantics and the string in them is supposed to be some valid erlang code. Likewise for the sel construct, which generalises the choice for the reversible semantics. Notice that the sel and the branch constructs have the same semantics and require to specify the selector of the branch (to make it simple the realisation of projections on Erlang; the selector is mandatory for REGs and optional otherwise).
+The empty graph '(o)' has a special role: it is the empty graph outside loops, while in loops it marks a point where the selector may exit the iteration. Guards are used only for the reversible semantics and the string in them is supposed to be some valid erlang code. Likewise for the 'sel' construct, which generalises the choice for the reversible semantics. Notice that the 'sel' and the 'branch' constructs have the same semantics and require to specify the selector of the branch (to make it simple the realisation of projections on Erlang; the selector is mandatory for REGs and optional otherwise).
 
 The clause 'unless guard' is optional in branching and iteration.
 
-When  reversibility is not assumed
+The following equivalences hold when reversibility is not assumed
 
    sel P { Gn unless g1 + ... + Gn unless gn } = G1 + ... + Gn      for all guards g1, ..., gn 
    repeat P {G unless g}                       = * G @ P            for all guards g
 
-The binary operators |, +, and ; are given in ascending order of precedence.
-
-Text enclosed by '[' and ']' and is treated as comment and, after '..', so is the rest of a line.
-
-Basic syntactic checks are made during the parsing (e.g, (i) that sender and receiver of interactions have to be different and (2) that the participant controlling a loop is active in the loop). More are planned together with some more informative error messages.
+The binary operators _|_, _+_, and _;_ are given in ascending order of precedence.
 
 
 A g-choreography representing the ping-pong protocol in this syntax could be
@@ -159,7 +156,12 @@ Ping -> Pong : finished
 } @ Ping ; Ping -> Pong : finished
 
 ```
-(recall that ';' has priority over '+').
+(recall that _;_ takes precedence over _+_).
+
+
+Text enclosed by '[' and ']' and is treated as comment and, after '..', so is the rest of a line.
+
+Basic syntactic checks are made during the parsing (e.g, (i) that sender and receiver of interactions have to be different and (2) that the participant controlling a loop is active in the loop). More are planned together with some more informative error messages.
 
 # How to install ChorGram
 At the moment ChorGram is available for linux-like architectures only.
@@ -206,11 +208,9 @@ Besides the command line options, there is a configuration file 'aux/dot.cfg' th
 'statesep		++		:symbol to separate states in output files'
 ```
 
-Unless you know what you're do doing, do not add lines to
-'aux/dot.cfg'. If you need to edit the file other than for altering
-the values as described, remember the following rules:
+Unless you know what you're do doing, do not add lines to 'aux/dot.cfg'. If you need to edit the file other than for altering the values as described, remember the following rules:
 
-- do not insert text before  the very first line. 
+- do not insert text before  the very first line.
 - do not insert empty lines
 - do not insert lines with the very same initial word
 
@@ -234,21 +234,31 @@ Once both the directories of [HKC](http://perso.ens-lyon.fr/damien.pous/hknt/) a
 If you want, you can compile [HKC](http://perso.ens-lyon.fr/damien.pous/hknt/) yourself by going into the directory of [HKC](http://perso.ens-lyon.fr/damien.pous/hknt/) and typing make (you will need OCaml, ./hknt-1.0/README).
 
 
-# Running
-## Executing cfsm2gg.py
-The Python script 'cfsm2gg.py' offers a command-line interface to gmc. For an overview of its usage, get the help message on the tool via the command: 
+# Going top-down
+ChorGram features a few operations for the top-down approach of choregraphic design.
+
+## Projecting g-choreographies
+
+
+## Well-formedness
+
+# Going bottom-up
+Here is a quick description on how to use ChorGram to check for generalises multiparty compatibility and retrieve a g-choreography from a communicating system.
+
+## Executing cfsm2gg
+The Python script 'cfsm2gg' offers a command-line interface to gmc. For an overview of its usage, get the help message on the tool via the command: 
 
 ```
 #!python
 
-python cfsm2gg.py --help 
+python cfsm2gg --help 
 ```
 which prints on the screen the following message:
 
 ```
 #!bash
 
-usage: cfsm2gg.py [-h] [-v] [-shh] [-df DF] [--dot DOT] [-l] [-sn] [-dw DW]
+usage: cfsm2gg [-h] [-v] [-shh] [-df DF] [--dot DOT] [-l] [-sn] [-dw DW]
                   [-ts] [-tp TP] [-cp CP] [-p PATH] [-b BOUND] [-nc] [-pn PN]
                   [-hkc HKC] [-gmc GMC] [-bg BG] [-dir DIR] [-m MUL] [-D D]
                   filename
@@ -304,11 +314,11 @@ optional arguments:
 
 ## Getting the results
 
-Upon execution with the '-v' option, 'cfsm2gg.py' displays some information about the files and the execution time and produces some files as results. Such files are collected in a directory that can either be a default one (currently the directory 'experiments/results/' followed by the basename of the input file) or the one you specify with the option 'dir' plus the base name of the input file. For example, if you run 
+Upon execution with the '-v' option, 'cfsm2gg' displays some information about the files and the execution time and produces some files as results. Such files are collected in a directory that can either be a default one (currently the directory 'experiments/results/' followed by the basename of the input file) or the one you specify with the option 'dir' plus the basename of the input file. For example, if you run 
 
 ```
 #!bash
-python cfsm2gg.py -v -nc -dw 0 -df pdf -dir experiments/results/ experiments/pingpong.fsa 
+python cfsm2gg -v -nc -dw 0 -df pdf -dir experiments/results/ experiments/pingpong.fsa 
 ```
 you get a message like
 ```
@@ -365,12 +375,10 @@ Here is an (ugly) example of the 1-bounded transition system of the pingpong pro
 ```
 #!bash
 
-python cfsm2gg.py -df png -b 1 --dot "Nshape=parallelogram" --dot "Gnodesep=.5" -dir out \
+python cfsm2gg -df png -b 1 --dot "Nshape=parallelogram" --dot "Gnodesep=.5" -dir out \
 -p "w *" -tp "Ping Pong * *" -cp "* * Ping Pong" experiments/pingpong.fsa 
 ```
 
 ![pingpong_ts1.png](https://bitbucket.org/repo/BrqBML/images/436085583-pingpong_ts1.png)
 
-this example is meant just to show how to specify conditions on nodes and transitions using the options -p, -ts, and -cp
-and how to use dot options --dot (the parallelogram shape is what makes the diagram look bad). A better way to set dot preferences
-is to edit the file .dot.cfg described above.
+this example is meant just to show how to specify conditions on nodes and transitions using the options -p, -ts, and -cp and how to use dot options with '--dot'. A better way to set dot preferences is to edit the file .dot.cfg described above.

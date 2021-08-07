@@ -27,7 +27,7 @@ type Cond    = String
 data Dir     = Send
              | Receive
              | Tau
-             | Break
+             | BreakLoop
              | LoopSnd
              | LoopRcv
                deriving (Eq,Ord,Show)
@@ -108,20 +108,22 @@ msgOf :: Action -> Message
 msgOf ( _, _, msg ) = msg
 
 subjectOf :: Action -> Ptp
-subjectOf ( ( s, r ), d, _ ) = case d of
-                                Send    -> s
-                                LoopSnd -> s
-                                Receive -> r
-                                LoopRcv -> r
-                                _       -> s
+subjectOf ( ( s, r ), d, _ ) =
+  case d of
+    Send    -> s
+    LoopSnd -> s
+    Receive -> r
+    LoopRcv -> r
+    _       -> s
 
 objectOf :: Action -> Ptp
-objectOf ( ( s, r ), d, _ ) = case d of
-                                Send    -> r
-                                LoopSnd -> r
-                                Receive -> s
-                                LoopRcv -> s
-                                _       -> r
+objectOf ( ( s, r ), d, _ ) =
+  case d of
+    Send    -> r
+    LoopSnd -> r
+    Receive -> s
+    LoopRcv -> s
+    _       -> r
 
 eventOf :: LTrans -> Action
 eventOf ( _, e, _ ) = e
@@ -135,13 +137,13 @@ addtrans t@( q, e, q' ) ( states, q0, acts, trxs ) =
 
 showDir :: Dir -> Map String String -> String
 showDir d flines
-    | d == Send    = " " ++ flines!sndm ++ " "
-    | d == Receive = " " ++ flines!rcvm ++ " "
-    | d == Tau     = " " ++ flines!tau ++ " "
-    | d == Break   = " " ++ flines!breakLoop ++ " "
-    | d == LoopSnd = " " ++ flines!sndm ++ " "
-    | d == LoopRcv = " " ++ flines!rcvm ++ " "
-    | otherwise    = error ("Non sense: " ++ show d ++ " is not valid")
+    | d == Send      = " " ++ flines!sndm ++ " "
+    | d == Receive   = " " ++ flines!rcvm ++ " "
+    | d == Tau       = " " ++ flines!tau ++ " "
+    | d == BreakLoop = " " ++ flines!breakLoop ++ " "
+    | d == LoopSnd   = " " ++ flines!sndm ++ " "
+    | d == LoopRcv   = " " ++ flines!rcvm ++ " "
+    | otherwise      = error ("Non sense: " ++ show d ++ " is not valid")
 
 -- 
 -- Basic Functions (for TS constructions)
@@ -180,6 +182,22 @@ renamePtp old new ( states, q0, acts, trxs ) = ( states, q0, acts', trxs' )
         ract  = \( ( s, r ), d, m ) -> ( (aux s, aux r), d, m )
         trxs' = S.map (\(q, act ,q') -> ( q, ract act, q' )) trxs
         aux p = if p == old then new else p
+
+-- predTrxRemoval :: CFSM -> (Action -> Bool) -> CFSM
+-- -- removes the transitions whose action satisfies the predicate lpred
+-- predTrxRemoval m@(states, q0, acts, trxs) lpred = (states, q0, acts, trxs')
+--   where trxs'   = S.difference (L.foldl S.union otrxs (L.map inherit pairs)) (S.filter (\(_,l,_) -> lpred l) trxs)
+--         otrxs   = S.filter (\(_, l, _) -> not(lpred l)) trxs
+--         pairs   = [ (q,q') | q <- S.toList states, q' <- S.toList states, not(q==q'), S.member q' (pClosure m lpred q) ]
+--         inherit = \(q1,q2) -> S.map (\(_, l, q') -> (q1, l, q')) (S.intersection otrxs (goutgoing m q2))
+
+-- flatSet :: Set State -> State
+-- -- turns a set of states into a state
+-- flatSet states = S.foldr ( \q q' -> (q ++ "__" ++ q') ) "" states 
+
+-- flat :: Graph (Set State) Action -> CFSM
+-- flat (states, q0, labels, trxs) =
+--   (S.map flatSet states, flatSet q0, labels, S.map (\(q, l, q') -> (flatSet q, l, flatSet q')) trxs)
 
 -- dActions :: CFSM -> State -> Dir -> Set LTrans
 -- dActions m q d = (S.filter (\( _, ( _, d', _ ), _ ) -> d == d') (step m q))
@@ -290,15 +308,15 @@ cfsmUnion q0 l = (L.foldr (\(states, _, _,_) -> S.union states) (S.singleton q0)
 strToAction :: P -> Id -> [String] -> [Action]
 strToAction _ _ [] = []
 strToAction ptps sbj [s] = [( ((ptps!sbj), (ptps!sbj) ), Tau, "not action: " ++ s)]
-strToAction ptps sbj [s,"break"] = [( (ptps!sbj, ptps!sbj ), Break, "break: " ++ s)]
+strToAction ptps sbj [s,"break"] = [( (ptps!sbj, ptps!sbj ), BreakLoop, "break: " ++ s)]
 strToAction ptps sbj [s,s'] = [( (ptps!sbj, ptps!sbj ), Tau, "not action: " ++ s ++ " - " ++ s')]
 strToAction ptps sbj (p:d:msg:xs)
 -- TODO: what about LoopSnd and LoopRcv?
-  | d == "!"     = ( (ptps!sbj, ptps!(read p :: Id)), Send,    msg ):(strToAction ptps sbj xs)
-  | d == "?"     = ( (ptps!(read p :: Id), ptps!sbj), Receive, msg ):(strToAction ptps sbj xs)
-  | d == "tau"   = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ):(strToAction ptps sbj xs)
-  | d == "break" = ( (ptps!sbj, ptps!(read p :: Id)), Break,   msg ):(strToAction ptps sbj xs)
-  | otherwise    = ( (ptps!sbj, ptps!(read p :: Id)), Tau,     msg ++ "unknown direction: " ++ d ):(strToAction ptps sbj xs)
+  | d == "!"     = ( (ptps!sbj, ptps!(read p :: Id)), Send,      msg ):(strToAction ptps sbj xs)
+  | d == "?"     = ( (ptps!(read p :: Id), ptps!sbj), Receive,   msg ):(strToAction ptps sbj xs)
+  | d == "tau"   = ( (ptps!sbj, ptps!(read p :: Id)), Tau,       msg ):(strToAction ptps sbj xs)
+  | d == "break" = ( (ptps!sbj, ptps!(read p :: Id)), BreakLoop, msg ):(strToAction ptps sbj xs)
+  | otherwise    = ( (ptps!sbj, ptps!(read p :: Id)), Tau,       msg ++ "unknown direction: " ++ d ):(strToAction ptps sbj xs)
 
 parseFSA :: [[String]] -> System
 --
@@ -371,7 +389,7 @@ parseFSA text = if L.length pairs == L.length outs &&
                "!"     -> ( (ptps'!sbj, ptps'!p), (if noLoop then Send else LoopSnd), msg )
                "?"     -> ( (ptps'!p, ptps'!sbj), (if noLoop then Receive else LoopRcv), msg )
                "tau"   -> ( (ptps'!sbj, ptps'!sbj), Tau, msg )
-               "break" -> ( (ptps'!sbj, ptps'!sbj), Break, msg )
+               "break" -> ( (ptps'!sbj, ptps'!sbj), BreakLoop, msg )
                _   -> error ("Line " ++ show line ++ "unrecognised communication action " ++ d)
 
 
@@ -487,12 +505,12 @@ cfsm2String sbj m =
              (show $ S.findIndex (gtarget t) qs)
            lab ( ( s, r ), dir, msg ) =
              case dir of
-               Send    -> show r ++ " ! " ++ show msg
-               Receive -> show s ++ " ? " ++ show msg
-               Tau     -> " tau " ++ show msg
-               Break   -> " break " ++ show msg
-               LoopSnd -> show r ++ " ! " ++ show msg
-               LoopRcv -> show s ++ " ? " ++ show msg
+               Send      -> show r ++ " ! " ++ show msg
+               Receive   -> show s ++ " ? " ++ show msg
+               Tau       -> " tau " ++ show msg
+               BreakLoop -> " break " ++ show msg
+               LoopSnd   -> show r ++ " ! " ++ show msg
+               LoopRcv   -> show s ++ " ? " ++ show msg
 
 cfsm2fsm :: Map String String -> CFSM -> (String, Map State Int)
 cfsm2fsm flines (states, initn, _, trans) =
