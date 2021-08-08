@@ -12,6 +12,7 @@ import Data.List as L
 import Data.Map.Strict as M
 import Misc
 import DotStuff
+import qualified Data.Text as T
 
 data Interaction =
   Comm Channel Message
@@ -40,6 +41,112 @@ trxClosure cond (states, q0, ls, trxs) =
 interaction2string :: Interaction -> String
 interaction2string Tau = "tau"
 interaction2string (Comm (s,r) l) = (show s) ++ " -> " ++ (show r) ++ ": " ++ (show l)
+
+parseCA :: String -> CAutomaton
+parseCA text =
+  --
+  -- parseCA returns a system provided that 'text' represents a CA
+  -- according to the following syntax:
+  --     C ::= Int I Int
+  --        |  C NewLine C
+  --     I ::= Str -> Str : Str
+  --        |  Str -> Str Str
+  --        |  Str Str Str
+  --        |  Str Str : Str
+  --        |  tau
+  --
+  -- where Int is an integer, Str is a string, and NewLine is the end
+  -- of line token.  Lines starting with '--' are interpreted as
+  -- comments and ignored. The first line must be the first transition
+  -- of the initial state.
+  --
+  parsing 1 lines (S.empty, q0, S.empty, S.empty)
+  where
+    lines = L.map Prelude.words (Prelude.lines text)
+    q0 = if lines == []
+      then error "parseCA: there should be at least a state"
+      else
+      if head lines == []
+      then error "parseCA: there should be at least a state"
+      else read (head $ head lines)::Int
+    parsing i t ca@(qs, q0, ls, ts) =
+      case t of
+        l:xs ->
+          case l of
+            [] -> parsing (i+1) xs ca
+            _ ->
+              case head l of
+                '-':w ->
+                  if head w == '-'
+                  then parsing (i+1) xs ca
+                  else error ("parseCA: syntax error on line " ++ (show i))
+                _ -> 
+                  case l of
+                    [q, s, r, m, q'] ->
+                      let
+                        source = (read q)::Int
+                        target = (read q')::Int
+                        label = (Comm (s,r) m)
+                        ca' =
+                          (S.union qs (S.fromList [source, target]),
+                           q0,
+                           S.union ls (S.singleton label),
+                           S.union ts (S.singleton (source, label, target))
+                          )
+                      in
+                        parsing (i+1) xs ca'
+                    [q, s, "->", r, m, q'] ->
+                      let
+                        source = (read q)::Int
+                        target = (read q')::Int
+                        label = (Comm (s,r) m)
+                        ca' =
+                          (S.union qs (S.fromList [source, target]),
+                           q0,
+                           S.union ls (S.singleton label),
+                           S.union ts (S.singleton (source, label, target))
+                          )
+                      in
+                        parsing (i+1) xs ca'
+                    [q, s, r, ":", m, q'] ->
+                      let
+                        source = (read q)::Int
+                        target = (read q')::Int
+                        label = (Comm (s,r) m)
+                        ca' =
+                          (S.union qs (S.fromList [source, target]),
+                           q0,
+                           S.union ls (S.singleton label),
+                           S.union ts (S.singleton (source, label, target))
+                          )
+                      in
+                        parsing (i+1) xs ca'
+                    [q, s, "->", r, ":", m, q'] ->
+                      let
+                        source = (read q)::Int
+                        target = (read q')::Int
+                        label = (Comm (s,r) m)
+                        ca' =
+                          (S.union qs (S.fromList [source, target]),
+                           q0,
+                           S.union ls (S.singleton label),
+                           S.union ts (S.singleton (source, label, target))
+                          )
+                      in
+                        parsing (i+1) xs ca'
+                    [q,"tau",q'] ->
+                      parsing (i+1) xs ca'
+                      where
+                        ca' =
+                          (S.union qs (S.fromList [(read q)::Int, (read q')::Int]),
+                           q0,
+                           S.union ls (S.singleton Tau),
+                           S.union ts (S.singleton ((read q)::Int, Tau, (read q')::Int))
+                          )
+                    _ ->
+                      error ("parseCA: syntax error on line " ++ (show i))
+        _ -> ca
+
 
 ca2dot :: CAutomaton -> String -> Map String String -> String
 ca2dot ( states, q0, _, trxs ) name flines =

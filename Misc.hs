@@ -295,11 +295,10 @@ info =
        ]
   ),
   (GC2DOT, ["returns the dot format of a g-choreography",
-            "[-v] [-d dirpath] [--fmt (gml | gc | gmldiff | sloppygml)] filename",
+            "[-v] [-d dirpath] [--fmt (gml | gc | gmldiff | sloppygml)] [-o destfile] filename",
             "\t-v diplays the path to the resulting file; not set by default",
             "default: dirpath = " ++ dirpath,
-            "\t--fmt = gc",
-            "\t-o filename stores the result in dirpath/filename.dot"
+            "\t--fmt = gc"
            ]
   ),
   (GC2FSA, ["returns the communicating system and the projections of g-choreography in the fsa format",
@@ -339,7 +338,7 @@ info =
         ]
   ),
   (MIN, ["determinises or minimises CFSMs",
-         "[-D (min | det | no)] [-d dirpath] [-v] filename",
+         "[-D (min | det | no)] [-d dirpath] [-v] [-o destfile] filename",
          "default: dirpath = " ++ dirpath,
          "\t -D min"
         ]
@@ -448,7 +447,7 @@ defaultFlags cmd = M.insert "-o" ""
                       POM2GC -> M.fromList [("-d",dirpath)]
                       GC2GML -> M.fromList [("-d",dirpath), ("-v",""), ("-u","1")] -- '-l' unfolding of loops
                       SYS    -> M.fromList [("-d",dirpath), ("-v","")]
-                      MIN    -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min")]
+                      MIN    -> M.fromList [("-d",dirpath), ("-v",""), ("-D","min"), ("-o", "")]
                       WB     -> M.fromList [("-v","")]
                       WS     -> M.fromList [("-v","")]
                       WF     -> M.fromList [("-v","")]
@@ -538,6 +537,7 @@ getFlags cmd args =
       "-d":y:xs -> M.insert "-d" y   (getFlags cmd xs)
       "-v":xs   -> M.insert "-v" yes (getFlags cmd xs)
       "-D":y:xs -> M.insert "-D" y   (getFlags cmd xs)
+      "-o":y:xs -> M.insert "-o" y   (getFlags cmd xs)
       _         -> error $ usage(cmd)
     WB -> case args of
       []        -> defaultFlags(cmd)
@@ -956,6 +956,9 @@ type DotString = String
 getConf :: String -> IO(Map String DotString)
 getConf f = do
   conf <- readFile f
-  let aux   = \l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l | ((L.length $ T.unpack l) > 2) && (L.take 2 (T.unpack l) /= "--")]
-  let lns = T.lines $ T.pack conf
+  let
+    aux   =
+      \l -> L.map (\p -> (T.unpack $ p!!0, T.unpack $ p!!1)) [T.words l | ((L.length $ T.unpack l) > 2) && (L.take 2 (T.unpack l) /= "--")]
+  let lns
+        = T.lines $ T.pack conf
   return (M.fromList $ L.concat $ L.map aux lns)

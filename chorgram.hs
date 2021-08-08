@@ -22,6 +22,6 @@ main = do
         putStrLn "----------------------------------- chogram info -----------------------------------"
         mapM_ (\l -> putStrLn ("\t" ++ l)) (lines help)
         putStrLn "----------------------------------- chogram info -----------------------------------"
-      "minproj" -> callCommand ("project -D min " ++ (L.foldl (\x y -> x ++ " " ++ y) "" (tail progargs)))
-      "detproj" -> callCommand ("project -D det " ++ (L.foldl (\x y -> x ++ " " ++ y) "" (tail progargs)))
+      "minimise" -> callCommand ("project -D min " ++ (L.foldl (\x y -> x ++ " " ++ y) "" (tail progargs)))
+      "determinise" -> callCommand ("project -D det " ++ (L.foldl (\x y -> x ++ " " ++ y) "" (tail progargs)))
       _ -> callCommand (L.foldl (\x y -> x ++ " " ++ y) "" progargs)

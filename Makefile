@@ -21,7 +21,6 @@ all:
 	$(MAKE) BuildGlobal_hs &&\
 	$(MAKE) PomsetSemantics_hs &&\
 	$(MAKE) sysparser_hs &&\
-	$(MAKE) minimise_hs &&\
 	$(MAKE) gc2pom_hs &&\
 	$(MAKE) project_hs &&\
 	$(MAKE) pom2gc_hs &&\
@@ -30,13 +29,14 @@ all:
 	$(MAKE) gc2gml_hs &&\
 	$(MAKE) cg_hs
 #	$(MAKE) gcsem_hs &&\
+#	$(MAKE) handleND_hs &&\ (DEPRECATED)
 
 #
 # Examples of usage of scripts:
 # python cfsm2gc.py -l -df png -dir <path-to-results-directory> <path-to-file>
 # gc.py --dot "Tpng" --dot "Gsplines=ortho" --sloppy -dir <path-to-results-directory> <path-to-file>
 # cfsm2gc.py -sn -D det -dir /tmp ~/Dropbox/chorgram_experiments/gmc/bank > /tmp/b.txt
-# minimise -v -D det -d experiments/open_chor/ experiments/open_chor/ex4_1.fsa
+# (DEPRECATED) # handleND -v -D det -d experiments/open_chor/ experiments/open_chor/ex4_1.fsa
 # gc2fsa ~/Dropbox/chorgram_experiments/examples_gc/two_buyers_protocol.gc > experiments/results/two_buyers_protocol/sys.fsa
 # gc2pom -l 2 --gml -d /tmp/ experiments/test/atm.gc
 # gc2gml -o t.x experiments/test/atm.gc 
@@ -46,7 +46,7 @@ all:
 
 
 # gmc dependencies
-# compile: gmc.hs BuildGlobal.hs GCParser.hs SystemParser.hs PomsetSemantics.hs gc.hs sysparser.hs minimise.hs gc2fsa.hs gc2pom.hs pom2gc.hs minimise.hs gc2gml.hs
+# compile: gmc.hs BuildGlobal.hs GCParser.hs SystemParser.hs PomsetSemantics.hs gc.hs sysparser.hs handleND.hs gc2fsa.hs gc2pom.hs pom2gc.hs gc2gml.hs
 #	$(MAKE) all
 
 gmc_hs: gmc.hs SystemParser.hs FSA.hs CFSM.hs TS.hs Representability.hs Misc.hs DotStuff.hs BranchingProperty.hs PetrifyBridge.hs
@@ -70,8 +70,8 @@ RGCParser_hs: RGCParser.hs Misc.hs DotStuff.hs GCParser.hs CFSM.hs SyntacticGlob
 sysparser_hs: sysparser.hs SystemParser.hs
 	$(ccmd) $<
 
-minimise_hs: minimise.hs Misc.hs FSA.hs CFSM.hs DotStuff.hs SystemParser.hs
-	$(ccmd) $<
+# handleND_hs: handleND.hs Misc.hs FSA.hs CFSM.hs DotStuff.hs SystemParser.hs
+# 	$(ccmd) $<
 
 gc2pom_hs: gc2pom.hs Misc.hs GCParser.hs PomsetSemantics.hs
 	$(ccmd) $<
@@ -112,7 +112,7 @@ debug:
 	$(ccdebug) SystemParser_hs &&\
 	$(ccdebug) PomsetSemantics_hs &&\
 	$(ccdebug) gc_hs &&\
-	$(ccdebug) minimise_hs &&\
+#	$(ccdebug) handleND_hs &&\ (DEPRECATED)
 #	$(ccdebug) hgsem_hs &&\
 	$(ccdebug) sysparser_hs\
 	$(ccdebug) gc2pom_hs &&\

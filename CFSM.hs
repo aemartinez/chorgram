@@ -319,31 +319,33 @@ strToAction ptps sbj (p:d:msg:xs)
   | otherwise    = ( (ptps!sbj, ptps!(read p :: Id)), Tau,       msg ++ "unknown direction: " ++ d ):(strToAction ptps sbj xs)
 
 parseFSA :: [[String]] -> System
---
--- parseFSA returns a system provided that 'text' represents a few
--- cfsms according to the following syntax:
---     C ::= '.outputs' Str    NewLine
---           '.state graph'    NewLine
---           T                 NewLine
---           '.end'            NewLine
---     T ::= .marking Str
---        |  Str {! + ?} Str Str NewLine T
---
--- where Str is a string and NewLine is the end of line token.
--- Lines starting with '--' are interpreted as comments and
--- ignored. 
---
-parseFSA text = if L.length pairs == L.length outs &&
-                   L.length pairs == L.length marks &&
-                   L.length pairs == L.length sts &&
-                   L.length pairs == L.length ends
-                then (sys',ptps')
-                else error ("malformed file of CFSM (some the numbers of lines starting with .outputs, .markings, .states, .end do not match)"
-                            ++ "\nouts\t" ++ show outs
-                            ++ "\nmarks\t" ++ show marks
-                            ++ "\nstarts\t" ++ show sts
-                            ++ "\nends\t" ++ show ends
-                           )
+parseFSA text =
+  --
+  -- parseFSA returns a system provided that 'text' represents a few
+  -- cfsms according to the following syntax:
+  --     C ::= '.outputs' Str    NewLine
+  --           '.state graph'    NewLine
+  --           T                 NewLine
+  --           '.end'            NewLine
+  --     T ::= .marking Str
+  --        |  Str {! + ?} Str Str NewLine T
+  --
+  -- where Str is a string and NewLine is the end of line token.
+  -- Lines starting with '--' are interpreted as comments and
+  -- ignored. 
+  --
+  if L.length pairs == L.length outs &&
+     L.length pairs == L.length marks &&
+     L.length pairs == L.length sts &&
+     L.length pairs == L.length ends
+  then (sys',ptps')
+  else
+    error ("malformed file of CFSM (some the numbers of lines starting with .outputs, .markings, .states, .end do not match)"
+           ++ "\nouts\t" ++ show outs
+           ++ "\nmarks\t" ++ show marks
+           ++ "\nstarts\t" ++ show sts
+           ++ "\nends\t" ++ show ends
+          )
   where ptps' = M.fromList pairs
         pairs = [(k, names!!k) | k <- range $ L.length outs]
         outs  = L.filter (\line -> line /= [] && (head line) == ".outputs") text
@@ -514,7 +516,7 @@ cfsm2String sbj m =
 
 cfsm2fsm :: Map String String -> CFSM -> (String, Map State Int)
 cfsm2fsm flines (states, initn, _, trans) =
--- Transforms a cfsm into the fsm format of mcrl2; the result is a string for the fsm format and a map 
+  -- Transforms a cfsm into the fsm format of mcrl2; the result is a string for the fsm format and a map 
   let env = (M.fromList $ snd $  mapAccumL (\x y -> (x+1,(y,x))) 1 (S.toList states)) :: Map State Int
       liststates = intercalate "\n" $ nub $ (show $ env!initn):(L.map show $ M.elems env)
       listtrans = intercalate "\n" $

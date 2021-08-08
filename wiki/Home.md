@@ -41,8 +41,8 @@ The current list of operations is as follows:
 - **cfsm2gg**: a python script that executes gmc, transforms the .dot files it generates in graphical formats, and displays some performance information
 <!-- - **sgg**: takes in input a description of a g-choreography (with an extended syntax), projects the graph in a set of (non-minimal) CFSMs -->
 - **project**: projects g-choreographies on CFSMs
-- **minproj**: as project with minimisation
-- **detproj**: as project with determinisation
+- **minimise**: as project with minimisation
+- **determinise**: as project with determinisation
 - **gc2fsa**: returns the .fsa format of the minimised CFSMs of a g-choreography (the '-v' option also generates a '.hs' file that is the haskell representation of the system)
 - **gc2pom**: returns the pomset semantics (in graphml format) of a g-choreography (in .gc format) (cf. (R. Guanciale and E. Tuosto, ICE 2016) and its journal version **(E. Tuosto and R. Guanciale, 2018)**
 - **wb**: checks for (the simple version of) well-branchedness
@@ -60,22 +60,31 @@ chorgram cfsm2gg
 
 ```
 
-prints on the screen
+prints on the screen the help message of the operation 'cfsm2gg' while executing while
 
 ```
 #!bash
-chorgram cfsm2gg
-
-```
-
-the help message of the operation 'cfsm2gg' while executing
-
-```
-#!bash
-chorgram cfsm2gg
+chorgram
 
 ```
 returns the help message of 'chorgram'.
+
+If the file 'example.gc' contains a g-choreography with a participant 'A' then
+
+```
+#!bash
+chorgram project -D no --fmt fsa example.gc -p A > /tmp/d.fsa
+
+```
+stores in '/tmp/a.fsa' the projection of the g-choreography in 'example.gc' on the participant 'A' while
+
+```
+#!bash
+chorgram minimise /tmp/example.gc -p A
+
+```
+
+prints on the standard output the minised projection of the g-choreography on 'A'.
 
 # ChorGram's graphical user interface
 
