@@ -48,7 +48,7 @@
 -- Note: strings are made of the following characters
 --
 --   0123456789
---   <=>\\^_`\167/$#&~,.
+--   \_$#&~
 --   ABCDEFGHIJKLMNOPQRSTUVWXYZ
 --   abcdefghijklmnopqrstuvwxyz
 --

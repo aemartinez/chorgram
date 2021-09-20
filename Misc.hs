@@ -129,8 +129,13 @@ isAlpha :: Char -> Bool
 --
 -- and must start with a letter when specifying the identity of a
 -- machine (non-terminal Ptp) or of system.
-isAlpha c = c € ([x | x <- ['0'.. 'z'] ++ ['$', '#', '&', '~', '\"', '_'],
-                  not (x € ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '-', '*', '/', '^', '!', '?', '%', '§'])
+isAlpha c =
+  let
+    allowed = ['0'.. 'z'] ++ ['$', '#', '&', '~', '\"', '_']
+    forbidden = ['@', '.', ',', ';', ':', '(', ')', '[', ']', '{', '}', '|', '+', '-', '*', '/', '^', '!', '?', '%', '§']
+  in
+    c € ([x | x <- allowed,
+                  not (x € forbidden)
                  ])
 
 isPtp :: String -> Bool
