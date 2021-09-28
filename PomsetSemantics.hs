@@ -21,7 +21,8 @@ import DotStuff
 type Event = Int
 type Lab = Map Event Action
 type Pomset = (Set Event, Set (Event, Event), Lab)
-type TraceSet = (Set [Event], Lab)
+type Trace = [Event]
+type TraceSet = (Set Trace, Lab)
 data LabelFormat =
   Interaction |
   Communication
