@@ -21,8 +21,7 @@ import DotStuff
 type Event = Int
 type Lab = Map Event Action
 type Pomset = (Set Event, Set (Event, Event), Lab)
-type Trace = [Event]
-type TraceSet = (Set Trace, Lab)
+type Trace = [Action]
 data LabelFormat =
   Interaction |
   Communication
@@ -30,12 +29,17 @@ data DiffObj =
   Edge String String |
   Node String
 
-serializePoms :: Set Pomset -> TraceSet
-serializePoms poms = S.foldl tsUnion (S.empty, M.empty) (S.map serializePom poms)
-    where tsUnion (evs, lab) (evs', lab') = (S.union evs evs', M.union lab lab')
+serializePoms :: Set Pomset -> Set Trace
+serializePoms set_of_pomsets = S.unions (S.map serializePom set_of_pomsets)
 
-serializePom :: Pomset -> TraceSet
-serializePom (events, rel, lab) = (S.filter (checkRel rel) (S.fromList (L.permutations (S.elems events))), lab)
+serializePom :: Pomset -> Set Trace
+serializePom (events, rel, lab) = S.map events_to_actions legal_permutations
+  where events_to_actions = L.map evt_to_act
+        evt_to_act evt = case M.lookup evt lab of 
+                            Just act -> act 
+                            -- evt is guaranteed to be the keys of lab
+        legal_permutations = S.filter (checkRel rel) permutations_of_events
+        permutations_of_events = S.fromList (L.permutations (S.elems events))
 
 checkRel :: Set (Event, Event) -> [Event] -> Bool
 checkRel rel evs = case evs of
