@@ -19,6 +19,7 @@ import Data.Map.Strict as M
 type Node          = [State]
 type KEvent        = (State, State, Ptp, Ptp, Dir, Message)
 type Interaction   = (Ptp, Ptp, Message)
+type Run           = [KTrans]
 
 type Buffer        = Map Channel [Message]
 type Configuration = (Node, Buffer)
