@@ -71,11 +71,20 @@ renameNodes sigma (confs, n0, events, trans) = (confs', n0', events, trans')
         aux (ls,b) = (if M.member ls sigma then sigma!ls else ls, b)
 
 
+senderState :: KEvent -> State
+senderState (q, _, _, _, _, _) = q
+
+receiverState :: KEvent -> State
+receiverState (_, q', _, _, _, _) = q'
+
 sender :: KEvent -> Ptp
 sender (_, _, s, _, _, _) = s
 
 receiver :: KEvent -> Ptp
 receiver ( _, _, _, r, _, _ ) = r
+
+direction :: KEvent -> Dir
+direction ( _, _, _, _, d, _ ) = d
 
 machines :: KTrans -> Set Ptp
 machines ( _,e,_ ) = S.insert (receiver e) (S.singleton $ sender e)
