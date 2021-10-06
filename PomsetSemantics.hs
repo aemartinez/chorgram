@@ -35,9 +35,7 @@ serializePoms set_of_pomsets = S.unions (S.map serializePom set_of_pomsets)
 serializePom :: Pomset -> Set Trace
 serializePom (events, rel, lab) = S.map events_to_actions legal_permutations
   where events_to_actions = L.map evt_to_act
-        evt_to_act evt = case M.lookup evt lab of 
-                            Just act -> act 
-                            Nothing -> 0 -- This never happens since evt is guaranteed to be in the keys of lab
+        evt_to_act evt = fromJust (M.lookup evt lab) 
         legal_permutations = S.filter (checkRel rel) permutations_of_events
         permutations_of_events = S.fromList (L.permutations (S.elems events))
 
