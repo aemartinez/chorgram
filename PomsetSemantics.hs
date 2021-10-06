@@ -17,6 +17,7 @@ import Text.XML.HXT.Parser.XmlParsec(xreadDoc)
 import Data.Tree.NTree.TypeDefs
 import Text.XML.HXT.DOM.TypeDefs
 import DotStuff
+import Data.Maybe
 
 type Event = Int
 type Lab = Map Event Action
