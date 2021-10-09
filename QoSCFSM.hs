@@ -15,8 +15,8 @@ import Data.Map.Strict as M
 import CFSM
 
 type QoSAttr = String
-type QoSSpec = Map QoSAttr (Set Int) -- ToDo: define QoSSpec as theory over real numbers
+type QoSSpec = Map QoSAttr Int -- ToDo: define QoSSpec as theory over real numbers
 
 type QoSMap = Map State QoSSpec
-type QoSSystem  = ( System , Set QoSAttr, Map Ptp QoSMap ) 
--- (Map Ptp QoSMap) should be consistent with the states in PtP
+type QoSSystem  = ( System , Set QoSAttr, Map Ptp QoSMap )
+-- (Map Ptp QoSMap) should be consistent with the states in Ptp
