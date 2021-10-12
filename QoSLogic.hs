@@ -29,28 +29,37 @@ data QL = T
     | Or QL QL
     | Until QL GC QL
 
-isSatisfiable :: QoSSystem -> QL -> TS.Run -> TS.Configuration -> Bool
+isSatisfiable :: QoSSystem -> QL -> TS.Run -> TS.Configuration -> IO Bool
 isSatisfiable qossys@(sys, qosattrs, qosmaps) prop run conf =
     case prop of 
-         T -> True
-         F -> False
+         T -> return True
+         F -> return False
          Spec phi -> checkEntailment (aggregation qossys run) phi
-             where checkEntailment p@(attrs, term) p'@(attrs', term') = not (SMTLIB.Solver.isSat smtScript)
+             where checkEntailment p@(attrs, term) p'@(attrs', term') = do { aux <- (SMTLIB.Solver.isSat smtScript); return $ not aux }
                      where smtScript = buildScript (S.union attrs attrs') (SMTLIB.smtAND term (SMTLIB.smtNOT term'))
-         Not psi -> not (isSatisfiable qossys psi run conf)
-         Or psi psi' -> (isSatisfiable qossys psi run conf) || (isSatisfiable qossys psi' run conf)
-         Until psi gchor psi' -> if not (L.null run) && (isSatisfiable qossys psi' run conf) 
-                                     then True
-                                 else if isSatisfiable qossys psi run conf 
-                                         then S.foldl (\b kEvtConf -> b || (filterGChorAndRecursion kEvtConf)) False nextConfs 
-                                      else False
+         Not psi -> do 
+                    aux <- (isSatisfiable qossys psi run conf)
+                    return (not aux)
+         Or psi psi' -> do
+                        aux <- (isSatisfiable qossys psi run conf) 
+                        aux' <- (isSatisfiable qossys psi' run conf)
+                        return (aux || aux')
+         Until psi gchor psi' -> do
+                                 aux <- (isSatisfiable qossys psi' run conf)
+                                 if (not (L.null run)) && aux 
+                                     then return True
+                                 else do
+                                      aux <- isSatisfiable qossys psi run conf
+                                      if aux 
+                                         then S.foldl (\b kEvtConf -> do { aux <- b; aux' <- (filterGChorAndRecursion kEvtConf); return $ aux || aux'}) (return False) nextConfs 
+                                      else return False
                                             where language = serializePoms $ fst (pomsetsOf gchor 0 0)
                                                   maxLength = S.findMax $ S.map L.length language
                                                   nextConfs = TS.step maxLength True sys conf
                                                   filterGChorAndRecursion (kevt, conf') = 
-                                                        if S.member (traceOf extendedRun) language 
+                                                        if L.any (L.isPrefixOf (traceOf extendedRun)) language 
                                                             then isSatisfiable qossys (Until psi gchor psi') extendedRun conf' 
-                                                        else False
+                                                        else return False
                                                         where extendedRun = run ++ [(conf, kevt, conf')]
 
 traceOf :: Run -> [Action]
