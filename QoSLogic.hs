@@ -32,33 +32,26 @@ data QL = T
 isSatisfiable :: QoSSystem -> QL -> TS.Run -> TS.Configuration -> Bool
 isSatisfiable qossys@(sys, qosattrs, qosmaps) prop run conf =
     case prop of 
-        T -> True
-        F -> False
-        Spec phi -> checkEntailment (aggregation qossys run) phi
-            where checkEntailment p@(attrs, term) p'@(attrs', term') = not (SMTLIB.Solver.isSat smtScript)
-                    where smtScript = buildScript (S.union attrs attrs') (SMTLIB.smtAND term (SMTLIB.smtNOT term'))
-        Not psi -> not (isSatisfiable qossys psi run conf)
-        Or psi psi' -> (isSatisfiable qossys psi run conf) || (isSatisfiable qossys psi' run conf)
-        Until psi gchor psi' -> helper
-            where helper
-                      | isSatisfiable qossys psi' run conf = True 
-                      | otherwise = psiHolds && nextStepHolds
-                          where psiHolds = isSatisfiable qossys psi run conf
-                                nextStepHolds = S.member True (S.map filterGChorAndRecursion nextconfs) 
-                                -- can we use forall or exists ?
-                                -- we are not i mplementing short circuit to discard traces not in gchor
-                                -- we could do this more efficiently by returning true as soon as one extension suceeds
-                                filterGChorAndRecursion (kevt@(s1, s2, ptp1, ptp2, dir, msg), conf') = 
-                                        S.member (traceOf extendedRun) language && recursiveCheck extendedRun
-                                        where extendedRun = run ++ [(conf, kevt, conf')]
-                                              language = serializePoms $ fst (pomsetsOf gchor 0 0)
-                                              recursiveCheck run' = isSatisfiable qossys prop run' conf'
-                                nextconfs = TS.step 0 True sys conf
-                                    -- the bound k can be computed from gchor. it is the length of the maximum trace.
-                                    -- pi in L(G)
-                                    -- define s(pi) = max {n : there are n interaction in pi with same sender and receiver}
-                                    -- k = max {s(pi) \
-                                    -- k = max {s(pi) | pi in L(G)}
+         T -> True
+         F -> False
+         Spec phi -> checkEntailment (aggregation qossys run) phi
+             where checkEntailment p@(attrs, term) p'@(attrs', term') = not (SMTLIB.Solver.isSat smtScript)
+                     where smtScript = buildScript (S.union attrs attrs') (SMTLIB.smtAND term (SMTLIB.smtNOT term'))
+         Not psi -> not (isSatisfiable qossys psi run conf)
+         Or psi psi' -> (isSatisfiable qossys psi run conf) || (isSatisfiable qossys psi' run conf)
+         Until psi gchor psi' -> if not (L.null run) && (isSatisfiable qossys psi' run conf) 
+                                     then True
+                                 else if isSatisfiable qossys psi run conf 
+                                         then S.foldl (\b kEvtConf -> b || (filterGChorAndRecursion kEvtConf)) False nextConfs 
+                                      else False
+                                            where language = serializePoms $ fst (pomsetsOf gchor 0 0)
+                                                  maxLength = S.findMax $ S.map L.length language
+                                                  nextConfs = TS.step maxLength True sys conf
+                                                  filterGChorAndRecursion (kevt, conf') = 
+                                                        if S.member (traceOf extendedRun) language 
+                                                            then isSatisfiable qossys (Until psi gchor psi') extendedRun conf' 
+                                                        else False
+                                                        where extendedRun = run ++ [(conf, kevt, conf')]
 
 traceOf :: Run -> [Action]
 traceOf = L.map actionOf
