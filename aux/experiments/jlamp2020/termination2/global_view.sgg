@@ -1,8 +1,0 @@
-A -> B: int ;
-A -> C: string ;
-sel {
-    (A -> B: date ; A -> B: quit)
-    + 
-    (A -> C: invoice ; A -> C: quit)
-}
-    

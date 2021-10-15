@@ -1,4 +1,0 @@
-(
-    Supplier -> Ship: Goods;
-    Ship -> Truck: Goods
-) | Supplier -> Truck : Address

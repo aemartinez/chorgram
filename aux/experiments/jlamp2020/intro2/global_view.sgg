@@ -1,7 +1,0 @@
-sel {
- ((C1 -> UR : inc ; C2 -> UR : dbl) |
-  (C1 -> NA : inc ; C2 -> NA : dbl))
- +
- ((C2 -> UR : dbl ; C1 -> UR : inc) |
-  (C2 -> NA : dbl ; C1 -> NA : inc))
-}
