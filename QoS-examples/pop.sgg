@@ -1,0 +1,12 @@
+
+    C -> S : helo;
+    S -> C : int;
+    repeat C {
+        C -> S : read;
+        S -> C : size;
+        C -> S : retr;
+        S -> C : msg;
+        C -> S : ack
+    };
+    C -> S : quit;
+    S -> C : bye

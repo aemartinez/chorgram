@@ -1,0 +1,28 @@
+.outputs C
+.state graph
+0 S ! helo 3
+1 S ? bye 2
+3 S ? int 4
+4 S ! quit 1
+4 S ! read 5
+5 S ? size 6
+6 S ! retr 7
+7 S ? msg 8
+8 S ! ack 4
+.marking 0
+.end
+
+.outputs S
+.state graph
+0 C ? helo 3
+1 C ! bye 2
+3 C ! int 4
+4 C ? quit 1
+4 C ? read 5
+5 C ! size 6
+6 C ? retr 7
+7 C ! msg 8
+8 C ? ack 4
+.marking 0
+.end
+

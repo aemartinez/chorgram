@@ -1,0 +1,16 @@
+Ops xxxx:0 CSSENDack:1 CSSENDhelo:1 CSSENDquit:1 CSSENDread:1 CSSENDretr:1 SCRECEIVEbye:1 SCRECEIVEint:1 SCRECEIVEmsg:1 SCRECEIVEsize:1 
+ 
+Automaton C
+States 00 11 22 33 44 55 66 77 88 
+Final States 00 11 22 33 44 55 66 77 88 
+Transitions 
+xxxx() -> 00
+CSSENDack(88) -> 44
+CSSENDhelo(00) -> 33
+CSSENDquit(44) -> 11
+CSSENDread(44) -> 55
+CSSENDretr(66) -> 77
+SCRECEIVEbye(11) -> 22
+SCRECEIVEint(33) -> 44
+SCRECEIVEmsg(77) -> 88
+SCRECEIVEsize(55) -> 66

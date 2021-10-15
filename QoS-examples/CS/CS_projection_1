@@ -1,0 +1,16 @@
+Ops xxxx:0 CSRECEIVEack:1 CSRECEIVEhelo:1 CSRECEIVEquit:1 CSRECEIVEread:1 CSRECEIVEretr:1 SCSENDbye:1 SCSENDint:1 SCSENDmsg:1 SCSENDsize:1 
+ 
+Automaton S
+States 00 11 22 33 44 55 66 77 88 
+Final States 00 11 22 33 44 55 66 77 88 
+Transitions 
+xxxx() -> 00
+CSRECEIVEack(88) -> 44
+CSRECEIVEhelo(00) -> 33
+CSRECEIVEquit(44) -> 11
+CSRECEIVEread(44) -> 55
+CSRECEIVEretr(66) -> 77
+SCSENDbye(11) -> 22
+SCSENDint(33) -> 44
+SCSENDmsg(77) -> 88
+SCSENDsize(55) -> 66

@@ -1,0 +1,23 @@
+digraph CFSM_proj_S{
+ graph [color=white ratio=compress margin=0];
+	S00	[style=filled, color=cornflowerblue]
+	S00	[label = "00"];
+	S11	[label = "11"];
+	S22	[label = "22"];
+	S33	[label = "33"];
+	S44	[label = "44"];
+	S55	[label = "55"];
+	S66	[label = "66"];
+	S77	[label = "77"];
+	S88	[label = "88"];
+	S00 -> S33	[label = "C&middot;S ? helo"];
+	S11 -> S22	[label = "S&middot;C ! bye"];
+	S33 -> S44	[label = "S&middot;C ! int"];
+	S44 -> S11	[label = "C&middot;S ? quit"];
+	S44 -> S55	[label = "C&middot;S ? read"];
+	S55 -> S66	[label = "S&middot;C ! size"];
+	S66 -> S77	[label = "C&middot;S ? retr"];
+	S77 -> S88	[label = "S&middot;C ! msg"];
+	S88 -> S44	[label = "C&middot;S ? ack"];
+
+}

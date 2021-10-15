@@ -1,0 +1,50 @@
+digraph CFSMs {
+ graph [color=white ratio=compress margin=0];
+   subgraph cluster_C{
+   label = C;
+	C0	[style=filled, color=cornflowerblue]
+	C0	[label = "0"];
+	C1	[label = "1"];
+	C2	[label = "2"];
+	C3	[label = "3"];
+	C4	[label = "4"];
+	C5	[label = "5"];
+	C6	[label = "6"];
+	C7	[label = "7"];
+	C8	[label = "8"];
+	C0 -> C3	[label = "C&middot;S ! helo"];
+	C1 -> C2	[label = "S&middot;C ? bye"];
+	C3 -> C4	[label = "S&middot;C ? int"];
+	C4 -> C1	[label = "C&middot;S ! quit"];
+	C4 -> C5	[label = "C&middot;S ! read"];
+	C5 -> C6	[label = "S&middot;C ? size"];
+	C6 -> C7	[label = "C&middot;S ! retr"];
+	C7 -> C8	[label = "S&middot;C ? msg"];
+	C8 -> C4	[label = "C&middot;S ! ack"];
+   }
+
+   subgraph cluster_S{
+   label = S;
+	S0	[style=filled, color=cornflowerblue]
+	S0	[label = "0"];
+	S1	[label = "1"];
+	S2	[label = "2"];
+	S3	[label = "3"];
+	S4	[label = "4"];
+	S5	[label = "5"];
+	S6	[label = "6"];
+	S7	[label = "7"];
+	S8	[label = "8"];
+	S0 -> S3	[label = "C&middot;S ? helo"];
+	S1 -> S2	[label = "S&middot;C ! bye"];
+	S3 -> S4	[label = "S&middot;C ! int"];
+	S4 -> S1	[label = "C&middot;S ? quit"];
+	S4 -> S5	[label = "C&middot;S ? read"];
+	S5 -> S6	[label = "S&middot;C ! size"];
+	S6 -> S7	[label = "C&middot;S ? retr"];
+	S7 -> S8	[label = "S&middot;C ! msg"];
+	S8 -> S4	[label = "C&middot;S ? ack"];
+   }
+
+}
+
